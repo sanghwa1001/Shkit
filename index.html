@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 시스템 (상점 이름 개별 수정)</title>
+    <title>로그인 시스템 (상점 이름 바로 수정)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -186,7 +186,6 @@
             if (document.getElementById('storage-page').classList.contains('active')) renderAvatarList();
         });
 
-        // === 화면 전환 ===
         function showPage(pageId) {
             const pages = document.querySelectorAll('.page');
             pages.forEach(page => page.classList.remove('active'));
@@ -317,22 +316,27 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
                 const isChecked = localShopItems.includes(avatarId) ? 'checked' : '';
-                
                 const currentName = localShopNames[avatarId.replace('.', '_')] || `아바타 ${index + 1}`;
                 
-                // [수정] 텍스트 입력창 대신 일반 텍스트 + 수정 아이콘(✏️) 배치
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
-                    <div style="margin: 5px 0; display:flex; align-items:center; gap:5px; justify-content:center;">
+                    
+                    <div id="view-mode-${index}" style="margin: 5px 0; display:flex; align-items:center; gap:5px; justify-content:center;">
                         <span style="font-size: 12px; color: #333; font-weight:bold;">${currentName}</span>
-                        <span title="이름 수정" style="cursor: pointer; font-size: 12px; background: #eee; padding: 2px 4px; border-radius: 4px;" onclick="editAvatarName(event, '${avatarId}', '${currentName}')">✏️</span>
+                        <span title="이름 수정" style="cursor: pointer; font-size: 12px; background: #eee; padding: 2px 4px; border-radius: 4px;" onclick="enableEditMode(event, ${index})">✏️</span>
                     </div>
+
+                    <div id="edit-mode-${index}" style="margin: 5px 0; display:none; align-items:center; gap:5px; justify-content:center;">
+                        <input type="text" id="name-input-${index}" value="${currentName}" style="width: 80px; padding: 2px; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index})">
+                        <span title="저장" style="cursor: pointer; font-size: 12px; background: #d4edda; color: #155724; padding: 2px 4px; border-radius: 4px;" onclick="saveSingleName(event, '${avatarId}', ${index})">✔️</span>
+                    </div>
+
                     <input type="checkbox" id="shop-cb-${index}" class="shop-checkbox" value="${avatarId}" ${isChecked}>
                 `;
                 
                 itemDiv.onclick = (e) => {
-                    // 체크박스나 수정버튼을 눌렀을 때는 체크박스가 토글되지 않도록 방지
-                    if(e.target.type !== 'checkbox' && !e.target.innerText.includes('✏️')) {
+                    // 입력창이나 아이콘 클릭 시 체크박스가 풀리지 않게 방지
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
                         const cb = document.getElementById(`shop-cb-${index}`);
                         cb.checked = !cb.checked;
                     }
@@ -341,20 +345,40 @@
             });
         }
 
-        // [추가] 연필 아이콘 클릭 시 즉각적으로 이름을 변경하는 함수
-        function editAvatarName(event, avatarId, currentName) {
-            event.stopPropagation(); // 부모 엘리먼트(아이템 박스) 클릭 이벤트 방지
+        // [추가] ✏️ 버튼을 누르면 입력창으로 변환
+        function enableEditMode(event, index) {
+            event.stopPropagation();
+            document.getElementById(`view-mode-${index}`).style.display = 'none';
             
-            const newName = prompt('수정할 아바타 이름을 입력하세요:', currentName);
+            const editMode = document.getElementById(`edit-mode-${index}`);
+            editMode.style.display = 'flex';
             
-            if (newName !== null && newName.trim() !== '') {
+            const inputField = document.getElementById(`name-input-${index}`);
+            inputField.focus(); // 켜지자마자 바로 커서 활성화
+        }
+
+        // [추가] ✔️ 버튼을 눌러 개별 이름 저장
+        function saveSingleName(event, avatarId, index) {
+            event.stopPropagation();
+            const inputField = document.getElementById(`name-input-${index}`);
+            const newName = inputField.value.trim();
+            
+            if(newName !== '') {
                 const dbKey = avatarId.replace('.', '_');
-                db.ref('shopItemNames/' + dbKey).set(newName.trim());
-                // 파이어베이스 실시간 연동으로 인해 renderAdminShopPage()는 자동 재호출됨
+                db.ref('shopItemNames/' + dbKey).set(newName);
+            } else {
+                // 이름을 비우고 저장하려 하면 원래대로 닫기
+                renderAdminShopPage();
             }
         }
 
-        // [수정] 판매 등록 기능 (이름 저장 로직 제거)
+        // [추가] 엔터키(Enter)를 눌러도 저장되게 설정
+        function handleEnter(event, avatarId, index) {
+            if(event.key === 'Enter') {
+                saveSingleName(event, avatarId, index);
+            }
+        }
+
         function saveShopItems() {
             let selectedItems = [];
             ALL_SHOP_AVATARS.forEach((avatarId, index) => {
