@@ -62,9 +62,11 @@
         .chat-input-area button { width: 100px; margin: 0; font-size: 18px; padding: 10px; }
         .lobby-menu-group { display: flex; gap: 10px; margin-top: 15px; }
         .lobby-menu-group button { margin: 0; flex: 1; }
-        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; }
+        
+        /* 아바타 리스트 스크롤 문제 해결 (padding 증가 및 가로 스크롤 방지) */
+        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; overflow-x: hidden; padding: 20px; }
         .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
-        .avatar-item:hover { transform: scale(1.05); }
+        .avatar-item:hover { transform: scale(1.05); z-index: 1; } /* 커질 때 다른 요소를 가리지 않도록 수정 */
         .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
         .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
@@ -276,9 +278,9 @@
             const data = snapshot.val();
             const logDiv = document.getElementById('chat-log');
             
-            // 💡 시스템 안내문 렌더링 (이름 없이 중앙 정렬 및 색상 지정)
+            // 시스템 안내문 렌더링
             if (data.isAlert) {
-                const color = data.alertColor || '#007bff'; // 기본은 파란색
+                const color = data.alertColor || '#007bff'; 
                 logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80;">📢 ${data.message}</div>`;
             } else {
                 // 일반 채팅 렌더링
@@ -288,7 +290,7 @@
                 let nameColor = '#333';
                 let msgColor = '#333';
                 
-                // 관리자(상티)의 경우 이름과 메시지 모두 파란색
+                // 관리자(상티)의 경우
                 if (data.sender === '⭐상티' || displayName === '⭐상티') {
                     nameColor = '#007bff';
                     msgColor = '#007bff';
@@ -720,7 +722,6 @@
 
             const sysMsg = newState ? "상티가 채팅창을 비활성화했습니다." : "상티가 채팅창을 활성화했습니다.";
             
-            // 파란색 시스템 공지로 전송
             db.ref('chatLog').push().set({ 
                 sender: 'system',
                 message: sysMsg, 
@@ -769,7 +770,6 @@
                     const alertColor = action === 'add' ? '#28a745' : '#dc3545'; 
                     const sysMsg = `${nicknamesStr}이(가) 보석을 ${gemsToModify}개 ${actionText}받았습니다.`;
                     
-                    // 채팅창에 시스템 공지로 전송 (초록색 혹은 빨간색)
                     db.ref('chatLog').push().set({
                         sender: 'system',
                         message: sysMsg,
