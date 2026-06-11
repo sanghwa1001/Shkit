@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 시스템 (상점 관리 다중 선택 개선)</title>
+    <title>로그인 시스템 (상점 관리 다중 선택 개선 & 보안 업데이트)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
         /* 기본 레이아웃 및 버튼 디자인 */
@@ -163,7 +164,6 @@
         let myCurrentAvatar = null;
         let tempSelectedAvatar = null; 
 
-        // [추가] 관리자가 상점 관리에서 여러 개를 임시 선택할 배열
         let tempShopItems = [];
 
         let localStudentAccounts = {}; 
@@ -217,14 +217,30 @@
             }
         }
 
+        // === [수정됨] 관리자 로그인 기능 ===
         function checkAdminLogin() {
-            const inputId = document.getElementById('admin-id').value;
-            const inputPw = document.getElementById('admin-pw').value;
-            if (inputId === 'sanghwa1001' && inputPw === 'tkdghk2441?') {
-                showPage('admin-menu-page');
-            } else {
-                alert('관리자 정보가 일치하지 않습니다.');
+            const inputId = document.getElementById('admin-id').value.trim();
+            const inputPw = document.getElementById('admin-pw').value.trim();
+
+            if (inputId === '' || inputPw === '') {
+                alert('아이디와 비밀번호를 모두 입력해주세요.');
+                return;
             }
+
+            // 입력한 아이디를 파이어베이스 인증용 이메일 형태로 변환
+            const adminEmail = inputId + "@school.com";
+
+            // 파이어베이스 인증 서버에 이메일/비밀번호 로그인 요청
+            firebase.auth().signInWithEmailAndPassword(adminEmail, inputPw)
+                .then((userCredential) => {
+                    // 로그인 성공 시 관리자 메뉴로 이동
+                    showPage('admin-menu-page');
+                })
+                .catch((error) => {
+                    // 로그인 실패 (비밀번호 불일치, 없는 계정 등)
+                    alert('관리자 정보가 일치하지 않습니다.');
+                    console.error("로그인 에러:", error);
+                });
         }
 
         function createStudentAccount() {
@@ -321,7 +337,6 @@
 
         // === 상점 관리 페이지 (관리자용) ===
         function showAdminShopPage() {
-            // [추가] 관리자가 설정했던 기존 판매 목록을 임시 배열에 복사
             tempShopItems = [...localShopItems];
             renderAdminShopPage();
             showPage('admin-shop-page');
@@ -335,7 +350,6 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
                 
-                // [수정] 임시 배열(tempShopItems)에 있으면 파란색 테두리 클래스 추가
                 if (tempShopItems.includes(avatarId)) {
                     itemDiv.classList.add('selected');
                 }
@@ -344,7 +358,6 @@
                 const currentName = localShopNames[dbKey] || `아바타 ${index + 1}`;
                 const currentPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
                 
-                // [수정] 체크박스 제거
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
                     
@@ -367,18 +380,14 @@
                     </div>
                 `;
                 
-                // [수정] 박스 클릭 시 파란 테두리 다중 선택/해제 토글 적용
                 itemDiv.onclick = (e) => {
-                    // 입력창이나 ✏️/💎/✔️ 아이콘 클릭 시에는 테두리 지정이 반응하지 않도록 차단
                     if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
                         if (tempShopItems.includes(avatarId)) {
-                            // 이미 선택된 항목이면 배열에서 제거
                             tempShopItems = tempShopItems.filter(id => id !== avatarId);
                         } else {
-                            // 선택 안 된 항목이면 배열에 추가
                             tempShopItems.push(avatarId);
                         }
-                        renderAdminShopPage(); // 클릭 즉시 테두리 업데이트 반영
+                        renderAdminShopPage(); 
                     }
                 };
                 listDiv.appendChild(itemDiv);
@@ -428,7 +437,6 @@
             }
         }
 
-        // [수정] 조용히 판매 항목(tempShopItems)을 서버에 저장하고 관리자 메뉴로 이동
         function saveShopItems() {
             db.ref('shopItems').set(tempShopItems);
             showPage('admin-menu-page');
