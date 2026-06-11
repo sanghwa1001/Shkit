@@ -78,7 +78,7 @@
             <h2>관리자 메뉴</h2>
             <button onclick="showPage('student-create-page')">학생 계정 생성</button>
             <button onclick="showManagePage()">학생 계정 수정</button>
-            <button onclick="showAdminShopPage()">상점 관리</button>
+            <button onclick="showAdminShopPage()" style="background-color: #ff9800;">상점 관리</button>
             <button class="secondary-btn" onclick="showPage('main-page')">로그아웃 (처음으로)</button>
         </div>
 
@@ -213,7 +213,7 @@
             db.ref('studentAccounts/' + newId).set({
                 pw: newPw,
                 avatarId: DEFAULT_AVATARS[0],
-                ownedAvatars: DEFAULT_AVATARS // 생성 시 기본 아바타 소유
+                ownedAvatars: DEFAULT_AVATARS 
             });
             alert(`학생 계정(${newId})이 생성되었습니다!`);
             showPage('admin-menu-page');
@@ -295,7 +295,7 @@
             if (confirm('⚠️ 모든 학생 계정을 삭제하시겠습니까?')) db.ref('studentAccounts').remove();
         }
 
-        // === [추가] 관리자 상점 관리 기능 ===
+        // === 관리자 상점 관리 기능 ===
         function showAdminShopPage() {
             renderAdminShopPage();
             showPage('admin-shop-page');
@@ -315,7 +315,6 @@
                     <span style="font-size: 12px; color: #333;">아바타 ${index + 1}</span>
                     <input type="checkbox" id="shop-cb-${index}" class="shop-checkbox" value="${avatarId}" ${isChecked}>
                 `;
-                // 클릭 편의를 위해 박스 전체 클릭 시 체크박스 연동
                 itemDiv.onclick = (e) => {
                     if(e.target.type !== 'checkbox') {
                         const cb = document.getElementById(`shop-cb-${index}`);
@@ -348,7 +347,6 @@
                 currentUser = inputId;
                 myCurrentAvatar = account.avatarId || DEFAULT_AVATARS[0];
                 
-                // 기존 가입자에게 소유 아바타 데이터가 없으면 기본값 세팅
                 if (!account.ownedAvatars) {
                     db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
                 }
@@ -391,7 +389,7 @@
             });
         }
 
-        // === [추가] 학생 상점 기능 ===
+        // === 학생 상점 기능 ===
         function showStudentShopPage() {
             renderStudentShop();
             showPage('student-shop-page');
@@ -414,7 +412,6 @@
                 
                 const nameText = `<span style="font-size: 12px; color: #333;">${avatarId.split('.')[0]}번 아바타</span>`;
                 
-                // 이미 가지고 있는 아바타인지 확인
                 if (myOwnedAvatars.includes(avatarId)) {
                     itemDiv.innerHTML = `
                         <img src="${avatarId}" alt="아바타" style="opacity: 0.5;">
@@ -439,14 +436,13 @@
                 alert('이미 보유한 아바타입니다.'); return;
             }
 
-            myOwnedAvatars.push(avatarId); // 소유 리스트에 추가
+            myOwnedAvatars.push(avatarId); 
             db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: myOwnedAvatars });
             
             alert('아바타를 획득했습니다! 보관함에서 확인해보세요.');
-            // 실시간 DB 연동으로 인해 renderStudentShop()은 자동으로 다시 실행됩니다.
         }
 
-        // === 보관함 기능 (보유한 아바타만 노출) ===
+        // === 보관함 기능 ===
         function showStoragePage() { 
             renderAvatarList(); 
             showPage('storage-page'); 
@@ -456,7 +452,6 @@
             const listDiv = document.getElementById('avatar-list');
             listDiv.innerHTML = '';
             
-            // 본인이 획득한 아바타 배열 불러오기
             const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
             
             myOwnedAvatars.forEach(avatarId => {
@@ -466,7 +461,6 @@
                 
                 avatarDiv.onclick = () => changeAvatar(avatarId);
                 
-                // 기본 아바타는 이름을 별도로 지정하고 나머지는 번호로 표시
                 let avatarName = '';
                 if(avatarId === 'image_0.png') avatarName = '기본 남자';
                 else if(avatarId === 'image_1.png') avatarName = '기본 여자';
