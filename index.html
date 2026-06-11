@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 시스템</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* 전체 배경 및 가운데 정렬 설정 */
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        
+        /* 메인 컨테이너 디자인 */
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 340px;
+        }
+
+        /* 버튼 기본 디자인 */
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+
+        .bulk-btn { background-color: #28a745; }
+        .bulk-btn:hover { background-color: #218838; }
+        .delete-btn { background-color: #dc3545; }
+        .delete-btn:hover { background-color: #c82333; }
+        .secondary-btn { background-color: #6c757d; }
+        .secondary-btn:hover { background-color: #5a6268; }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .page { display: none; }
+        .active { display: block; }
+
+        /* 학생 계정 관리 리스트 스타일 */
+        .list-container {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 5px;
+        }
+
+        .list-header {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            color: #555;
+            text-align: center;
+        }
+        .list-header .h-id { flex: 2; }
+        .list-header .h-pw { flex: 2; }
+        .list-header .h-btn { flex: 2; }
+
+        .account-item {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .account-item input {
+            flex: 2;
+            margin: 0;
+            padding: 8px 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .account-item button {
+            flex: 1;
+            margin: 0;
+            padding: 8px 0;
+            font-size: 12px;
+        }
+        .edit-btn { background-color: #28a745; }
+        .edit-btn:hover { background-color: #218838; }
+
+        /* 로비 화면 전용 스타일 */
+        .lobby-title {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 22px;
+            margin-top: 0;
+        }
+        .welcome-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .online-users-container {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .online-users-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .online-user-item {
+            font-size: 14px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            color: #555;
+        }
+        
+        /* 아바타 이미지 스타일 */
+        .online-user-avatar {
+            width: 40px;
+            height: auto;
+            margin-right: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white; /* 투명 배경 이미지일 경우를 대비 */
+            object-fit: cover;
+        }
+        
+        /* 아바타 보관함 스타일 */
+        .avatar-list-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .avatar-item {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            background-color: #f8f9fa;
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+        .avatar-item:hover {
+            background-color: #e2e6ea;
+        }
+        .avatar-item img {
+            width: 60px;
+            height: auto;
+        }
+        .avatar-item.selected {
+            border-color: #007bff;
+            background-color: #e6f7ff;
+            box-shadow: 0 0 8px rgba(0,123,255,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="main-page" class="page active">
+            <h2>메인 화면</h2>
+            <button onclick="showPage('student-page')">학생 로그인</button>
+            <button onclick="showPage('admin-login-page')">관리자 로그인</button>
+        </div>
+
+        <div id="student-page" class="page">
+            <h2>학생 로그인</h2>
+            <input type="text" id="student-id" placeholder="학생 아이디">
+            <input type="password" id="student-pw" placeholder="학생 비밀번호">
+            <button onclick="checkStudentLogin()">로그인</button>
+            <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+        </div>
+
+        <div id="admin-login-page" class="page">
+            <h2>관리자 로그인</h2>
+            <input type="text" id="admin-id" placeholder="관리자 아이디">
+            <input type="password" id="admin-pw" placeholder="관리자 비밀번호">
+            <button onclick="checkAdminLogin()">로그인</button>
+            <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+        </div>
+
+        <div id="admin-menu-page" class="page">
+            <h2>관리자 메뉴</h2>
+            <button onclick="showPage('student-create-page')">학생 계정 생성</button>
+            <button onclick="showManagePage()">학생 계정 수정</button>
+            <button class="secondary-btn" onclick="showPage('main-page')">로그아웃 (처음으로)</button>
+        </div>
+
+        <div id="student-create-page" class="page">
+            <h2>학생 계정 생성</h2>
+            <input type="text" id="new-student-id" placeholder="생성할 아이디">
+            <input type="password" id="new-student-pw" placeholder="생성할 비밀번호">
+            <button onclick="createStudentAccount()">계정 생성</button>
+            
+            <button class="bulk-btn" onclick="document.getElementById('excel-file-input').click()">학생 계정 일괄 생성</button>
+            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
+            
+            <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+        </div>
+
+        <div id="student-manage-page" class="page">
+            <h2>학생 계정 목록</h2>
+            <div id="student-list" class="list-container"></div>
+            <button class="delete-btn" onclick="deleteAllAccounts()">학생 계정 일괄 삭제</button>
+            <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+        </div>
+
+        <div id="student-lobby-page" class="page">
+            <h2 class="lobby-title">🎉 메인 로비</h2>
+            <div class="welcome-text" id="welcome-message"></div>
+            
+            <div class="online-users-container">
+                <div class="online-users-title">🟢 현재 접속 중인 학생 및 아바타</div>
+                <div id="online-users-list"></div>
+            </div>
+
+            <button id="storage-btn" onclick="showStoragePage()">보관함</button>
+            <button class="secondary-btn" onclick="logoutStudent()">로그아웃 (처음으로)</button>
+        </div>
+
+        <div id="storage-page" class="page">
+            <h2>아바타 보관함</h2>
+            <p style="font-size: 14px; color: #555; margin-bottom: 20px;">원하는 아바타를 선택해주세요.</p>
+            <div id="avatar-list" class="avatar-list-container"></div>
+            <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
+        </div>
+
+    </div>
+
+    <script>
+        // 처음에 올려주신 원본 파일명으로 변경 (1.png, 2.png)
+        const DEFAULT_AVATARS = ['1.png', '2.png'];
+        
+        let studentAccounts = JSON.parse(localStorage.getItem('studentAccounts')) || [];
+        let currentUser = null;
+        let lobbyInterval;
+
+        function saveAccounts() {
+            localStorage.setItem('studentAccounts', JSON.stringify(studentAccounts));
+        }
+
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            if (pageId === 'admin-login-page') {
+                document.getElementById('admin-id').value = '';
+                document.getElementById('admin-pw').value = '';
+            } else if (pageId === 'student-page') {
+                document.getElementById('student-id').value = '';
+                document.getElementById('student-pw').value = '';
+            } else if (pageId === 'student-create-page') {
+                document.getElementById('new-student-id').value = '';
+                document.getElementById('new-student-pw').value = '';
+            }
+        }
+
+        function checkAdminLogin() {
+            const inputId = document.getElementById('admin-id').value;
+            const inputPw = document.getElementById('admin-pw').value;
+
+            if (inputId === 'sanghwa1001' && inputPw === 'tkdghk2441?') {
+                showPage('admin-menu-page');
+            } else {
+                alert('관리자 정보가 일치하지 않습니다.');
+            }
+        }
+
+        function createStudentAccount() {
+            const newId = document.getElementById('new-student-id').value.trim();
+            const newPw = document.getElementById('new-student-pw').value.trim();
+
+            if (newId === '' || newPw === '') {
+                alert('아이디와 비밀번호를 모두 입력해주세요.');
+                return;
+            }
+            if (studentAccounts.some(account => account.id === newId)) {
+                alert('이미 존재하는 아이디입니다.');
+                return;
+            }
+
+            studentAccounts.push({ id: newId, pw: newPw, avatarId: DEFAULT_AVATARS[0] });
+            saveAccounts();
+            alert(`학생 계정(${newId})이 성공적으로 생성되었습니다!`);
+            showPage('admin-menu-page');
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                
+                let successCount = 0;
+                let duplicateCount = 0;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row[0] === undefined || row[1] === undefined) continue;
+
+                    const id = String(row[0]).trim();
+                    const pw = String(row[1]).trim();
+
+                    if (id === '' || pw === '') continue;
+                    if (id === '아이디' || id.toLowerCase() === 'id' || id === '학생 아이디') continue;
+
+                    if (studentAccounts.some(account => account.id === id)) {
+                        duplicateCount++;
+                        continue;
+                    }
+
+                    studentAccounts.push({ id: id, pw: pw, avatarId: DEFAULT_AVATARS[0] });
+                    successCount++;
+                }
+                saveAccounts();
+                alert(`엑셀 일괄 등록 완료!\n- 생성 완료: ${successCount}개 계정\n- 중복 제외: ${duplicateCount}개 계정`);
+                event.target.value = '';
+                showPage('admin-menu-page');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showManagePage() {
+            renderStudentList();
+            showPage('student-manage-page');
+        }
+
+        function renderStudentList() {
+            const listDiv = document.getElementById('student-list');
+            listDiv.innerHTML = '';
+
+            if (studentAccounts.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; font-size: 14px;">생성된 학생 계정이 없습니다.</p>';
+                return;
+            }
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'list-header';
+            headerDiv.innerHTML = `
+                <div class="h-id">아이디</div>
+                <div class="h-pw">비밀번호</div>
+                <div class="h-btn">관리</div>
+            `;
+            listDiv.appendChild(headerDiv);
+
+            studentAccounts.forEach((account, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'account-item';
+                itemDiv.innerHTML = `
+                    <input type="text" id="edit-id-${index}" value="${account.id}" placeholder="아이디">
+                    <input type="text" id="edit-pw-${index}" value="${account.pw}" placeholder="비밀번호">
+                    <button class="edit-btn" onclick="updateAccount(${index})">수정</button>
+                    <button class="delete-btn" onclick="deleteAccount(${index})">삭제</button>
+                `;
+                listDiv.appendChild(itemDiv);
+            });
+        }
+
+        function updateAccount(index) {
+            const newId = document.getElementById(`edit-id-${index}`).value.trim();
+            const newPw = document.getElementById(`edit-pw-${index}`).value.trim();
+
+            if (newId === '' || newPw === '') {
+                alert('아이디와 비밀번호는 비워둘 수 없습니다.');
+                return;
+            }
+            if (studentAccounts.some((account, i) => i !== index && account.id === newId)) {
+                alert('이미 다른 학생이 사용 중인 아이디입니다.');
+                return;
+            }
+
+            studentAccounts[index].id = newId;
+            studentAccounts[index].pw = newPw;
+            saveAccounts();
+            alert('계정 정보가 성공적으로 수정되었습니다.');
+        }
+
+        function deleteAccount(index) {
+            const idToDelete = studentAccounts[index].id;
+            let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+            if (onlineUsersArr.some(user => user.id === idToDelete)) {
+                alert('현재 로비에 접속 중인 학생은 삭제할 수 없습니다.');
+                return;
+            }
+
+            if (confirm('정말 이 학생 계정을 삭제하시겠습니까?')) {
+                studentAccounts.splice(index, 1);
+                saveAccounts();
+                alert('계정이 삭제되었습니다.');
+                renderStudentList();
+            }
+        }
+
+        function deleteAllAccounts() {
+            if (studentAccounts.length === 0) {
+                alert('삭제할 학생 계정이 존재하지 않습니다.');
+                return;
+            }
+            
+            let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+            if (onlineUsersArr.length > 0) {
+                alert('현재 로비에 접속 중인 학생이 있어 일괄 삭제할 수 없습니다.\n먼저 모든 학생을 로그아웃시켜 주세요.');
+                return;
+            }
+
+            if (confirm('⚠️ 정말로 생성된 모든 학생 계정을 일괄 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                studentAccounts = [];
+                saveAccounts();
+                alert('모든 학생 계정이 성공적으로 삭제되었습니다.');
+                renderStudentList();
+            }
+        }
+
+        function checkStudentLogin() {
+            const inputId = document.getElementById('student-id').value.trim();
+            const inputPw = document.getElementById('student-pw').value.trim();
+            const matchedAccount = studentAccounts.find(account => account.id === inputId && account.pw === inputPw);
+
+            if (matchedAccount) {
+                // 이전 코드로 생성되어 avatarId가 없거나 옛날 파일명인 경우 보정
+                if (!matchedAccount.avatarId || !DEFAULT_AVATARS.includes(matchedAccount.avatarId)) {
+                    matchedAccount.avatarId = DEFAULT_AVATARS[0];
+                    saveAccounts();
+                }
+
+                currentUser = inputId;
+                document.getElementById('welcome-message').innerText = `${inputId}님, 반갑습니다! 🥳`;
+                
+                let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+                if (!onlineUsersArr.some(user => user.id === inputId)) {
+                    onlineUsersArr.push({ id: inputId, avatarId: matchedAccount.avatarId });
+                    localStorage.setItem('onlineUsersArr', JSON.stringify(onlineUsersArr));
+                }
+
+                showPage('student-lobby-page');
+                startLobbyUpdate();
+            } else {
+                alert('아이디 또는 비밀번호가 일치하지 않거나 없는 계정입니다.');
+            }
+        }
+
+        function logoutStudent() {
+            if (currentUser) {
+                let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+                onlineUsersArr = onlineUsersArr.filter(user => user.id !== currentUser);
+                localStorage.setItem('onlineUsersArr', JSON.stringify(onlineUsersArr));
+                currentUser = null;
+            }
+            clearInterval(lobbyInterval);
+            showPage('main-page');
+        }
+
+        function startLobbyUpdate() {
+            renderOnlineUsers();
+            lobbyInterval = setInterval(renderOnlineUsers, 1000);
+        }
+
+        function renderOnlineUsers() {
+            const listDiv = document.getElementById('online-users-list');
+            let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+            
+            listDiv.innerHTML = '';
+            
+            if (onlineUsersArr.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; font-size: 13px;">현재 접속 중인 학생이 없습니다.</p>';
+                return;
+            }
+
+            onlineUsersArr.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'online-user-item';
+                
+                const isMe = (user.id === currentUser) ? '<span style="color: #007bff; font-size: 12px; margin-left: 5px;">(나)</span>' : '';
+                
+                // 이미지가 없을 때를 대비해 기본 alt 텍스트 지정
+                userDiv.innerHTML = `
+                    <img src="${user.avatarId}" alt="아바타 엑스박스(파일확인요망)" class="online-user-avatar">
+                    <span>${user.id} ${isMe}</span>
+                `;
+                listDiv.appendChild(userDiv);
+            });
+        }
+
+        function showStoragePage() {
+            renderAvatarList();
+            showPage('storage-page');
+        }
+
+        function renderAvatarList() {
+            const listDiv = document.getElementById('avatar-list');
+            listDiv.innerHTML = '';
+            
+            const myAccount = studentAccounts.find(account => account.id === currentUser);
+            const currentAvatarId = myAccount.avatarId;
+
+            DEFAULT_AVATARS.forEach(avatarId => {
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar-item';
+                
+                if (avatarId === currentAvatarId) {
+                    avatarDiv.classList.add('selected');
+                }
+                
+                avatarDiv.onclick = () => changeAvatar(avatarId);
+                
+                // 파일명에 따른 이름 지정 (1.png = 남자, 2.png = 여자)
+                const avatarName = (avatarId === '1.png') ? '남자 아바타' : '여자 아바타';
+                
+                avatarDiv.innerHTML = `
+                    <img src="${avatarId}" alt="이미지를 불러올 수 없음">
+                    <p style="font-size: 12px; color: #333; margin-top: 10px; font-weight: bold;">${avatarName}</p>
+                `;
+                listDiv.appendChild(avatarDiv);
+            });
+        }
+
+        function changeAvatar(newAvatarId) {
+            let myAccountIndex = studentAccounts.findIndex(account => account.id === currentUser);
+            studentAccounts[myAccountIndex].avatarId = newAvatarId;
+            saveAccounts();
+
+            let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+            let myOnlineIndex = onlineUsersArr.findIndex(user => user.id === currentUser);
+            if(myOnlineIndex !== -1) {
+                onlineUsersArr[myOnlineIndex].avatarId = newAvatarId;
+                localStorage.setItem('onlineUsersArr', JSON.stringify(onlineUsersArr));
+            }
+            
+            renderAvatarList();
+            renderOnlineUsers();
+            alert('아바타가 성공적으로 변경되었습니다!');
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (currentUser) {
+                let onlineUsersArr = JSON.parse(localStorage.getItem('onlineUsersArr')) || [];
+                onlineUsersArr = onlineUsersArr.filter(user => user.id !== currentUser);
+                localStorage.setItem('onlineUsersArr', JSON.stringify(onlineUsersArr));
+            }
+        });
+
+    </script>
+</body>
+</html>
