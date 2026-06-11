@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 시스템 (상점 이름 바로 수정)</title>
+    <title>로그인 시스템 (보석 상점 추가)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -36,20 +36,21 @@
         .online-users-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
         #online-users-list { display: flex; flex-wrap: wrap; gap: 20px; padding-top: 10px; justify-content: center; }
         .online-user-item { display: flex; flex-direction: column; align-items: center; font-size: 13px; color: #333; margin: 0; }
-        /* [수정] 로비 아바타 크기 85px로 조정 */
         .online-user-avatar { height: 85px; width: auto; margin-bottom: 5px; border: none; background: transparent; }
         
         /* 아바타 그리드(보관함, 상점 관리, 상점 공통) */
         .avatar-list-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; padding: 5px; }
         .avatar-item { border: 2px solid transparent; border-radius: 10px; padding: 10px; text-align: center; background-color: #f8f9fa; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;}
-        /* [수정] 보관함 등 목록 아바타 크기 85px로 조정 */
         .avatar-item img { height: 85px; width: auto; margin-bottom: 8px; }
         .avatar-item.selected { border-color: #007bff; background-color: #e6f7ff; }
         .shop-checkbox { transform: scale(1.3); margin-top: 5px; cursor: pointer; }
         
-        .buy-btn { width: 100%; padding: 5px; font-size: 12px; margin: 5px 0 0 0; background-color: #17a2b8; }
+        .buy-btn { width: 100%; padding: 5px; font-size: 12px; margin: 5px 0 0 0; background-color: #17a2b8; display:flex; justify-content:center; align-items:center; gap:5px; }
         .buy-btn:hover { background-color: #138496; }
         .owned-tag { font-size: 12px; color: #888; margin-top: 5px; font-weight: bold; }
+        
+        /* 학생 보석 표시 UI */
+        .gem-display { font-size: 14px; font-weight: bold; color: #ff9800; background: #fff3cd; padding: 5px 10px; border-radius: 20px; display: inline-block; margin-bottom: 15px; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
@@ -104,7 +105,7 @@
 
         <div id="admin-shop-page" class="page">
             <h2>상점 관리</h2>
-            <p style="font-size: 12px; color: #555; margin-bottom: 10px;">이름 옆 수정 아이콘(✏️)을 눌러 이름을 변경하고,<br>상점에 등록할 아바타를 체크하세요.</p>
+            <p style="font-size: 12px; color: #555; margin-bottom: 10px;">아이콘(✏️,💎)을 눌러 정보 수정 후<br>상점에 등록할 아바타를 체크하세요.</p>
             <div id="admin-shop-list" class="avatar-list-container"></div>
             <button class="bulk-btn" onclick="saveShopItems()">판매하기 (상점 등록)</button>
             <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
@@ -123,8 +124,8 @@
         </div>
 
         <div id="student-shop-page" class="page">
-            <h2>상점</h2>
-            <p style="font-size: 13px; color: #555;">원하는 아바타를 구입하세요!</p>
+            <h2>아바타 상점</h2>
+            <div id="my-gems-display" class="gem-display">내 보석: 💎 0</div>
             <div id="student-shop-list" class="avatar-list-container"></div>
             <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
         </div>
@@ -162,6 +163,7 @@
         let localOnlineUsers = {}; 
         let localShopItems = []; 
         let localShopNames = {}; 
+        let localShopPrices = {}; // [추가] 아바타 가격 저장 객체
 
         // === 실시간 데이터 동기화 ===
         db.ref('studentAccounts').on('value', (snapshot) => {
@@ -186,6 +188,13 @@
             if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
             if (document.getElementById('storage-page').classList.contains('active')) renderAvatarList();
+        });
+
+        // [추가] 가격 데이터 동기화
+        db.ref('shopItemPrices').on('value', (snapshot) => {
+            localShopPrices = snapshot.val() || {};
+            if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
+            if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
         function showPage(pageId) {
@@ -219,12 +228,14 @@
             if (newId === '' || newPw === '') return alert('아이디와 비밀번호를 모두 입력해주세요.');
             if (localStudentAccounts[newId]) return alert('이미 존재하는 아이디입니다.');
 
+            // [추가] 계정 생성 시 기본 10보석 지급
             db.ref('studentAccounts/' + newId).set({
                 pw: newPw,
                 avatarId: DEFAULT_AVATARS[0],
-                ownedAvatars: DEFAULT_AVATARS 
+                ownedAvatars: DEFAULT_AVATARS,
+                gems: 10 
             });
-            alert(`학생 계정(${newId})이 생성되었습니다!`);
+            alert(`학생 계정(${newId})이 생성되었습니다! (기본 10보석 지급)`);
             showPage('admin-menu-page');
         }
 
@@ -248,7 +259,8 @@
                     if (id === '' || pw === '' || id === '아이디' || id.toLowerCase() === 'id') continue;
                     if (localStudentAccounts[id]) { duplicateCount++; continue; }
 
-                    updates[id] = { pw: pw, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS };
+                    // [추가] 일괄 생성 시에도 기본 10보석 지급
+                    updates[id] = { pw: pw, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 };
                     successCount++;
                 }
 
@@ -318,26 +330,35 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
                 const isChecked = localShopItems.includes(avatarId) ? 'checked' : '';
-                const currentName = localShopNames[avatarId.replace('.', '_')] || `아바타 ${index + 1}`;
+                const dbKey = avatarId.replace('.', '_');
+                
+                const currentName = localShopNames[dbKey] || `아바타 ${index + 1}`;
+                const currentPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
                 
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
                     
                     <div id="view-mode-${index}" style="margin: 5px 0; display:flex; align-items:center; gap:5px; justify-content:center;">
                         <span style="font-size: 12px; color: #333; font-weight:bold;">${currentName}</span>
-                        <span title="이름 수정" style="cursor: pointer; font-size: 12px; background: #eee; padding: 2px 4px; border-radius: 4px;" onclick="enableEditMode(event, ${index})">✏️</span>
+                        <span title="이름 수정" style="cursor: pointer; font-size: 12px; background: #eee; padding: 2px 4px; border-radius: 4px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
+                        <span title="가격 수정" style="cursor: pointer; font-size: 12px; background: #eee; padding: 2px 4px; border-radius: 4px;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
+                    </div>
+                    <div style="font-size: 11px; color: #ff9800; font-weight: bold; margin-bottom: 5px;">가격: 💎 ${currentPrice}</div>
+
+                    <div id="edit-name-mode-${index}" style="margin: 5px 0; display:none; align-items:center; gap:5px; justify-content:center;">
+                        <input type="text" id="name-input-${index}" value="${currentName}" style="width: 80px; padding: 2px; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'name')">
+                        <span title="저장" style="cursor: pointer; font-size: 12px; background: #d4edda; color: #155724; padding: 2px 4px; border-radius: 4px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
                     </div>
 
-                    <div id="edit-mode-${index}" style="margin: 5px 0; display:none; align-items:center; gap:5px; justify-content:center;">
-                        <input type="text" id="name-input-${index}" value="${currentName}" style="width: 80px; padding: 2px; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index})">
-                        <span title="저장" style="cursor: pointer; font-size: 12px; background: #d4edda; color: #155724; padding: 2px 4px; border-radius: 4px;" onclick="saveSingleName(event, '${avatarId}', ${index})">✔️</span>
+                    <div id="edit-price-mode-${index}" style="margin: 5px 0; display:none; align-items:center; gap:5px; justify-content:center;">
+                        <input type="number" id="price-input-${index}" value="${currentPrice}" min="0" style="width: 50px; padding: 2px; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'price')">
+                        <span title="저장" style="cursor: pointer; font-size: 12px; background: #d4edda; color: #155724; padding: 2px 4px; border-radius: 4px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'price')">✔️</span>
                     </div>
 
                     <input type="checkbox" id="shop-cb-${index}" class="shop-checkbox" value="${avatarId}" ${isChecked}>
                 `;
                 
                 itemDiv.onclick = (e) => {
-                    // 입력창이나 수정 버튼을 클릭했을 때는 체크박스가 토글되지 않도록 방지
                     if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
                         const cb = document.getElementById(`shop-cb-${index}`);
                         cb.checked = !cb.checked;
@@ -347,55 +368,50 @@
             });
         }
 
-        // ✏️ 버튼을 누르면 입력창으로 변환
-        function enableEditMode(event, index) {
+        function enableEditMode(event, index, type) {
             event.stopPropagation();
             document.getElementById(`view-mode-${index}`).style.display = 'none';
             
-            const editMode = document.getElementById(`edit-mode-${index}`);
+            const editMode = document.getElementById(`edit-${type}-mode-${index}`);
             editMode.style.display = 'flex';
             
-            const inputField = document.getElementById(`name-input-${index}`);
-            inputField.focus(); // 켜지자마자 바로 타이핑 가능하도록 커서 활성화
+            const inputField = document.getElementById(`${type}-input-${index}`);
+            inputField.focus(); 
         }
 
-        // ✔️ 버튼을 눌러 개별 이름 저장 및 리셋 로직 처리
-        function saveSingleName(event, avatarId, index) {
+        // [통합] 이름 또는 가격을 저장하는 함수
+        function saveSingleData(event, avatarId, index, type) {
             event.stopPropagation();
-            const inputField = document.getElementById(`name-input-${index}`);
-            const newName = inputField.value.trim();
+            const inputField = document.getElementById(`${type}-input-${index}`);
+            const newValue = inputField.value.trim();
             const dbKey = avatarId.replace('.', '_');
-            
-            // 파이어베이스에 저장되어 있는 기존 이름
-            const currentNameInDB = localShopNames[dbKey];
 
-            if (newName === '') {
-                // 입력칸을 모두 지운 경우: 초기값(아바타 N)으로 되돌리기 위해 DB 기록 삭제
-                if (currentNameInDB !== undefined) {
-                    db.ref('shopItemNames/' + dbKey).remove().then(() => {
-                        renderAdminShopPage();
-                    });
+            if (type === 'name') {
+                const currentNameInDB = localShopNames[dbKey];
+                if (newValue === '') {
+                    if (currentNameInDB !== undefined) db.ref('shopItemNames/' + dbKey).remove().then(() => renderAdminShopPage());
+                    else renderAdminShopPage(); 
                 } else {
-                    renderAdminShopPage(); // 이미 초기값이면 화면만 닫기
+                    if (newValue !== currentNameInDB) db.ref('shopItemNames/' + dbKey).set(newValue).then(() => renderAdminShopPage());
+                    else renderAdminShopPage(); 
                 }
-            } else {
-                // 새로운 이름이 입력된 경우
-                if (newName !== currentNameInDB) {
-                    // 데이터가 변경되었으므로 파이어베이스에 업데이트
-                    db.ref('shopItemNames/' + dbKey).set(newName).then(() => {
-                        renderAdminShopPage();
-                    });
+            } else if (type === 'price') {
+                const currentPriceInDB = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+                let parsedPrice = parseInt(newValue, 10);
+                
+                if (isNaN(parsedPrice) || parsedPrice < 0) parsedPrice = 1; // 기본값 방어
+
+                if (parsedPrice !== currentPriceInDB) {
+                    db.ref('shopItemPrices/' + dbKey).set(parsedPrice).then(() => renderAdminShopPage());
                 } else {
-                    // 기존 이름과 완전히 동일하면 파이어베이스 연동 없이 화면만 닫기
-                    renderAdminShopPage(); 
+                    renderAdminShopPage();
                 }
             }
         }
 
-        // 엔터키(Enter)를 눌러도 저장(✔️ 클릭과 동일한 효과)되게 설정
-        function handleEnter(event, avatarId, index) {
+        function handleEnter(event, avatarId, index, type) {
             if(event.key === 'Enter') {
-                saveSingleName(event, avatarId, index);
+                saveSingleData(event, avatarId, index, type);
             }
         }
 
@@ -421,9 +437,9 @@
                 currentUser = inputId;
                 myCurrentAvatar = account.avatarId || DEFAULT_AVATARS[0];
                 
-                if (!account.ownedAvatars) {
-                    db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
-                }
+                // 기존 가입자 데이터 호환 (없으면 기본값)
+                if (!account.ownedAvatars) db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
+                if (account.gems === undefined) db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
 
                 document.getElementById('welcome-message').innerText = `${inputId}님, 반갑습니다! 🥳`;
                 
@@ -463,7 +479,7 @@
             });
         }
 
-        // === 학생 상점 기능 ===
+        // === 학생 상점 및 보석 구매 기능 ===
         function showStudentShopPage() {
             renderStudentShop();
             showPage('student-shop-page');
@@ -472,6 +488,10 @@
         function renderStudentShop() {
             const listDiv = document.getElementById('student-shop-list');
             listDiv.innerHTML = '';
+
+            // 내 보석 표시 업데이트
+            const myGems = localStudentAccounts[currentUser]?.gems || 0;
+            document.getElementById('my-gems-display').innerText = `내 보석: 💎 ${myGems}`;
 
             if (localShopItems.length === 0) {
                 listDiv.innerHTML = '<p style="color: #888; font-size: 13px; grid-column: span 2;">현재 등록된 상품이 없습니다.</p>';
@@ -484,7 +504,10 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
                 
-                const avatarName = localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`;
+                const dbKey = avatarId.replace('.', '_');
+                const avatarName = localShopNames[dbKey] || `${avatarId.split('.')[0]}번 아바타`;
+                const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+                
                 const nameText = `<span style="font-size: 12px; color: #333; font-weight:bold;">${avatarName}</span>`;
                 
                 if (myOwnedAvatars.includes(avatarId)) {
@@ -497,7 +520,7 @@
                     itemDiv.innerHTML = `
                         <img src="${avatarId}" alt="아바타">
                         ${nameText}
-                        <button class="buy-btn" onclick="buyAvatar('${avatarId}')">구입하기</button>
+                        <button class="buy-btn" onclick="buyAvatar('${avatarId}')">💎 ${avatarPrice} 구입하기</button>
                     `;
                 }
                 listDiv.appendChild(itemDiv);
@@ -505,12 +528,29 @@
         }
 
         function buyAvatar(avatarId) {
+            const dbKey = avatarId.replace('.', '_');
+            const price = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+            
             let myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
-            if (myOwnedAvatars.includes(avatarId)) return alert('이미 보유한 아바타입니다.');
+            let myGems = localStudentAccounts[currentUser]?.gems || 0;
 
-            myOwnedAvatars.push(avatarId); 
-            db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: myOwnedAvatars });
-            alert('아바타를 획득했습니다! 보관함에서 확인해보세요.');
+            if (myOwnedAvatars.includes(avatarId)) return alert('이미 보유한 아바타입니다.');
+            
+            // 보석 차감 로직
+            if (myGems < price) {
+                alert('보석이 부족합니다!');
+                return;
+            }
+
+            myGems -= price; // 보석 차감
+            myOwnedAvatars.push(avatarId); // 소유 리스트에 추가
+            
+            db.ref('studentAccounts/' + currentUser).update({ 
+                ownedAvatars: myOwnedAvatars,
+                gems: myGems
+            });
+            
+            alert('아바타를 성공적으로 구입했습니다! 보관함에서 확인해보세요.');
         }
 
         // === 보관함 기능 ===
