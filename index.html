@@ -99,10 +99,11 @@
         <div id="admin-menu-page" class="page">
             <h2>🛠️ 관리자 메뉴</h2>
             <div class="login-btn-group">
+                <button onclick="enterAdminLobby()" style="background-color: #6f42c1; border-color:#59339d; box-shadow: 0 6px 0 #452679;">🌟 로비로 이동</button>
                 <button onclick="showPage('student-create-page')">학생 계정 생성</button>
                 <button onclick="showManagePage()">학생 계정 수정</button>
                 <button onclick="showAdminShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
-                <button class="secondary-btn" onclick="showPage('main-page')">로그아웃</button>
+                <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
             </div>
         </div>
 
@@ -149,6 +150,7 @@
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" placeholder="채팅을 입력하세요!" onkeypress="if(event.key==='Enter') sendChat()">
                     <button class="bulk-btn" onclick="sendChat()">전송</button>
+                    <button id="admin-chat-reset-btn" class="delete-btn" style="display: none; width: 100px; margin: 0; font-size: 18px; padding: 10px;" onclick="clearAllChat()">초기화</button>
                 </div>
             </div>
 
@@ -196,6 +198,7 @@
         let currentUser = null;
         let myCurrentAvatar = null;
         let tempSelectedAvatar = null; 
+        let isAdmin = false; // 관리자 상태 변수 추가
 
         let tempShopItems = [];
         let localStudentAccounts = {}; 
@@ -234,13 +237,21 @@
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
-        db.ref('chatLog').limitToLast(50).on('child_added', (snapshot) => {
+        // 실시간 채팅 로드
+        db.ref('chatLog').on('child_added', (snapshot) => {
             const data = snapshot.val();
             const logDiv = document.getElementById('chat-log');
             const isMe = data.sender === currentUser;
             const color = isMe ? '#007bff' : '#333';
             logDiv.innerHTML += `<div style="margin-bottom: 5px;"><strong style="color:${color}">${data.sender}:</strong> ${data.message}</div>`;
             logDiv.scrollTop = logDiv.scrollHeight;
+        });
+
+        // 데이터베이스 초기화 시 클라이언트 채팅창도 지우기 위한 로직
+        db.ref('chatLog').on('value', (snapshot) => {
+            if (!snapshot.exists()) {
+                document.getElementById('chat-log').innerHTML = '';
+            }
         });
 
         function showPage(pageId) {
@@ -447,11 +458,29 @@
             }
         }
 
+        // 관리자로 로비 입장하기
+        function enterAdminLobby() {
+            isAdmin = true;
+            currentUser = '⭐관리자';
+            myCurrentAvatar = DEFAULT_AVATARS[0]; 
+            
+            document.getElementById('welcome-message').innerText = `환영합니다, 관리자님! 로비 상태를 확인하세요.`;
+            document.getElementById('admin-chat-reset-btn').style.display = 'block';
+            
+            const myOnlineRef = db.ref('onlineUsers/' + currentUser);
+            myOnlineRef.set({ avatarId: myCurrentAvatar });
+            myOnlineRef.onDisconnect().remove(); 
+            
+            showPage('student-lobby-page');
+        }
+
         function logoutStudent() {
             if (currentUser) {
                 db.ref('onlineUsers/' + currentUser).remove();
                 currentUser = null;
             }
+            isAdmin = false;
+            document.getElementById('admin-chat-reset-btn').style.display = 'none';
             showPage('main-page');
         }
 
@@ -468,19 +497,7 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP 
             });
 
-            // 2. 메시지 개수 제한 로직 (50개 초과 시 가장 오래된 것 삭제)
-            db.ref('chatLog').once('value', (snapshot) => {
-                const chats = snapshot.val();
-                if (chats) {
-                    const chatKeys = Object.keys(chats);
-                    if (chatKeys.length > 50) {
-                        const oldestKey = chatKeys[0];
-                        db.ref('chatLog/' + oldestKey).remove();
-                    }
-                }
-            });
-
-            // 3. 말풍선 처리
+            // 2. 말풍선 처리
             const now = Date.now();
             db.ref('onlineUsers/' + currentUser).update({ bubble: msg, bubbleTime: now });
             input.value = '';
@@ -492,6 +509,19 @@
                     }
                 });
             }, 5000);
+        }
+
+        // 전체 채팅 지우기 (관리자 전용)
+        function clearAllChat() {
+            if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                db.ref('chatLog').remove()
+                    .then(() => {
+                        alert('채팅 기록이 깔끔하게 지워졌습니다.');
+                    })
+                    .catch((error) => {
+                        alert('초기화 중 오류가 발생했습니다.');
+                    });
+            }
         }
 
         function renderOnlineUsers() {
