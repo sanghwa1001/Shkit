@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아바타 월드 로그인 (와이드 게임 UI 버전)</title>
+    <title>아바타 월드 로그인 (와이드 게임 UI 버전 - 버튼 글자 맞춤)</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -28,24 +28,30 @@
             border-radius: 25px; 
             box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
             text-align: center; 
-            width: 90%; /* 화면 꽉 차게 변경 */
-            max-width: 650px; /* 기존 350px에서 대폭 확장 */
+            width: 90%; 
+            max-width: 650px; 
             box-sizing: border-box;
         }
 
         h2 { color: #333; margin-top: 0; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 36px; }
 
-        /* === 큼직한 3D 게임 버튼 === */
+        /* === 큼직한 3D 게임 버튼 (한 줄 맞춤 속성 추가) === */
         button { 
             font-family: 'Jua', sans-serif;
-            width: 100%; padding: 15px; margin: 10px 0; 
+            width: 100%; 
+            padding: 15px 10px; /* 좌우 여백을 약간 줄여 글자가 들어갈 공간 확보 */
+            margin: 10px 0; 
             border: 3px solid #0056b3; 
             border-radius: 15px; 
             background-color: #007bff; 
-            color: white; font-size: 22px; cursor: pointer; 
+            color: white; 
+            font-size: 20px; /* 화면이 작아도 잘리지 않도록 폰트 크기 최적화 */
+            cursor: pointer; 
             box-shadow: 0 6px 0 #004494; 
             transition: all 0.1s ease; 
-            letter-spacing: 2px;
+            letter-spacing: 1px; /* 글자 간격을 살짝 좁힘 */
+            white-space: nowrap; /* 🚨 글자가 두 줄로 꺾이는 현상 방지 */
+            overflow: hidden; /* 영역을 벗어나는 글자 숨김 */
         }
         button:active { 
             transform: translateY(6px); 
@@ -75,7 +81,7 @@
         
         /* === 확장된 목록 디자인 === */
         .list-container { 
-            max-height: 400px; /* 더 많이 보이게 세로 길이 확장 */
+            max-height: 400px; 
             overflow-y: auto; margin-bottom: 20px; padding-right: 10px; 
             background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px;
         }
@@ -87,7 +93,7 @@
         
         .account-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: white; padding: 8px; border-radius: 10px; border: 2px solid #eee;}
         .account-item input { flex: 2; margin: 0; padding: 10px; font-size: 16px; text-align: center; border-width: 2px;}
-        .account-item button { flex: 1; margin: 0; font-size: 16px; }
+        .account-item button { flex: 1; margin: 0; font-size: 15px; padding: 10px 5px; white-space: nowrap; } /* 글자 맞춤 최적화 */
         
         /* === 시원해진 로비 화면 디자인 === */
         .lobby-title { color: #ff9800; font-size: 44px; margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; }
@@ -102,7 +108,6 @@
         /* === 넓은 공간을 꽉 채우는 반응형 아바타 그리드 === */
         .avatar-list-container { 
             display: grid; 
-            /* 화면이 넓어지면 자동으로 3~4칸으로 늘어납니다! */
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
             gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; 
         }
@@ -116,7 +121,7 @@
         
         .avatar-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
         
-        .buy-btn { width: 100%; padding: 10px; font-size: 16px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px;}
+        .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
         
