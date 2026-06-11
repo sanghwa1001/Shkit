@@ -12,71 +12,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        /* === 게임 스타일 전체 레이아웃 === */
-        body { 
-            font-family: 'Jua', sans-serif; 
-            display: flex; justify-content: center; align-items: center; 
-            height: 100vh; margin: 0; 
-            background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
-        }
-        
-        /* 🔥 엄청나게 커진 메인 게임 팝업창 (10명 수용 가능) */
-        .container { 
-            background-color: #ffffff; 
-            padding: 40px; 
-            border: 5px solid #333; 
-            border-radius: 25px; 
-            box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
-            text-align: center; 
-            width: 95%; 
-            max-width: 1000px; /* 너비 대폭 확장! */
-            box-sizing: border-box;
-        }
-
+        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); }
+        .container { background-color: #ffffff; padding: 40px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 95%; max-width: 1000px; box-sizing: border-box; }
         h2 { color: #333; margin-top: 0; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 36px; }
-
-        /* === 로그인 창 전용 인풋 (화면이 커져도 예쁘게) === */
-        input.login-input {
-            max-width: 350px; 
-            margin-left: auto; 
-            margin-right: auto; 
-            display: block;
-        }
+        input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; display: block; }
         .login-btn-group { max-width: 350px; margin: 0 auto; }
-
-        /* === 큼직한 3D 게임 버튼 === */
-        button { 
-            font-family: 'Jua', sans-serif;
-            width: 100%; padding: 15px 10px; margin: 10px 0; 
-            border: 3px solid #0056b3; border-radius: 15px; 
-            background-color: #007bff; color: white; font-size: 20px; 
-            cursor: pointer; box-shadow: 0 6px 0 #004494; 
-            transition: all 0.1s ease; letter-spacing: 1px; 
-            white-space: nowrap; overflow: hidden;
-        }
+        button { font-family: 'Jua', sans-serif; width: 100%; padding: 15px 10px; margin: 10px 0; border: 3px solid #0056b3; border-radius: 15px; background-color: #007bff; color: white; font-size: 20px; cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 1px; white-space: nowrap; overflow: hidden; }
         button:active { transform: translateY(6px); box-shadow: 0 0 0 #004494; }
-        
         .bulk-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724; }
         .delete-btn { background-color: #dc3545; border-color: #bd2130; box-shadow: 0 6px 0 #8b1c24; }
         .secondary-btn { background-color: #6c757d; border-color: #545b62; box-shadow: 0 6px 0 #3d4246; }
         .edit-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 4px 0 #155724; padding: 10px; font-size: 16px;}
-        
-        /* 기본 입력창 */
-        input { 
-            font-family: 'Jua', sans-serif; width: 100%; padding: 15px; margin: 10px 0; 
-            border: 3px solid #ddd; border-radius: 12px; box-sizing: border-box; 
-            font-size: 20px; background-color: #f9f9f9; transition: border-color 0.3s;
-        }
+        input { font-family: 'Jua', sans-serif; width: 100%; padding: 15px; margin: 10px 0; border: 3px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 20px; background-color: #f9f9f9; transition: border-color 0.3s; }
         input:focus { outline: none; border-color: #007bff; background-color: #fff; }
-
         .page { display: none; } .active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* === 확장된 목록 디자인 === */
-        .list-container { 
-            max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; 
-            background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px;
-        }
+        .list-container { max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px; }
         .list-container::-webkit-scrollbar { width: 10px; }
         .list-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 5px; }
         .list-header { display: flex; gap: 10px; margin-bottom: 15px; font-size: 18px; color: #555; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 10px;}
@@ -84,69 +35,25 @@
         .account-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: white; padding: 8px; border-radius: 10px; border: 2px solid #eee;}
         .account-item input { flex: 2; margin: 0; padding: 10px; font-size: 16px; text-align: center; border-width: 2px;}
         .account-item button { flex: 1; margin: 0; font-size: 15px; padding: 10px 5px; white-space: nowrap; }
-        
-        /* === 시원해진 로비 화면 디자인 === */
         .lobby-title { color: #ff9800; font-size: 44px; margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; }
         .welcome-text { font-size: 26px; color: #333; margin-bottom: 25px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 3px solid #ffeeba;}
-        
         .online-users-container { background-color: #e3f2fd; border: 3px solid #90caf9; border-radius: 15px; padding: 20px; max-height: 280px; overflow-y: auto; }
         .online-users-title { font-size: 22px; margin-bottom: 15px; color: #1565c0; border-bottom: 2px dashed #90caf9; padding-bottom: 10px; text-align: left;}
-        
-        /* 🔥 가로 10명 배치 최적화 그리드 */
         #online-users-list { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 20px; justify-content: flex-start; }
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 16px; color: #333; background: white; padding: 10px 5px; border-radius: 12px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 75px;}
         .online-user-avatar { height: 60px; width: auto; margin-bottom: 8px; }
-        
-        /* 💬 말풍선 디자인 */
-        .speech-bubble {
-            position: absolute;
-            top: -45px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #fff;
-            border: 3px solid #ff9800;
-            border-radius: 15px;
-            padding: 6px 12px;
-            font-size: 15px;
-            color: #333;
-            white-space: nowrap;
-            z-index: 10;
-            box-shadow: 0 4px 0 rgba(255,152,0,0.5);
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        /* 말풍선 꼬리 */
-        .speech-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 8px 8px 0;
-            border-style: solid;
-            border-color: #ff9800 transparent transparent transparent;
-            display: block;
-            width: 0;
-        }
+        .speech-bubble { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); background: #fff; border: 3px solid #ff9800; border-radius: 15px; padding: 6px 12px; font-size: 15px; color: #333; white-space: nowrap; z-index: 10; box-shadow: 0 4px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: #ff9800 transparent transparent transparent; display: block; width: 0; }
         @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
-
-        /* === 실시간 채팅창 구역 === */
-        .chat-section {
-            background: #f1f8e9; border: 3px solid #8bc34a; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px;
-        }
-        .chat-log {
-            height: 120px; overflow-y: auto; background: #fff; border: 2px solid #ccc; border-radius: 10px; padding: 10px; text-align: left; font-size: 18px;
-        }
+        .chat-section { background: #f1f8e9; border: 3px solid #8bc34a; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-log { height: 120px; overflow-y: auto; background: #fff; border: 2px solid #ccc; border-radius: 10px; padding: 10px; text-align: left; font-size: 18px; }
         .chat-log::-webkit-scrollbar { width: 8px; }
         .chat-log::-webkit-scrollbar-thumb { background: #8bc34a; border-radius: 4px; }
         .chat-input-area { display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; margin: 0; font-size: 18px; padding: 10px; }
         .chat-input-area button { width: 100px; margin: 0; font-size: 18px; padding: 10px; }
-
-        /* 하단 메뉴 가로 정렬 */
         .lobby-menu-group { display: flex; gap: 10px; margin-top: 15px; }
         .lobby-menu-group button { margin: 0; flex: 1; }
-
-        /* === 넓은 공간을 꽉 채우는 반응형 아바타 그리드 === */
         .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; }
         .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.05); }
@@ -297,13 +204,13 @@
         let localShopNames = {}; 
         let localShopPrices = {}; 
 
-        // 데이터 동기화
         db.ref('studentAccounts').on('value', (snapshot) => {
             localStudentAccounts = snapshot.val() || {};
             if (document.getElementById('student-manage-page').classList.contains('active')) renderStudentList();
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
+        // 실시간 리스너 강화: 로비가 활성 상태일 때 데이터 변경 시 무조건 재렌더링
         db.ref('onlineUsers').on('value', (snapshot) => {
             localOnlineUsers = snapshot.val() || {};
             if (document.getElementById('student-lobby-page').classList.contains('active')) renderOnlineUsers();
@@ -328,35 +235,37 @@
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
-        // 🔥 채팅 로그 실시간 수신 이벤트
         db.ref('chatLog').limitToLast(50).on('child_added', (snapshot) => {
             const data = snapshot.val();
             const logDiv = document.getElementById('chat-log');
             const isMe = data.sender === currentUser;
             const color = isMe ? '#007bff' : '#333';
             logDiv.innerHTML += `<div style="margin-bottom: 5px;"><strong style="color:${color}">${data.sender}:</strong> ${data.message}</div>`;
-            logDiv.scrollTop = logDiv.scrollHeight; // 항상 최신글이 보이게 스크롤 내리기
+            logDiv.scrollTop = logDiv.scrollHeight;
         });
 
         function showPage(pageId) {
             const pages = document.querySelectorAll('.page');
             pages.forEach(page => page.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-
-            if (pageId === 'admin-login-page') {
-                document.getElementById('admin-id').value = ''; document.getElementById('admin-pw').value = '';
-            } else if (pageId === 'student-page') {
-                document.getElementById('student-id').value = ''; document.getElementById('student-pw').value = '';
-            } else if (pageId === 'student-create-page') {
-                document.getElementById('new-student-id').value = ''; document.getElementById('new-student-pw').value = '';
-            } else if (pageId === 'student-lobby-page') {
-                // 로비 진입 시 스크롤 맨 아래로
+            if (pageId === 'student-lobby-page') {
                 const logDiv = document.getElementById('chat-log');
                 logDiv.scrollTop = logDiv.scrollHeight;
+                renderOnlineUsers(); // 페이지 진입 시 강제 렌더링
             }
         }
 
-        // ================= 기존 관리자 & 상점 기능 (생략 없이 원본 유지) =================
+        // [중요 수정] 아바타 장착 시 로비 화면 즉시 갱신
+        function applySelectedAvatar() {
+            if (!tempSelectedAvatar) return;
+            myCurrentAvatar = tempSelectedAvatar;
+            db.ref('studentAccounts/' + currentUser).update({ avatarId: tempSelectedAvatar });
+            db.ref('onlineUsers/' + currentUser).update({ avatarId: tempSelectedAvatar });
+            
+            showPage('student-lobby-page');
+            renderOnlineUsers(); // 변경 직후 즉시 렌더링 호출
+        }
+
         function checkAdminLogin() {
             const inputId = document.getElementById('admin-id').value.trim();
             const inputPw = document.getElementById('admin-pw').value.trim();
@@ -520,7 +429,6 @@
         function handleEnter(event, avatarId, index, type) { if(event.key === 'Enter') saveSingleData(event, avatarId, index, type); }
         function saveShopItems() { db.ref('shopItems').set(tempShopItems); showPage('admin-menu-page'); }
 
-        // ================= 학생 시스템 & 말풍선 채팅 =================
         function checkStudentLogin() {
             const inputId = document.getElementById('student-id').value.trim();
             const inputPw = document.getElementById('student-pw').value.trim();
@@ -529,18 +437,13 @@
             if (account && account.pw === inputPw) {
                 currentUser = inputId;
                 myCurrentAvatar = account.avatarId || DEFAULT_AVATARS[0];
-                
                 if (!account.ownedAvatars) db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
                 if (account.gems === undefined) db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
-
                 document.getElementById('welcome-message').innerText = `환영합니다, ${inputId}님! ✨`;
-                
                 const myOnlineRef = db.ref('onlineUsers/' + currentUser);
                 myOnlineRef.set({ avatarId: myCurrentAvatar });
                 myOnlineRef.onDisconnect().remove(); 
-
                 showPage('student-lobby-page');
-                renderOnlineUsers(); 
             } else {
                 alert('아이디 또는 비밀번호가 틀렸습니다.');
             }
@@ -554,31 +457,15 @@
             showPage('main-page');
         }
 
-        // 🔥 채팅 보내기 (말풍선 + 채팅창)
         function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
             if (!msg || !currentUser) return;
-
-            // 1. 공용 채팅 기록에 추가
-            db.ref('chatLog').push().set({
-                sender: currentUser,
-                message: msg,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            // 2. 내 아바타 위에 말풍선 데이터 올리기
+            db.ref('chatLog').push().set({ sender: currentUser, message: msg, timestamp: firebase.database.ServerValue.TIMESTAMP });
             const now = Date.now();
-            db.ref('onlineUsers/' + currentUser).update({
-                bubble: msg,
-                bubbleTime: now
-            });
-
+            db.ref('onlineUsers/' + currentUser).update({ bubble: msg, bubbleTime: now });
             input.value = '';
-
-            // 3. 5초 뒤에 말풍선 지우기 (자동)
             setTimeout(() => {
-                // 현재 시간이랑 비교해서 다른 채팅을 치지 않았을 때만 지움
                 db.ref('onlineUsers/' + currentUser).once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.bubbleTime === now) {
@@ -588,57 +475,35 @@
             }, 5000);
         }
 
-        // 유저 렌더링 (말풍선 포함)
         function renderOnlineUsers() {
             const listDiv = document.getElementById('online-users-list');
             listDiv.innerHTML = '';
             const ids = Object.keys(localOnlineUsers);
-            if (ids.length === 0) {
-                listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return;
-            }
-            
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return; }
             const now = Date.now();
-
             ids.forEach(id => {
                 const user = localOnlineUsers[id];
                 const userDiv = document.createElement('div');
                 userDiv.className = 'online-user-item';
-                
-                // 말풍선 체크 (5초가 지나지 않은 말풍선만 표시)
                 let bubbleHTML = '';
                 if (user.bubble && user.bubbleTime && (now - user.bubbleTime < 5000)) {
-                    // 글자가 너무 길면 말줄임표 처리 (선택사항이나 디자인 위해 제한)
-                    let displayMsg = user.bubble;
-                    if(displayMsg.length > 15) displayMsg = displayMsg.substring(0, 15) + '...';
+                    let displayMsg = user.bubble.length > 15 ? user.bubble.substring(0, 15) + '...' : user.bubble;
                     bubbleHTML = `<div class="speech-bubble">${displayMsg}</div>`;
                 }
-
                 const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:14px;">(나)</span>' : '';
-                // 아이디가 너무 길면 잘리게 처리 (옵션)
                 let displayId = id.length > 5 ? id.substring(0,4) + '..' : id;
-
-                userDiv.innerHTML = `
-                    ${bubbleHTML}
-                    <img src="${user.avatarId}" alt="아바타" class="online-user-avatar">
-                    <span style="font-weight:bold;">${displayId} ${isMe}</span>
-                `;
+                userDiv.innerHTML = `${bubbleHTML}<img src="${user.avatarId}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold;">${displayId} ${isMe}</span>`;
                 listDiv.appendChild(userDiv);
             });
         }
 
-        // ================= 상점 & 보관함 =================
         function showStudentShopPage() { renderStudentShop(); showPage('student-shop-page'); }
-
         function renderStudentShop() {
             const listDiv = document.getElementById('student-shop-list');
             listDiv.innerHTML = '';
             const myGems = localStudentAccounts[currentUser]?.gems || 0;
             document.getElementById('my-gems-display').innerText = `내 보석: 💎 ${myGems}`;
-
-            if (localShopItems.length === 0) {
-                listDiv.innerHTML = '<p style="color: #888; font-size: 18px; grid-column: 1 / -1;">현재 등록된 상품이 없습니다.</p>'; return;
-            }
-
+            if (localShopItems.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px; grid-column: 1 / -1;">현재 등록된 상품이 없습니다.</p>'; return; }
             const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
             localShopItems.forEach(avatarId => {
                 const itemDiv = document.createElement('div');
@@ -647,7 +512,6 @@
                 const avatarName = localShopNames[dbKey] || `${avatarId.split('.')[0]}번 아바타`;
                 const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
                 const nameText = `<span style="font-size: 18px; color: #333; margin-top: 8px;">${avatarName}</span>`;
-                
                 if (myOwnedAvatars.includes(avatarId)) {
                     itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타" style="opacity: 0.5;">${nameText}<div class="owned-tag">보유 중</div>`;
                 } else {
@@ -662,12 +526,9 @@
             const price = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
             let myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
             let myGems = localStudentAccounts[currentUser]?.gems || 0;
-
             if (myOwnedAvatars.includes(avatarId)) return alert('이미 보유한 아바타입니다.');
             if (myGems < price) return alert('보석이 부족합니다!');
-
-            myGems -= price; 
-            myOwnedAvatars.push(avatarId); 
+            myGems -= price; myOwnedAvatars.push(avatarId); 
             db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: myOwnedAvatars, gems: myGems });
             alert('아바타를 성공적으로 구입했습니다! 보관함에서 확인해보세요. 🎉');
         }
@@ -678,30 +539,15 @@
             const listDiv = document.getElementById('avatar-list');
             listDiv.innerHTML = '';
             const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
-            
             myOwnedAvatars.forEach(avatarId => {
                 const avatarDiv = document.createElement('div');
                 avatarDiv.className = 'avatar-item';
                 if (avatarId === tempSelectedAvatar) avatarDiv.classList.add('selected');
-                
                 avatarDiv.onclick = () => { tempSelectedAvatar = avatarId; renderAvatarList(); };
-                
-                let avatarName = '';
-                if(avatarId === 'image_0.png') avatarName = '기본 남자';
-                else if(avatarId === 'image_1.png') avatarName = '기본 여자';
-                else avatarName = localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`;
-
+                let avatarName = (avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`);
                 avatarDiv.innerHTML = `<img src="${avatarId}" alt="아바타"><p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
             });
-        }
-
-        function applySelectedAvatar() {
-            if (!tempSelectedAvatar) return;
-            myCurrentAvatar = tempSelectedAvatar;
-            db.ref('studentAccounts/' + currentUser).update({ avatarId: tempSelectedAvatar });
-            db.ref('onlineUsers/' + currentUser).update({ avatarId: tempSelectedAvatar });
-            showPage('student-lobby-page');
         }
     </script>
 </body>
