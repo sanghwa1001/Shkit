@@ -276,9 +276,10 @@
             const data = snapshot.val();
             const logDiv = document.getElementById('chat-log');
             
-            // 시스템 안내문(빨간 굵은 글씨) 렌더링 - 이름(발신자) 없음
+            // 💡 시스템 안내문 렌더링 (이름 없이 중앙 정렬 및 색상 지정)
             if (data.isAlert) {
-                logDiv.innerHTML += `<div style="margin-bottom: 5px; color: #dc3545; font-weight: bold; text-align: center; background: #ffeeba; padding: 4px; border-radius: 8px;">📢 ${data.message}</div>`;
+                const color = data.alertColor || '#007bff'; // 기본은 파란색
+                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80;">📢 ${data.message}</div>`;
             } else {
                 // 일반 채팅 렌더링
                 const displayName = data.senderName || data.sender;
@@ -717,11 +718,14 @@
             const newState = !isChatMuted;
             db.ref('chatState/isMuted').set(newState);
 
-            const sysMsg = newState ? "상티가 채팅창을 비활성화했습니다" : "상티가 채팅창을 활성화했습니다";
+            const sysMsg = newState ? "상티가 채팅창을 비활성화했습니다." : "상티가 채팅창을 활성화했습니다.";
+            
+            // 파란색 시스템 공지로 전송
             db.ref('chatLog').push().set({ 
-                sender: 'system', // 상티가 아닌 시스템 발송으로 처리
+                sender: 'system',
                 message: sysMsg, 
                 isAlert: true,
+                alertColor: '#007bff', 
                 timestamp: firebase.database.ServerValue.TIMESTAMP 
             });
         }
@@ -741,6 +745,8 @@
             }
             
             let updates = {};
+            let nicknameArray = [];
+            
             selectedStudentsForGems.forEach(id => {
                 const currentGems = localStudentAccounts[id]?.gems || 0;
                 let newGems = currentGems;
@@ -751,12 +757,27 @@
                     newGems = Math.max(0, currentGems - gemsToModify); 
                 }
                 updates[`studentAccounts/${id}/gems`] = newGems;
+                
+                const nick = localStudentAccounts[id]?.nickname || id;
+                nicknameArray.push(nick);
             });
             
             db.ref().update(updates)
                 .then(() => {
+                    const nicknamesStr = nicknameArray.join(', ');
                     const actionText = action === 'add' ? '지급' : '차감';
-                    alert(`${selectedStudentsForGems.length}명의 학생에게 각각 💎 ${gemsToModify}개의 보석을 ${actionText}했습니다!`);
+                    const alertColor = action === 'add' ? '#28a745' : '#dc3545'; 
+                    const sysMsg = `${nicknamesStr}이(가) 보석을 ${gemsToModify}개 ${actionText}받았습니다.`;
+                    
+                    // 채팅창에 시스템 공지로 전송 (초록색 혹은 빨간색)
+                    db.ref('chatLog').push().set({
+                        sender: 'system',
+                        message: sysMsg,
+                        isAlert: true,
+                        alertColor: alertColor,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+
                     selectedStudentsForGems = []; 
                     renderOnlineUsers();
                 })
