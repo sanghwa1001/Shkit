@@ -175,7 +175,7 @@
                         <span style="font-weight:bold; font-size:16px; color:#1565c0;">개</span>
                         <button onclick="giftGems()" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724; width: auto;">🎁 선물</button>
                         <button onclick="requestGems()" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674; width: auto;">🙏 조르기</button>
-                        <button id="accept-request-btn" onclick="acceptGemRequest()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777; width: auto;">수락</button>
+                        <button id="accept-request-btn" onclick="acceptGemRequest()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777; width: auto;">🤝 수락</button>
                     </div>
                 </div>
                 <div id="online-users-list"></div>
@@ -355,7 +355,6 @@
             }
         });
 
-        // 실시간 조르기 요청 감지 및 수락 버튼 상태 업데이트
         function listenForGemRequests() {
             db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
                 const reqs = snapshot.val();
@@ -369,24 +368,60 @@
                 const acceptBtn = document.getElementById('accept-request-btn');
                 if (pendingRequests.length > 0) {
                     acceptBtn.disabled = false;
-                    acceptBtn.style.backgroundColor = '#ff9800'; // 주황색 활성화
+                    acceptBtn.style.backgroundColor = '#ff9800'; 
                     acceptBtn.style.borderColor = '#e65100';
                     acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
-                    acceptBtn.innerText = `수락 (${pendingRequests.length})`;
+                    acceptBtn.innerText = `🤝 수락`; 
                 } else {
                     acceptBtn.disabled = true;
                     acceptBtn.style.backgroundColor = '#ccc';
                     acceptBtn.style.borderColor = '#999';
                     acceptBtn.style.boxShadow = '0 4px 0 #777';
-                    acceptBtn.innerText = '수락';
+                    acceptBtn.innerText = '🤝 수락';
                 }
 
-                // 배지 갱신을 위해 로비 재렌더링
                 if (document.getElementById('student-lobby-page').classList.contains('active')) {
                     renderOnlineUsers();
                 }
             });
         }
+
+        // 1초마다 조르기 요청 만료 확인 및 카운트다운 렌더링
+        setInterval(() => {
+            if (!currentUser || isAdmin) return;
+            
+            const now = Date.now();
+            let needsRender = false;
+
+            pendingRequests.forEach(req => {
+                if (req.expiresAt && now > req.expiresAt) {
+                    if (req.isDeleting) return;
+                    req.isDeleting = true; // 중복 실행 방지
+
+                    // 데이터베이스에서 삭제
+                    db.ref(`gemRequests/${currentUser}/${req.key}`).remove().then(() => {
+                        const requesterNick = localStudentAccounts[req.from]?.nickname || req.from;
+                        const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
+                        
+                        db.ref('chatLog').push().set({
+                            sender: 'system',
+                            message: `${requesterNick}이(가) ${myNick}에게 보낸 조르기 요청이 1분 경과로 취소되었습니다. ⏳`,
+                            isAlert: true,
+                            alertColor: '#6c757d', // 회색 안내
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    });
+                } else if (req.expiresAt) {
+                    // 남은 시간 계산 후 DOM 직접 업데이트 (애니메이션 깜빡임 방지)
+                    let timeLeft = Math.max(0, Math.ceil((req.expiresAt - now) / 1000));
+                    const safeId = req.from.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const badgeEl = document.getElementById(`badge-${safeId}`);
+                    if (badgeEl) {
+                        badgeEl.innerText = `🙏${req.amount}개 (${timeLeft}s)`;
+                    }
+                }
+            });
+        }, 1000);
 
         function showPage(pageId) {
             const pages = document.querySelectorAll('.page');
@@ -876,7 +911,7 @@
                 db.ref(`gemRequests/${id}`).push({
                     from: currentUser,
                     amount: amt,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    expiresAt: Date.now() + 60000 // 60초 만료 설정
                 });
                 targetNicks.push(localStudentAccounts[id]?.nickname || id);
             });
@@ -892,10 +927,9 @@
 
             selectedStudentsForGems = [];
             renderOnlineUsers();
-            alert('조르기 요청을 보냈습니다!');
+            alert('조르기 요청을 보냈습니다! (1분 후 자동 취소됩니다.)');
         }
 
-        // 선택한 친구들의 조르기만 수락하는 로직
         function acceptGemRequest() {
             if (pendingRequests.length === 0) return;
             if (selectedStudentsForGems.length === 0) {
@@ -908,7 +942,6 @@
             let acceptedNicks = [];
             let totalDeduction = 0;
 
-            // 선택한 친구들이 보낸 요청들만 필터링
             let matchedRequests = pendingRequests.filter(req => selectedStudentsForGems.includes(req.from));
 
             if (matchedRequests.length === 0) {
@@ -977,12 +1010,14 @@
                     };
                 }
 
-                // 조르기 요청 알림 배지 (🙏개수) 렌더링
+                // 조르기 요청 알림 배지에 카운트다운(시간) 렌더링을 위한 ID 부여
                 let requestBadge = '';
                 if (!isAdmin && currentUser) {
                     const reqFromThisUser = pendingRequests.find(req => req.from === id);
                     if (reqFromThisUser) {
-                        requestBadge = `<div style="position:absolute; top:-10px; right:-5px; background:#dc3545; color:white; font-size:12px; font-weight:bold; padding:2px 6px; border-radius:10px; z-index:11; box-shadow:0 2px 4px rgba(0,0,0,0.2);">🙏${reqFromThisUser.amount}개</div>`;
+                        let timeLeft = Math.max(0, Math.ceil((reqFromThisUser.expiresAt - now) / 1000));
+                        const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+                        requestBadge = `<div id="badge-${safeId}" style="position:absolute; top:-10px; right:-20px; background:#dc3545; color:white; font-size:12px; font-weight:bold; padding:2px 6px; border-radius:10px; z-index:11; box-shadow:0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;">🙏${reqFromThisUser.amount}개 (${timeLeft}s)</div>`;
                     }
                 }
 
