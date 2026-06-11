@@ -157,14 +157,17 @@
                 <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
                 <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
                 
-                <div id="admin-gift-group" style="display: none; align-items: center; justify-content: center; background-color: #e67e22; border: 3px solid #d35400; box-shadow: 0 6px 0 #a04000; border-radius: 15px; flex: 2; padding: 5px; gap: 8px;">
-                    <span style="color: white; font-size: 18px; font-weight:bold;">보석</span>
-                    <input type="number" id="gem-gift-amount" value="1" min="1" style="width: 60px; margin: 0; padding: 8px; font-size: 18px; text-align: center; border-radius: 8px; border: 2px solid #ccc;">
-                    <span style="color: white; font-size: 18px; font-weight:bold;">개</span>
-                    <button onclick="giftGemsToSelected()" style="background-color: #fff; color: #d35400; border: 2px solid #d35400; box-shadow: 0 4px 0 #a04000; width: auto; padding: 8px 15px; margin: 0; font-size: 16px; white-space: nowrap;">지급</button>
+                <div id="admin-gem-controls" style="display: none; flex: 2; gap: 10px;">
+                    <div style="display:flex; align-items:center; justify-content:center; background:#f8f9fa; border:3px solid #ccc; border-radius:15px; padding:0 10px;">
+                        <span style="font-weight:bold; font-size:18px; color:#333;">보석</span>
+                        <input type="number" id="gem-control-amount" value="1" min="1" style="width:60px; margin:0 5px; padding:8px; font-size:18px; text-align:center; border:2px solid #ccc; border-radius:8px;">
+                        <span style="font-weight:bold; font-size:18px; color:#333;">개</span>
+                    </div>
+                    <button onclick="modifyGems('add')" style="margin:0; flex:1; background-color: #28a745; border-color:#1e7e34; box-shadow: 0 6px 0 #155724;">✅ 지급</button>
+                    <button onclick="modifyGems('sub')" style="margin:0; flex:1; background-color: #dc3545; border-color:#bd2130; box-shadow: 0 6px 0 #8b1c24;">⛔ 차감</button>
                 </div>
 
-                <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+                <button class="secondary-btn" onclick="logoutStudent()" style="flex: 1;">로그아웃</button>
             </div>
         </div>
 
@@ -245,7 +248,6 @@
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
-        // 실시간 채팅 로드
         db.ref('chatLog').on('child_added', (snapshot) => {
             const data = snapshot.val();
             const logDiv = document.getElementById('chat-log');
@@ -458,11 +460,11 @@
                 if (account.gems === undefined) db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
                 document.getElementById('welcome-message').innerText = `환영합니다, ${inputId}님! ✨`;
                 
-                // 학생 로그인 시 UI 리셋
+                // 학생 로그인 시 UI 렌더링 설정
                 document.getElementById('admin-chat-reset-btn').style.display = 'none';
                 document.getElementById('shop-btn').style.display = 'block';
                 document.getElementById('storage-btn').style.display = 'block';
-                document.getElementById('admin-gift-group').style.display = 'none';
+                document.getElementById('admin-gem-controls').style.display = 'none';
                 selectedStudentsForGems = [];
 
                 const myOnlineRef = db.ref('onlineUsers/' + currentUser);
@@ -483,13 +485,12 @@
             document.getElementById('welcome-message').innerText = `환영합니다, 관리자님! 로비 상태를 확인하세요.`;
             document.getElementById('admin-chat-reset-btn').style.display = 'block';
             
-            // 상점/보관함 숨기고 보석 지급 그룹 노출
+            // 상점/보관함 숨기고 보석 지급/차감 컨트롤 세트 노출
             document.getElementById('shop-btn').style.display = 'none';
             document.getElementById('storage-btn').style.display = 'none';
-            document.getElementById('admin-gift-group').style.display = 'flex';
+            document.getElementById('admin-gem-controls').style.display = 'flex';
             selectedStudentsForGems = []; 
             
-            // 관리자는 onlineUsers에 아예 데이터를 남기지 않습니다. (아바타 완전히 제외)
             showPage('student-lobby-page');
         }
 
@@ -502,7 +503,7 @@
             document.getElementById('admin-chat-reset-btn').style.display = 'none';
             document.getElementById('shop-btn').style.display = 'block';
             document.getElementById('storage-btn').style.display = 'block';
-            document.getElementById('admin-gift-group').style.display = 'none';
+            document.getElementById('admin-gem-controls').style.display = 'none';
             selectedStudentsForGems = [];
             showPage('main-page');
         }
@@ -512,7 +513,6 @@
             const msg = input.value.trim();
             if (!msg || !currentUser) return;
 
-            // 1. 메시지 추가
             const newChatRef = db.ref('chatLog').push();
             newChatRef.set({ 
                 sender: currentUser, 
@@ -520,7 +520,6 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP 
             });
 
-            // 2. 말풍선 처리 (관리자는 말풍선 시스템에 등록하지 않음)
             if (!isAdmin) {
                 const now = Date.now();
                 db.ref('onlineUsers/' + currentUser).update({ bubble: msg, bubbleTime: now });
@@ -536,7 +535,6 @@
             input.value = '';
         }
 
-        // 전체 채팅 지우기
         function clearAllChat() {
             if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
                 db.ref('chatLog').remove()
@@ -545,17 +543,17 @@
             }
         }
 
-        // 선택된 학생들에게 보석 일괄 지급 (인라인 인풋)
-        function giftGemsToSelected() {
+        // 보석 일괄 지급 또는 차감 처리 함수
+        function modifyGems(action) {
             if (selectedStudentsForGems.length === 0) {
-                alert('보석을 지급할 학생을 선택해 주세요.');
+                alert(`보석을 ${action === 'add' ? '지급' : '차감'}할 학생을 선택해 주세요.`);
                 return;
             }
             
-            const amountInput = document.getElementById('gem-gift-amount');
-            const gemsToAdd = parseInt(amountInput.value, 10);
+            const amountInput = document.getElementById('gem-control-amount');
+            const gemsToModify = parseInt(amountInput.value, 10);
             
-            if (isNaN(gemsToAdd) || gemsToAdd <= 0) {
+            if (isNaN(gemsToModify) || gemsToModify <= 0) {
                 alert('올바른 보석 개수를 입력해 주세요. (1 이상의 정수)');
                 return;
             }
@@ -563,17 +561,25 @@
             let updates = {};
             selectedStudentsForGems.forEach(id => {
                 const currentGems = localStudentAccounts[id]?.gems || 0;
-                updates[`studentAccounts/${id}/gems`] = currentGems + gemsToAdd;
+                let newGems = currentGems;
+                
+                if (action === 'add') {
+                    newGems = currentGems + gemsToModify;
+                } else if (action === 'sub') {
+                    newGems = Math.max(0, currentGems - gemsToModify); // 마이너스 보석 방지
+                }
+                updates[`studentAccounts/${id}/gems`] = newGems;
             });
             
             db.ref().update(updates)
                 .then(() => {
-                    alert(`${selectedStudentsForGems.length}명의 학생에게 각각 💎 ${gemsToAdd}개의 보석을 지급했습니다!`);
-                    selectedStudentsForGems = []; // 지급 후 다중선택 초기화
+                    const actionText = action === 'add' ? '지급' : '차감';
+                    alert(`${selectedStudentsForGems.length}명의 학생에게 각각 💎 ${gemsToModify}개의 보석을 ${actionText}했습니다!`);
+                    selectedStudentsForGems = []; // 작업 완료 후 다중선택 초기화
                     renderOnlineUsers();
                 })
                 .catch((error) => {
-                    alert('보석을 지급하는 중 오류가 발생했습니다.');
+                    alert('보석을 업데이트하는 중 오류가 발생했습니다.');
                 });
         }
 
@@ -585,14 +591,12 @@
             
             const now = Date.now();
             ids.forEach(id => {
-                // 안전장치: 혹시라도 관리자 데이터가 남아있으면 화면에 그리지 않음
                 if (id === '⭐관리자') return; 
 
                 const user = localOnlineUsers[id];
                 const userDiv = document.createElement('div');
                 userDiv.className = 'online-user-item';
                 
-                // 관리자 다중 선택 UI
                 if (isAdmin && selectedStudentsForGems.includes(id)) {
                     userDiv.classList.add('selected');
                 }
