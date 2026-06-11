@@ -355,6 +355,7 @@
             }
         });
 
+        // 실시간 조르기 요청 감지 및 수락 버튼 상태 업데이트
         function listenForGemRequests() {
             db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
                 const reqs = snapshot.val();
@@ -391,14 +392,12 @@
             if (!currentUser || isAdmin) return;
             
             const now = Date.now();
-            let needsRender = false;
 
             pendingRequests.forEach(req => {
                 if (req.expiresAt && now > req.expiresAt) {
                     if (req.isDeleting) return;
-                    req.isDeleting = true; // 중복 실행 방지
+                    req.isDeleting = true; 
 
-                    // 데이터베이스에서 삭제
                     db.ref(`gemRequests/${currentUser}/${req.key}`).remove().then(() => {
                         const requesterNick = localStudentAccounts[req.from]?.nickname || req.from;
                         const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
@@ -407,12 +406,11 @@
                             sender: 'system',
                             message: `${requesterNick}이(가) ${myNick}에게 보낸 조르기 요청이 1분 경과로 취소되었습니다. ⏳`,
                             isAlert: true,
-                            alertColor: '#6c757d', // 회색 안내
+                            alertColor: '#6c757d', 
                             timestamp: firebase.database.ServerValue.TIMESTAMP
                         });
                     });
                 } else if (req.expiresAt) {
-                    // 남은 시간 계산 후 DOM 직접 업데이트 (애니메이션 깜빡임 방지)
                     let timeLeft = Math.max(0, Math.ceil((req.expiresAt - now) / 1000));
                     const safeId = req.from.replace(/[^a-zA-Z0-9_-]/g, '_');
                     const badgeEl = document.getElementById(`badge-${safeId}`);
@@ -678,6 +676,14 @@
             document.getElementById('admin-manage-lobby-btn').style.display = 'none';
             document.getElementById('admin-back-lobby-btn').style.display = 'none';
             
+            // 수락 버튼 안전 장치 리셋
+            const acceptBtn = document.getElementById('accept-request-btn');
+            acceptBtn.disabled = true;
+            acceptBtn.style.backgroundColor = '#ccc';
+            acceptBtn.style.borderColor = '#999';
+            acceptBtn.style.boxShadow = '0 4px 0 #777';
+            acceptBtn.innerText = '🤝 수락';
+
             selectedStudentsForGems = [];
             listenForGemRequests(); 
 
@@ -911,7 +917,7 @@
                 db.ref(`gemRequests/${id}`).push({
                     from: currentUser,
                     amount: amt,
-                    expiresAt: Date.now() + 60000 // 60초 만료 설정
+                    expiresAt: Date.now() + 60000 
                 });
                 targetNicks.push(localStudentAccounts[id]?.nickname || id);
             });
@@ -1010,7 +1016,6 @@
                     };
                 }
 
-                // 조르기 요청 알림 배지에 카운트다운(시간) 렌더링을 위한 ID 부여
                 let requestBadge = '';
                 if (!isAdmin && currentUser) {
                     const reqFromThisUser = pendingRequests.find(req => req.from === id);
