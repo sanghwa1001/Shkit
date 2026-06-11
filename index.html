@@ -57,8 +57,7 @@
         .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; }
         .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.05); }
-        .avatar-item img { height: 110px; width: auto; margin-bottom: 12px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));}
-        .avatar-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
+        .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
         .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
@@ -157,6 +156,7 @@
             <div class="lobby-menu-group">
                 <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
                 <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
+                <button id="admin-gift-btn" onclick="giftGemsToSelected()" style="display: none; background-color: #e67e22; border-color:#d35400; box-shadow: 0 6px 0 #a04000;">🎁 보석 지급</button>
                 <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
             </div>
         </div>
@@ -198,7 +198,8 @@
         let currentUser = null;
         let myCurrentAvatar = null;
         let tempSelectedAvatar = null; 
-        let isAdmin = false; // 관리자 상태 변수 추가
+        let isAdmin = false; 
+        let selectedStudentsForGems = []; // 보석을 지급할 다중 선택 학생 배열 추가
 
         let tempShopItems = [];
         let localStudentAccounts = {}; 
@@ -445,10 +446,19 @@
 
             if (account && account.pw === inputPw) {
                 currentUser = inputId;
+                isAdmin = false;
                 myCurrentAvatar = account.avatarId || DEFAULT_AVATARS[0];
                 if (!account.ownedAvatars) db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
                 if (account.gems === undefined) db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
                 document.getElementById('welcome-message').innerText = `환영합니다, ${inputId}님! ✨`;
+                
+                // 학생 로그인 시 UI 리셋
+                document.getElementById('admin-chat-reset-btn').style.display = 'none';
+                document.getElementById('shop-btn').style.display = 'block';
+                document.getElementById('storage-btn').style.display = 'block';
+                document.getElementById('admin-gift-btn').style.display = 'none';
+                selectedStudentsForGems = [];
+
                 const myOnlineRef = db.ref('onlineUsers/' + currentUser);
                 myOnlineRef.set({ avatarId: myCurrentAvatar });
                 myOnlineRef.onDisconnect().remove(); 
@@ -462,13 +472,19 @@
         function enterAdminLobby() {
             isAdmin = true;
             currentUser = '⭐관리자';
-            myCurrentAvatar = DEFAULT_AVATARS[0]; 
+            myCurrentAvatar = ""; // 관리자는 아바타가 없음
             
             document.getElementById('welcome-message').innerText = `환영합니다, 관리자님! 로비 상태를 확인하세요.`;
             document.getElementById('admin-chat-reset-btn').style.display = 'block';
             
+            // 버튼 제어: 상점/보관함 숨기고 보석 지급 버튼 노출
+            document.getElementById('shop-btn').style.display = 'none';
+            document.getElementById('storage-btn').style.display = 'none';
+            document.getElementById('admin-gift-btn').style.display = 'block';
+            selectedStudentsForGems = []; // 다중 선택 초기화
+            
             const myOnlineRef = db.ref('onlineUsers/' + currentUser);
-            myOnlineRef.set({ avatarId: myCurrentAvatar });
+            myOnlineRef.set({ avatarId: "" }); // 데이터베이스에 아바타 없음으로 설정
             myOnlineRef.onDisconnect().remove(); 
             
             showPage('student-lobby-page');
@@ -481,6 +497,10 @@
             }
             isAdmin = false;
             document.getElementById('admin-chat-reset-btn').style.display = 'none';
+            document.getElementById('shop-btn').style.display = 'block';
+            document.getElementById('storage-btn').style.display = 'block';
+            document.getElementById('admin-gift-btn').style.display = 'none';
+            selectedStudentsForGems = [];
             showPage('main-page');
         }
 
@@ -524,6 +544,39 @@
             }
         }
 
+        // 선택된 학생들에게 보석 지급하는 함수 (관리자 전용)
+        function giftGemsToSelected() {
+            if (selectedStudentsForGems.length === 0) {
+                alert('보석을 지급할 학생(아바타 카드가 생성된 유저)을 선택해 주세요.');
+                return;
+            }
+            
+            const inputAmount = prompt(`선택한 ${selectedStudentsForGems.length}명의 학생에게 각각 지급할 보석의 개수를 입력하세요:`, "10");
+            if (inputAmount === null) return; // 취소 클릭 시
+            
+            const gemsToAdd = parseInt(inputAmount, 10);
+            if (isNaN(gemsToAdd) || gemsToAdd <= 0) {
+                alert('올바른 보석 개수를 입력해 주세요. (1 이상의 정수)');
+                return;
+            }
+            
+            let updates = {};
+            selectedStudentsForGems.forEach(id => {
+                const currentGems = localStudentAccounts[id]?.gems || 0;
+                updates[`studentAccounts/${id}/gems`] = currentGems + gemsToAdd;
+            });
+            
+            db.ref().update(updates)
+                .then(() => {
+                    alert(`${selectedStudentsForGems.length}명의 학생에게 각각 💎 ${gemsToAdd}개의 보석을 지급했습니다!`);
+                    selectedStudentsForGems = []; // 지급 후 선택 초기화
+                    renderOnlineUsers();
+                })
+                .catch((error) => {
+                    alert('보석을 지급하는 중 오류가 발생했습니다.');
+                });
+        }
+
         function renderOnlineUsers() {
             const listDiv = document.getElementById('online-users-list');
             listDiv.innerHTML = '';
@@ -534,6 +587,27 @@
                 const user = localOnlineUsers[id];
                 const userDiv = document.createElement('div');
                 userDiv.className = 'online-user-item';
+                
+                // 관리자가 학생을 클릭하여 다중 선택할 수 있도록 스타일 및 이벤트 추가
+                if (isAdmin && selectedStudentsForGems.includes(id)) {
+                    userDiv.classList.add('selected');
+                }
+                if (isAdmin && id !== '⭐관리자') {
+                    userDiv.style.cursor = 'pointer';
+                }
+                
+                userDiv.onclick = () => {
+                    if (!isAdmin) return;
+                    if (id === '⭐관리자') return; // 관리자 자신은 선택 불가
+                    
+                    if (selectedStudentsForGems.includes(id)) {
+                        selectedStudentsForGems = selectedStudentsForGems.filter(sid => sid !== id);
+                    } else {
+                        selectedStudentsForGems.push(id);
+                    }
+                    renderOnlineUsers();
+                };
+
                 let bubbleHTML = '';
                 if (user.bubble && user.bubbleTime && (now - user.bubbleTime < 5000)) {
                     let displayMsg = user.bubble.length > 15 ? user.bubble.substring(0, 15) + '...' : user.bubble;
@@ -541,7 +615,13 @@
                 }
                 const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:14px;">(나)</span>' : '';
                 let displayId = id.length > 5 ? id.substring(0,4) + '..' : id;
-                userDiv.innerHTML = `${bubbleHTML}<img src="${user.avatarId}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold;">${displayId} ${isMe}</span>`;
+                
+                // 관리자이거나 아바타가 지정되지 않은 경우 이미지 태그 대신 공백 또는 특수문자 박스 처리
+                let avatarHTML = user.avatarId 
+                    ? `<img src="${user.avatarId}" alt="아바타" class="online-user-avatar">` 
+                    : `<div class="online-user-avatar" style="display:flex; align-items:center; justify-content:center; background:#eee; border-radius:12px; font-size:24px; height:60px; width:60px; margin-bottom:8px;">❌</div>`;
+                
+                userDiv.innerHTML = `${bubbleHTML}${avatarHTML}<span style="font-weight:bold;">${displayId} ${isMe}</span>`;
                 listDiv.appendChild(userDiv);
             });
         }
