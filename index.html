@@ -19,12 +19,14 @@
         .login-btn-group { max-width: 350px; margin: 0 auto; }
         button { font-family: 'Jua', sans-serif; width: 100%; padding: 15px 10px; margin: 10px 0; border: 3px solid #0056b3; border-radius: 15px; background-color: #007bff; color: white; font-size: 20px; cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 1px; white-space: nowrap; overflow: hidden; }
         button:active { transform: translateY(6px); box-shadow: 0 0 0 #004494; }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
         .bulk-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724; }
         .delete-btn { background-color: #dc3545; border-color: #bd2130; box-shadow: 0 6px 0 #8b1c24; }
         .secondary-btn { background-color: #6c757d; border-color: #545b62; box-shadow: 0 6px 0 #3d4246; }
         .edit-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 4px 0 #155724; padding: 10px; font-size: 16px;}
         input { font-family: 'Jua', sans-serif; width: 100%; padding: 15px; margin: 10px 0; border: 3px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 20px; background-color: #f9f9f9; transition: border-color 0.3s; }
         input:focus { outline: none; border-color: #007bff; background-color: #fff; }
+        input:disabled { background-color: #e9ecef; cursor: not-allowed; }
         .page { display: none; } .active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .list-container { max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px; }
@@ -103,7 +105,7 @@
             <div class="login-btn-group">
                 <button onclick="enterAdminLobby()" style="background-color: #6f42c1; border-color:#59339d; box-shadow: 0 6px 0 #452679;">🌟 로비로 이동</button>
                 <button onclick="showPage('student-create-page')">학생 계정 생성</button>
-                <button onclick="showManagePage()">학생 계정 수정</button>
+                <button onclick="showManagePage('admin-menu-page')">학생 계정 수정</button>
                 <button onclick="showAdminShopPage('admin-menu-page')" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
                 <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
             </div>
@@ -125,7 +127,7 @@
             <h2>학생 목록</h2>
             <div id="student-list" class="list-container"></div>
             <button class="delete-btn" onclick="deleteAllAccounts()">전체 삭제</button>
-            <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            <button class="secondary-btn" onclick="closeManagePage()">이전으로</button>
         </div>
 
         <div id="admin-shop-page" class="page">
@@ -133,7 +135,7 @@
             <p style="font-size: 18px; color: #666; margin-bottom: 15px;">✏️이름 / 💎가격을 수정하고 판매할 아바타를 클릭하세요!</p>
             <div id="admin-shop-list" class="avatar-list-container"></div>
             <div style="display:flex; gap:10px;">
-                <button class="bulk-btn" onclick="saveShopItems()">저장하고 판매하기</button>
+                <button class="bulk-btn" onclick="saveShopItems()">판매하기</button>
                 <button class="secondary-btn" onclick="closeAdminShopPage()">이전으로</button>
             </div>
         </div>
@@ -161,7 +163,9 @@
                 <div class="chat-log" id="chat-log"></div>
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" placeholder="채팅을 입력하세요!" onkeypress="if(event.key==='Enter') sendChat()">
-                    <button class="bulk-btn" onclick="sendChat()">전송</button>
+                    <button id="chat-send-btn" class="bulk-btn" onclick="sendChat()">전송</button>
+                    
+                    <button id="admin-mute-btn" class="secondary-btn" style="display: none; width: 100px; margin: 0; font-size: 18px; padding: 10px;" onclick="toggleMute()">음소거</button>
                     <button id="admin-chat-reset-btn" class="delete-btn" style="display: none; width: 100px; margin: 0; font-size: 18px; padding: 10px;" onclick="clearAllChat()">초기화</button>
                 </div>
             </div>
@@ -169,10 +173,11 @@
             <div class="lobby-menu-group">
                 <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
                 <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
+                <button id="student-logout-btn" class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
                 
                 <button id="admin-shop-lobby-btn" onclick="showAdminShopPage('student-lobby-page')" style="display: none; background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 상점 관리</button>
-                
-                <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+                <button id="admin-manage-lobby-btn" onclick="showManagePage('student-lobby-page')" style="display: none; background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 6px 0 #0f6674;">학생 계정 수정</button>
+                <button id="admin-back-lobby-btn" class="secondary-btn" onclick="showPage('admin-menu-page')" style="display: none;">이전으로</button>
             </div>
         </div>
 
@@ -185,7 +190,7 @@
 
         <div id="storage-page" class="page">
             <h2>🎒 아바타 보관함</h2>
-            <p style="font-size: 18px; color: #555;">장착할 아바타를 고르세요!</p>
+            <p style="font-size: 18px; color: #555;">장착할 아바타 고르기!</p>
             <div id="avatar-list" class="avatar-list-container"></div>
             <button class="bulk-btn" onclick="applySelectedAvatar()">장착하기</button>
             <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
@@ -215,7 +220,9 @@
         let tempSelectedAvatar = null; 
         let isAdmin = false; 
         let selectedStudentsForGems = []; 
-        let adminShopReturnPage = 'admin-menu-page'; // 되돌아갈 페이지 경로 저장 변수
+        let adminShopReturnPage = 'admin-menu-page'; 
+        let adminManageReturnPage = 'admin-menu-page';
+        let isChatMuted = false; // 채팅 음소거 상태 변수
 
         let tempShopItems = [];
         let localStudentAccounts = {}; 
@@ -266,6 +273,46 @@
         db.ref('chatLog').on('value', (snapshot) => {
             if (!snapshot.exists()) {
                 document.getElementById('chat-log').innerHTML = '';
+            }
+        });
+
+        // 실시간 음소거 상태 감지 로직
+        db.ref('chatState/isMuted').on('value', (snapshot) => {
+            isChatMuted = snapshot.val() || false;
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const muteBtn = document.getElementById('admin-mute-btn');
+
+            if (isChatMuted) {
+                if (!isAdmin) {
+                    chatInput.disabled = true;
+                    chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                    chatSendBtn.disabled = true;
+                    chatSendBtn.style.backgroundColor = "#ccc";
+                    chatSendBtn.style.borderColor = "#999";
+                    chatSendBtn.style.boxShadow = "0 6px 0 #777";
+                }
+                if (isAdmin && muteBtn) {
+                    muteBtn.innerText = "음소거 해제";
+                    muteBtn.style.backgroundColor = "#dc3545"; 
+                    muteBtn.style.borderColor = "#bd2130";
+                    muteBtn.style.boxShadow = "0 6px 0 #8b1c24";
+                }
+            } else {
+                if (!isAdmin) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = "채팅을 입력하세요!";
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.style.backgroundColor = ""; 
+                    chatSendBtn.style.borderColor = "";
+                    chatSendBtn.style.boxShadow = "";
+                }
+                if (isAdmin && muteBtn) {
+                    muteBtn.innerText = "음소거";
+                    muteBtn.style.backgroundColor = ""; 
+                    muteBtn.style.borderColor = "";
+                    muteBtn.style.boxShadow = "";
+                }
             }
         });
 
@@ -335,7 +382,16 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function showManagePage() { renderStudentList(); showPage('student-manage-page'); }
+        // 경로를 기억하며 계정 관리 페이지 진입
+        function showManagePage(returnPage = 'admin-menu-page') { 
+            adminManageReturnPage = returnPage;
+            renderStudentList(); 
+            showPage('student-manage-page'); 
+        }
+
+        function closeManagePage() {
+            showPage(adminManageReturnPage);
+        }
 
         function renderStudentList() {
             const listDiv = document.getElementById('student-list');
@@ -464,7 +520,7 @@
         
         function saveShopItems() { 
             db.ref('shopItems').set(tempShopItems); 
-            showPage(adminShopReturnPage); // 저장 후 원래 경로로 복귀
+            showPage(adminShopReturnPage); 
         }
 
         function checkStudentLogin() {
@@ -482,14 +538,41 @@
                 
                 // 학생용 UI 초기화
                 document.getElementById('admin-chat-reset-btn').style.display = 'none';
+                document.getElementById('admin-mute-btn').style.display = 'none';
                 document.getElementById('shop-btn').style.display = 'block';
                 document.getElementById('storage-btn').style.display = 'block';
+                document.getElementById('student-logout-btn').style.display = 'block';
+                
+                document.getElementById('admin-gem-controls').style.display = 'none';
                 document.getElementById('admin-shop-lobby-btn').style.display = 'none';
+                document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+                document.getElementById('admin-back-lobby-btn').style.display = 'none';
+                
                 selectedStudentsForGems = [];
 
                 const myOnlineRef = db.ref('onlineUsers/' + currentUser);
                 myOnlineRef.set({ avatarId: myCurrentAvatar });
                 myOnlineRef.onDisconnect().remove(); 
+                
+                // 학생 접속 시 현재 음소거 상태를 한번 더 체크하여 UI 반영
+                const chatInput = document.getElementById('chat-input');
+                const chatSendBtn = document.getElementById('chat-send-btn');
+                if (isChatMuted) {
+                    chatInput.disabled = true;
+                    chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                    chatSendBtn.disabled = true;
+                    chatSendBtn.style.backgroundColor = "#ccc";
+                    chatSendBtn.style.borderColor = "#999";
+                    chatSendBtn.style.boxShadow = "0 6px 0 #777";
+                } else {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = "채팅을 입력하세요!";
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.style.backgroundColor = ""; 
+                    chatSendBtn.style.borderColor = "";
+                    chatSendBtn.style.boxShadow = "";
+                }
+
                 showPage('student-lobby-page');
             } else {
                 alert('아이디 또는 비밀번호가 틀렸습니다.');
@@ -502,15 +585,28 @@
             myCurrentAvatar = ""; 
             
             document.getElementById('welcome-message').innerText = `환영합니다, 관리자님! 로비 상태를 확인하세요.`;
-            document.getElementById('admin-chat-reset-btn').style.display = 'block';
             
-            // 관리자용 UI 초기화
+            // 관리자용 UI 세팅
+            document.getElementById('admin-chat-reset-btn').style.display = 'block';
+            document.getElementById('admin-mute-btn').style.display = 'block';
             document.getElementById('shop-btn').style.display = 'none';
             document.getElementById('storage-btn').style.display = 'none';
+            document.getElementById('student-logout-btn').style.display = 'none';
+            
             document.getElementById('admin-gem-controls').style.display = 'flex';
             document.getElementById('admin-shop-lobby-btn').style.display = 'block';
-            selectedStudentsForGems = []; 
+            document.getElementById('admin-manage-lobby-btn').style.display = 'block';
+            document.getElementById('admin-back-lobby-btn').style.display = 'block';
             
+            // 관리자는 채팅 금지에 영향을 받지 않음 (항상 활성화)
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-input').placeholder = "채팅을 입력하세요!";
+            document.getElementById('chat-send-btn').disabled = false;
+            document.getElementById('chat-send-btn').style.backgroundColor = ""; 
+            document.getElementById('chat-send-btn').style.borderColor = "";
+            document.getElementById('chat-send-btn').style.boxShadow = "";
+
+            selectedStudentsForGems = []; 
             showPage('student-lobby-page');
         }
 
@@ -522,15 +618,19 @@
             isAdmin = false;
             
             document.getElementById('admin-chat-reset-btn').style.display = 'none';
-            document.getElementById('shop-btn').style.display = 'block';
-            document.getElementById('storage-btn').style.display = 'block';
+            document.getElementById('admin-mute-btn').style.display = 'none';
             document.getElementById('admin-gem-controls').style.display = 'none';
             document.getElementById('admin-shop-lobby-btn').style.display = 'none';
+            document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+            document.getElementById('admin-back-lobby-btn').style.display = 'none';
+            
             selectedStudentsForGems = [];
             showPage('main-page');
         }
 
         function sendChat() {
+            if (!isAdmin && isChatMuted) return; // 학생이면서 음소거 상태면 무시
+
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
             if (!msg || !currentUser) return;
@@ -557,12 +657,18 @@
             input.value = '';
         }
 
+        // 전체 채팅 지우기
         function clearAllChat() {
             if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
                 db.ref('chatLog').remove()
                     .then(() => alert('채팅 기록이 깔끔하게 지워졌습니다.'))
                     .catch((error) => alert('초기화 중 오류가 발생했습니다.'));
             }
+        }
+
+        // 음소거 토글 함수
+        function toggleMute() {
+            db.ref('chatState/isMuted').set(!isChatMuted);
         }
 
         function modifyGems(action) {
