@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아바타 월드 로그인 (와이드 게임 UI 버전 - 버튼 글자 맞춤)</title>
+    <title>아바타 월드 로그인 (말풍선 채팅 & 10명 와이드 로비)</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -20,7 +20,7 @@
             background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
         }
         
-        /* 큼직해진 메인 게임 팝업창 */
+        /* 🔥 엄청나게 커진 메인 게임 팝업창 (10명 수용 가능) */
         .container { 
             background-color: #ffffff; 
             padding: 40px; 
@@ -28,51 +28,44 @@
             border-radius: 25px; 
             box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
             text-align: center; 
-            width: 90%; 
-            max-width: 650px; 
+            width: 95%; 
+            max-width: 1000px; /* 너비 대폭 확장! */
             box-sizing: border-box;
         }
 
         h2 { color: #333; margin-top: 0; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 36px; }
 
-        /* === 큼직한 3D 게임 버튼 (한 줄 맞춤 속성 추가) === */
+        /* === 로그인 창 전용 인풋 (화면이 커져도 예쁘게) === */
+        input.login-input {
+            max-width: 350px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            display: block;
+        }
+        .login-btn-group { max-width: 350px; margin: 0 auto; }
+
+        /* === 큼직한 3D 게임 버튼 === */
         button { 
             font-family: 'Jua', sans-serif;
-            width: 100%; 
-            padding: 15px 10px; /* 좌우 여백을 약간 줄여 글자가 들어갈 공간 확보 */
-            margin: 10px 0; 
-            border: 3px solid #0056b3; 
-            border-radius: 15px; 
-            background-color: #007bff; 
-            color: white; 
-            font-size: 20px; /* 화면이 작아도 잘리지 않도록 폰트 크기 최적화 */
-            cursor: pointer; 
-            box-shadow: 0 6px 0 #004494; 
-            transition: all 0.1s ease; 
-            letter-spacing: 1px; /* 글자 간격을 살짝 좁힘 */
-            white-space: nowrap; /* 🚨 글자가 두 줄로 꺾이는 현상 방지 */
-            overflow: hidden; /* 영역을 벗어나는 글자 숨김 */
+            width: 100%; padding: 15px 10px; margin: 10px 0; 
+            border: 3px solid #0056b3; border-radius: 15px; 
+            background-color: #007bff; color: white; font-size: 20px; 
+            cursor: pointer; box-shadow: 0 6px 0 #004494; 
+            transition: all 0.1s ease; letter-spacing: 1px; 
+            white-space: nowrap; overflow: hidden;
         }
-        button:active { 
-            transform: translateY(6px); 
-            box-shadow: 0 0 0 #004494; 
-        }
+        button:active { transform: translateY(6px); box-shadow: 0 0 0 #004494; }
         
         .bulk-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724; }
         .delete-btn { background-color: #dc3545; border-color: #bd2130; box-shadow: 0 6px 0 #8b1c24; }
         .secondary-btn { background-color: #6c757d; border-color: #545b62; box-shadow: 0 6px 0 #3d4246; }
         .edit-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 4px 0 #155724; padding: 10px; font-size: 16px;}
         
-        /* 더 크고 입력하기 편해진 입력창 */
+        /* 기본 입력창 */
         input { 
-            font-family: 'Jua', sans-serif;
-            width: 100%; padding: 15px; margin: 10px 0; 
-            border: 3px solid #ddd; 
-            border-radius: 12px; 
-            box-sizing: border-box; 
-            font-size: 20px;
-            background-color: #f9f9f9;
-            transition: border-color 0.3s;
+            font-family: 'Jua', sans-serif; width: 100%; padding: 15px; margin: 10px 0; 
+            border: 3px solid #ddd; border-radius: 12px; box-sizing: border-box; 
+            font-size: 20px; background-color: #f9f9f9; transition: border-color 0.3s;
         }
         input:focus { outline: none; border-color: #007bff; background-color: #fff; }
 
@@ -81,51 +74,87 @@
         
         /* === 확장된 목록 디자인 === */
         .list-container { 
-            max-height: 400px; 
-            overflow-y: auto; margin-bottom: 20px; padding-right: 10px; 
+            max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; 
             background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px;
         }
         .list-container::-webkit-scrollbar { width: 10px; }
         .list-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 5px; }
-        
         .list-header { display: flex; gap: 10px; margin-bottom: 15px; font-size: 18px; color: #555; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 10px;}
         .list-header .h-id { flex: 2; } .list-header .h-pw { flex: 2; } .list-header .h-btn { flex: 2; }
-        
         .account-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: white; padding: 8px; border-radius: 10px; border: 2px solid #eee;}
         .account-item input { flex: 2; margin: 0; padding: 10px; font-size: 16px; text-align: center; border-width: 2px;}
-        .account-item button { flex: 1; margin: 0; font-size: 15px; padding: 10px 5px; white-space: nowrap; } /* 글자 맞춤 최적화 */
+        .account-item button { flex: 1; margin: 0; font-size: 15px; padding: 10px 5px; white-space: nowrap; }
         
         /* === 시원해진 로비 화면 디자인 === */
         .lobby-title { color: #ff9800; font-size: 44px; margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; }
         .welcome-text { font-size: 26px; color: #333; margin-bottom: 25px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 3px solid #ffeeba;}
         
-        .online-users-container { background-color: #e3f2fd; border: 3px solid #90caf9; border-radius: 15px; padding: 20px; margin: 25px 0; max-height: 300px; overflow-y: auto; }
+        .online-users-container { background-color: #e3f2fd; border: 3px solid #90caf9; border-radius: 15px; padding: 20px; max-height: 280px; overflow-y: auto; }
         .online-users-title { font-size: 22px; margin-bottom: 15px; color: #1565c0; border-bottom: 2px dashed #90caf9; padding-bottom: 10px; text-align: left;}
-        #online-users-list { display: flex; flex-wrap: wrap; gap: 20px; padding-top: 10px; justify-content: center; }
-        .online-user-item { display: flex; flex-direction: column; align-items: center; font-size: 18px; color: #333; background: white; padding: 10px; border-radius: 12px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb;}
-        .online-user-avatar { height: 90px; width: auto; margin-bottom: 8px; }
         
+        /* 🔥 가로 10명 배치 최적화 그리드 */
+        #online-users-list { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 20px; justify-content: flex-start; }
+        .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 16px; color: #333; background: white; padding: 10px 5px; border-radius: 12px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 75px;}
+        .online-user-avatar { height: 60px; width: auto; margin-bottom: 8px; }
+        
+        /* 💬 말풍선 디자인 */
+        .speech-bubble {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 3px solid #ff9800;
+            border-radius: 15px;
+            padding: 6px 12px;
+            font-size: 15px;
+            color: #333;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 4px 0 rgba(255,152,0,0.5);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* 말풍선 꼬리 */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #ff9800 transparent transparent transparent;
+            display: block;
+            width: 0;
+        }
+        @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+
+        /* === 실시간 채팅창 구역 === */
+        .chat-section {
+            background: #f1f8e9; border: 3px solid #8bc34a; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .chat-log {
+            height: 120px; overflow-y: auto; background: #fff; border: 2px solid #ccc; border-radius: 10px; padding: 10px; text-align: left; font-size: 18px;
+        }
+        .chat-log::-webkit-scrollbar { width: 8px; }
+        .chat-log::-webkit-scrollbar-thumb { background: #8bc34a; border-radius: 4px; }
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input-area input { flex: 1; margin: 0; font-size: 18px; padding: 10px; }
+        .chat-input-area button { width: 100px; margin: 0; font-size: 18px; padding: 10px; }
+
+        /* 하단 메뉴 가로 정렬 */
+        .lobby-menu-group { display: flex; gap: 10px; margin-top: 15px; }
+        .lobby-menu-group button { margin: 0; flex: 1; }
+
         /* === 넓은 공간을 꽉 채우는 반응형 아바타 그리드 === */
-        .avatar-list-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; 
-        }
-        .avatar-item { 
-            border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; 
-            background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            position: relative; cursor: pointer; transition: transform 0.2s;
-        }
+        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; padding: 10px; }
+        .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.05); }
         .avatar-item img { height: 110px; width: auto; margin-bottom: 12px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));}
-        
         .avatar-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
-        
         .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
-        
-        /* 커진 학생 보석 표시 UI */
         .gem-display { font-size: 24px; color: #d84315; background: #ffcc80; padding: 12px 25px; border-radius: 25px; display: inline-block; margin-bottom: 20px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
     </style>
 </head>
@@ -134,42 +163,52 @@
     <div class="container">
         <div id="main-page" class="page active">
             <h2>🎮 로그인 화면</h2>
-            <button onclick="showPage('student-page')">학생 로그인</button>
-            <button class="secondary-btn" onclick="showPage('admin-login-page')">관리자 로그인</button>
+            <div class="login-btn-group">
+                <button onclick="showPage('student-page')">학생 로그인</button>
+                <button class="secondary-btn" onclick="showPage('admin-login-page')">관리자 로그인</button>
+            </div>
         </div>
 
         <div id="student-page" class="page">
             <h2>학생 로그인</h2>
-            <input type="text" id="student-id" placeholder="학생 아이디">
-            <input type="password" id="student-pw" placeholder="학생 비밀번호">
-            <button onclick="checkStudentLogin()">접속하기!</button>
-            <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            <input type="text" id="student-id" class="login-input" placeholder="학생 아이디">
+            <input type="password" id="student-pw" class="login-input" placeholder="학생 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="checkStudentLogin()">접속하기!</button>
+                <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            </div>
         </div>
 
         <div id="admin-login-page" class="page">
             <h2>관리자 로그인</h2>
-            <input type="text" id="admin-id" placeholder="관리자 아이디">
-            <input type="password" id="admin-pw" placeholder="관리자 비밀번호">
-            <button onclick="checkAdminLogin()">로그인</button>
-            <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            <input type="text" id="admin-id" class="login-input" placeholder="관리자 아이디">
+            <input type="password" id="admin-pw" class="login-input" placeholder="관리자 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="checkAdminLogin()">로그인</button>
+                <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            </div>
         </div>
 
         <div id="admin-menu-page" class="page">
             <h2>🛠️ 관리자 메뉴</h2>
-            <button onclick="showPage('student-create-page')">학생 계정 생성</button>
-            <button onclick="showManagePage()">학생 계정 수정</button>
-            <button onclick="showAdminShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
-            <button class="secondary-btn" onclick="showPage('main-page')">로그아웃</button>
+            <div class="login-btn-group">
+                <button onclick="showPage('student-create-page')">학생 계정 생성</button>
+                <button onclick="showManagePage()">학생 계정 수정</button>
+                <button onclick="showAdminShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
+                <button class="secondary-btn" onclick="showPage('main-page')">로그아웃</button>
+            </div>
         </div>
 
         <div id="student-create-page" class="page">
             <h2>계정 만들기</h2>
-            <input type="text" id="new-student-id" placeholder="생성할 아이디">
-            <input type="password" id="new-student-pw" placeholder="생성할 비밀번호">
-            <button onclick="createStudentAccount()">계정 생성</button>
-            <button class="bulk-btn" onclick="document.getElementById('excel-file-input').click()">엑셀로 일괄 생성</button>
-            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
-            <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            <input type="text" id="new-student-id" class="login-input" placeholder="생성할 아이디">
+            <input type="password" id="new-student-pw" class="login-input" placeholder="생성할 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="createStudentAccount()">계정 생성</button>
+                <button class="bulk-btn" onclick="document.getElementById('excel-file-input').click()">엑셀로 일괄 생성</button>
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
+                <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            </div>
         </div>
 
         <div id="student-manage-page" class="page">
@@ -181,22 +220,36 @@
 
         <div id="admin-shop-page" class="page">
             <h2>상점 관리</h2>
-            <p style="font-size: 18px; color: #666; margin-bottom: 15px;">✏️이름 / 💎가격을 수정하고<br>판매할 아바타를 클릭하세요!</p>
+            <p style="font-size: 18px; color: #666; margin-bottom: 15px;">✏️이름 / 💎가격을 수정하고 판매할 아바타를 클릭하세요!</p>
             <div id="admin-shop-list" class="avatar-list-container"></div>
-            <button class="bulk-btn" onclick="saveShopItems()">저장하고 판매하기</button>
-            <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            <div style="display:flex; gap:10px;">
+                <button class="bulk-btn" onclick="saveShopItems()">저장하고 판매하기</button>
+                <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            </div>
         </div>
 
         <div id="student-lobby-page" class="page">
             <h2 class="lobby-title">🎉 메인 로비 🎉</h2>
             <div class="welcome-text" id="welcome-message"></div>
+            
             <div class="online-users-container">
                 <div class="online-users-title">🟢 접속 중인 친구들</div>
                 <div id="online-users-list"></div>
             </div>
-            <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
-            <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
-            <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+
+            <div class="chat-section">
+                <div class="chat-log" id="chat-log"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="채팅을 입력하세요!" onkeypress="if(event.key==='Enter') sendChat()">
+                    <button class="bulk-btn" onclick="sendChat()">전송</button>
+                </div>
+            </div>
+
+            <div class="lobby-menu-group">
+                <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
+                <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
+                <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+            </div>
         </div>
 
         <div id="student-shop-page" class="page">
@@ -238,13 +291,13 @@
         let tempSelectedAvatar = null; 
 
         let tempShopItems = [];
-
         let localStudentAccounts = {}; 
         let localOnlineUsers = {}; 
         let localShopItems = []; 
         let localShopNames = {}; 
         let localShopPrices = {}; 
 
+        // 데이터 동기화
         db.ref('studentAccounts').on('value', (snapshot) => {
             localStudentAccounts = snapshot.val() || {};
             if (document.getElementById('student-manage-page').classList.contains('active')) renderStudentList();
@@ -253,7 +306,7 @@
 
         db.ref('onlineUsers').on('value', (snapshot) => {
             localOnlineUsers = snapshot.val() || {};
-            renderOnlineUsers();
+            if (document.getElementById('student-lobby-page').classList.contains('active')) renderOnlineUsers();
         });
 
         db.ref('shopItems').on('value', (snapshot) => {
@@ -275,6 +328,16 @@
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
         });
 
+        // 🔥 채팅 로그 실시간 수신 이벤트
+        db.ref('chatLog').limitToLast(50).on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            const logDiv = document.getElementById('chat-log');
+            const isMe = data.sender === currentUser;
+            const color = isMe ? '#007bff' : '#333';
+            logDiv.innerHTML += `<div style="margin-bottom: 5px;"><strong style="color:${color}">${data.sender}:</strong> ${data.message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight; // 항상 최신글이 보이게 스크롤 내리기
+        });
+
         function showPage(pageId) {
             const pages = document.querySelectorAll('.page');
             pages.forEach(page => page.classList.remove('active'));
@@ -286,28 +349,22 @@
                 document.getElementById('student-id').value = ''; document.getElementById('student-pw').value = '';
             } else if (pageId === 'student-create-page') {
                 document.getElementById('new-student-id').value = ''; document.getElementById('new-student-pw').value = '';
+            } else if (pageId === 'student-lobby-page') {
+                // 로비 진입 시 스크롤 맨 아래로
+                const logDiv = document.getElementById('chat-log');
+                logDiv.scrollTop = logDiv.scrollHeight;
             }
         }
 
+        // ================= 기존 관리자 & 상점 기능 (생략 없이 원본 유지) =================
         function checkAdminLogin() {
             const inputId = document.getElementById('admin-id').value.trim();
             const inputPw = document.getElementById('admin-pw').value.trim();
-
-            if (inputId === '' || inputPw === '') {
-                alert('아이디와 비밀번호를 모두 입력해주세요.');
-                return;
-            }
-
+            if (inputId === '' || inputPw === '') { alert('아이디와 비밀번호를 모두 입력해주세요.'); return; }
             const adminEmail = inputId + "@gmail.com";
-
             firebase.auth().signInWithEmailAndPassword(adminEmail, inputPw)
-                .then((userCredential) => {
-                    showPage('admin-menu-page');
-                })
-                .catch((error) => {
-                    alert('관리자 정보가 일치하지 않습니다.');
-                    console.error("로그인 에러:", error);
-                });
+                .then((userCredential) => { showPage('admin-menu-page'); })
+                .catch((error) => { alert('관리자 정보가 일치하지 않습니다.'); });
         }
 
         function createStudentAccount() {
@@ -315,41 +372,29 @@
             const newPw = document.getElementById('new-student-pw').value.trim();
             if (newId === '' || newPw === '') return alert('아이디와 비밀번호를 모두 입력해주세요.');
             if (localStudentAccounts[newId]) return alert('이미 존재하는 아이디입니다.');
-
-            db.ref('studentAccounts/' + newId).set({
-                pw: newPw,
-                avatarId: DEFAULT_AVATARS[0],
-                ownedAvatars: DEFAULT_AVATARS,
-                gems: 10 
-            });
-            alert(`학생 계정(${newId})이 생성되었습니다! (기본 10보석 지급)`);
+            db.ref('studentAccounts/' + newId).set({ pw: newPw, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 });
+            alert(`학생 계정(${newId})이 생성되었습니다!`);
             showPage('admin-menu-page');
         }
 
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-                
-                let successCount = 0; let duplicateCount = 0;
-                let updates = {};
-
+                let successCount = 0; let duplicateCount = 0; let updates = {};
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || row[0] === undefined || row[1] === undefined) continue;
                     const id = String(row[0]).trim(); const pw = String(row[1]).trim();
                     if (id === '' || pw === '' || id === '아이디' || id.toLowerCase() === 'id') continue;
                     if (localStudentAccounts[id]) { duplicateCount++; continue; }
-
                     updates[id] = { pw: pw, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 };
                     successCount++;
                 }
-
                 if (successCount > 0) db.ref('studentAccounts').update(updates);
                 alert(`일괄 등록 완료!\n생성: ${successCount}개\n중복 제외: ${duplicateCount}개`);
                 event.target.value = ''; showPage('admin-menu-page');
@@ -357,18 +402,13 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function showManagePage() {
-            renderStudentList();
-            showPage('student-manage-page');
-        }
+        function showManagePage() { renderStudentList(); showPage('student-manage-page'); }
 
         function renderStudentList() {
             const listDiv = document.getElementById('student-list');
             listDiv.innerHTML = '';
             const ids = Object.keys(localStudentAccounts);
-            if (ids.length === 0) {
-                listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">생성된 학생 계정이 없습니다.</p>'; return;
-            }
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color:#888; font-size:18px;">생성된 학생 계정이 없습니다.</p>'; return; }
             listDiv.innerHTML = `<div class="list-header"><div class="h-id">아이디</div><div class="h-pw">비밀번호</div><div class="h-btn">관리</div></div>`;
             ids.forEach((id) => {
                 const account = localStudentAccounts[id];
@@ -402,23 +442,15 @@
             if (confirm('⚠️ 모든 학생 계정을 삭제하시겠습니까?')) db.ref('studentAccounts').remove();
         }
 
-        function showAdminShopPage() {
-            tempShopItems = [...localShopItems];
-            renderAdminShopPage();
-            showPage('admin-shop-page');
-        }
+        function showAdminShopPage() { tempShopItems = [...localShopItems]; renderAdminShopPage(); showPage('admin-shop-page'); }
 
         function renderAdminShopPage() {
             const listDiv = document.getElementById('admin-shop-list');
             listDiv.innerHTML = '';
-
             ALL_SHOP_AVATARS.forEach((avatarId, index) => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
-                
-                if (tempShopItems.includes(avatarId)) {
-                    itemDiv.classList.add('selected');
-                }
+                if (tempShopItems.includes(avatarId)) itemDiv.classList.add('selected');
 
                 const dbKey = avatarId.replace('.', '_');
                 const currentName = localShopNames[dbKey] || `아바타 ${index + 1}`;
@@ -426,7 +458,6 @@
                 
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
-                    
                     <div id="view-name-mode-${index}" style="margin-top: 8px; display:flex; align-items:center; gap:5px; justify-content:center;">
                         <span style="font-size: 18px; color: #333;">${currentName}</span>
                         <span title="이름 수정" style="cursor: pointer; font-size: 16px; background: #eee; padding: 4px 8px; border-radius: 8px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
@@ -435,7 +466,6 @@
                         <input type="text" id="name-input-${index}" value="${currentName}" style="width: 100px; padding: 6px; font-size: 16px; text-align: center; border: 2px solid #ccc; border-radius: 8px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'name')">
                         <span title="저장" style="cursor: pointer; font-size: 16px; background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 8px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
                     </div>
-
                     <div id="view-price-mode-${index}" style="margin-top: 8px; margin-bottom: 8px; display:flex; align-items:center; gap:5px; justify-content:center;">
                         <span style="font-size: 18px; color: #d84315;">💎 ${currentPrice}</span>
                         <span title="가격 수정" style="cursor: pointer; font-size: 16px; background: #eee; padding: 4px 8px; border-radius: 8px;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
@@ -445,14 +475,10 @@
                         <span title="저장" style="cursor: pointer; font-size: 16px; background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 8px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'price')">✔️</span>
                     </div>
                 `;
-                
                 itemDiv.onclick = (e) => {
                     if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
-                        if (tempShopItems.includes(avatarId)) {
-                            tempShopItems = tempShopItems.filter(id => id !== avatarId);
-                        } else {
-                            tempShopItems.push(avatarId);
-                        }
+                        if (tempShopItems.includes(avatarId)) tempShopItems = tempShopItems.filter(id => id !== avatarId);
+                        else tempShopItems.push(avatarId);
                         renderAdminShopPage(); 
                     }
                 };
@@ -463,8 +489,7 @@
         function enableEditMode(event, index, type) {
             event.stopPropagation();
             document.getElementById(`view-${type}-mode-${index}`).style.display = 'none';
-            const editMode = document.getElementById(`edit-${type}-mode-${index}`);
-            editMode.style.display = 'flex';
+            document.getElementById(`edit-${type}-mode-${index}`).style.display = 'flex';
             document.getElementById(`${type}-input-${index}`).focus(); 
         }
 
@@ -486,28 +511,16 @@
             } else if (type === 'price') {
                 const currentPriceInDB = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
                 let parsedPrice = parseInt(newValue, 10);
-                
                 if (isNaN(parsedPrice) || parsedPrice < 0) parsedPrice = 1;
-
-                if (parsedPrice !== currentPriceInDB) {
-                    db.ref('shopItemPrices/' + dbKey).set(parsedPrice).then(() => renderAdminShopPage());
-                } else {
-                    renderAdminShopPage();
-                }
+                if (parsedPrice !== currentPriceInDB) db.ref('shopItemPrices/' + dbKey).set(parsedPrice).then(() => renderAdminShopPage());
+                else renderAdminShopPage();
             }
         }
 
-        function handleEnter(event, avatarId, index, type) {
-            if(event.key === 'Enter') {
-                saveSingleData(event, avatarId, index, type);
-            }
-        }
+        function handleEnter(event, avatarId, index, type) { if(event.key === 'Enter') saveSingleData(event, avatarId, index, type); }
+        function saveShopItems() { db.ref('shopItems').set(tempShopItems); showPage('admin-menu-page'); }
 
-        function saveShopItems() {
-            db.ref('shopItems').set(tempShopItems);
-            showPage('admin-menu-page');
-        }
-
+        // ================= 학생 시스템 & 말풍선 채팅 =================
         function checkStudentLogin() {
             const inputId = document.getElementById('student-id').value.trim();
             const inputPw = document.getElementById('student-pw').value.trim();
@@ -541,6 +554,41 @@
             showPage('main-page');
         }
 
+        // 🔥 채팅 보내기 (말풍선 + 채팅창)
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg || !currentUser) return;
+
+            // 1. 공용 채팅 기록에 추가
+            db.ref('chatLog').push().set({
+                sender: currentUser,
+                message: msg,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // 2. 내 아바타 위에 말풍선 데이터 올리기
+            const now = Date.now();
+            db.ref('onlineUsers/' + currentUser).update({
+                bubble: msg,
+                bubbleTime: now
+            });
+
+            input.value = '';
+
+            // 3. 5초 뒤에 말풍선 지우기 (자동)
+            setTimeout(() => {
+                // 현재 시간이랑 비교해서 다른 채팅을 치지 않았을 때만 지움
+                db.ref('onlineUsers/' + currentUser).once('value').then(snap => {
+                    const data = snap.val();
+                    if(data && data.bubbleTime === now) {
+                        db.ref('onlineUsers/' + currentUser).update({ bubble: null, bubbleTime: null });
+                    }
+                });
+            }, 5000);
+        }
+
+        // 유저 렌더링 (말풍선 포함)
         function renderOnlineUsers() {
             const listDiv = document.getElementById('online-users-list');
             listDiv.innerHTML = '';
@@ -548,57 +596,62 @@
             if (ids.length === 0) {
                 listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return;
             }
+            
+            const now = Date.now();
+
             ids.forEach(id => {
                 const user = localOnlineUsers[id];
                 const userDiv = document.createElement('div');
                 userDiv.className = 'online-user-item';
-                const isMe = (id === currentUser) ? '<span style="color: #ff9800;">(나)</span>' : '';
-                userDiv.innerHTML = `<img src="${user.avatarId}" alt="아바타" class="online-user-avatar"><span>${id} ${isMe}</span>`;
+                
+                // 말풍선 체크 (5초가 지나지 않은 말풍선만 표시)
+                let bubbleHTML = '';
+                if (user.bubble && user.bubbleTime && (now - user.bubbleTime < 5000)) {
+                    // 글자가 너무 길면 말줄임표 처리 (선택사항이나 디자인 위해 제한)
+                    let displayMsg = user.bubble;
+                    if(displayMsg.length > 15) displayMsg = displayMsg.substring(0, 15) + '...';
+                    bubbleHTML = `<div class="speech-bubble">${displayMsg}</div>`;
+                }
+
+                const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:14px;">(나)</span>' : '';
+                // 아이디가 너무 길면 잘리게 처리 (옵션)
+                let displayId = id.length > 5 ? id.substring(0,4) + '..' : id;
+
+                userDiv.innerHTML = `
+                    ${bubbleHTML}
+                    <img src="${user.avatarId}" alt="아바타" class="online-user-avatar">
+                    <span style="font-weight:bold;">${displayId} ${isMe}</span>
+                `;
                 listDiv.appendChild(userDiv);
             });
         }
 
-        function showStudentShopPage() {
-            renderStudentShop();
-            showPage('student-shop-page');
-        }
+        // ================= 상점 & 보관함 =================
+        function showStudentShopPage() { renderStudentShop(); showPage('student-shop-page'); }
 
         function renderStudentShop() {
             const listDiv = document.getElementById('student-shop-list');
             listDiv.innerHTML = '';
-
             const myGems = localStudentAccounts[currentUser]?.gems || 0;
             document.getElementById('my-gems-display').innerText = `내 보석: 💎 ${myGems}`;
 
             if (localShopItems.length === 0) {
-                listDiv.innerHTML = '<p style="color: #888; font-size: 18px; grid-column: 1 / -1;">현재 등록된 상품이 없습니다.</p>';
-                return;
+                listDiv.innerHTML = '<p style="color: #888; font-size: 18px; grid-column: 1 / -1;">현재 등록된 상품이 없습니다.</p>'; return;
             }
 
             const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
-
             localShopItems.forEach(avatarId => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'avatar-item';
-                
                 const dbKey = avatarId.replace('.', '_');
                 const avatarName = localShopNames[dbKey] || `${avatarId.split('.')[0]}번 아바타`;
                 const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
-                
                 const nameText = `<span style="font-size: 18px; color: #333; margin-top: 8px;">${avatarName}</span>`;
                 
                 if (myOwnedAvatars.includes(avatarId)) {
-                    itemDiv.innerHTML = `
-                        <img src="${avatarId}" alt="아바타" style="opacity: 0.5;">
-                        ${nameText}
-                        <div class="owned-tag">보유 중</div>
-                    `;
+                    itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타" style="opacity: 0.5;">${nameText}<div class="owned-tag">보유 중</div>`;
                 } else {
-                    itemDiv.innerHTML = `
-                        <img src="${avatarId}" alt="아바타">
-                        ${nameText}
-                        <button class="buy-btn" onclick="buyAvatar('${avatarId}')">💎 ${avatarPrice} 구입하기</button>
-                    `;
+                    itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타">${nameText}<button class="buy-btn" onclick="buyAvatar('${avatarId}')">💎 ${avatarPrice} 구입하기</button>`;
                 }
                 listDiv.appendChild(itemDiv);
             });
@@ -607,75 +660,47 @@
         function buyAvatar(avatarId) {
             const dbKey = avatarId.replace('.', '_');
             const price = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
-            
             let myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
             let myGems = localStudentAccounts[currentUser]?.gems || 0;
 
             if (myOwnedAvatars.includes(avatarId)) return alert('이미 보유한 아바타입니다.');
-            
-            if (myGems < price) {
-                alert('보석이 부족합니다!');
-                return;
-            }
+            if (myGems < price) return alert('보석이 부족합니다!');
 
             myGems -= price; 
             myOwnedAvatars.push(avatarId); 
-            
-            db.ref('studentAccounts/' + currentUser).update({ 
-                ownedAvatars: myOwnedAvatars,
-                gems: myGems
-            });
-            
+            db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: myOwnedAvatars, gems: myGems });
             alert('아바타를 성공적으로 구입했습니다! 보관함에서 확인해보세요. 🎉');
         }
 
-        function showStoragePage() { 
-            tempSelectedAvatar = myCurrentAvatar; 
-            renderAvatarList(); 
-            showPage('storage-page'); 
-        }
+        function showStoragePage() { tempSelectedAvatar = myCurrentAvatar; renderAvatarList(); showPage('storage-page'); }
 
         function renderAvatarList() {
             const listDiv = document.getElementById('avatar-list');
             listDiv.innerHTML = '';
-            
             const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
             
             myOwnedAvatars.forEach(avatarId => {
                 const avatarDiv = document.createElement('div');
                 avatarDiv.className = 'avatar-item';
+                if (avatarId === tempSelectedAvatar) avatarDiv.classList.add('selected');
                 
-                if (avatarId === tempSelectedAvatar) {
-                    avatarDiv.classList.add('selected');
-                }
-                
-                avatarDiv.onclick = () => {
-                    tempSelectedAvatar = avatarId;
-                    renderAvatarList(); 
-                };
+                avatarDiv.onclick = () => { tempSelectedAvatar = avatarId; renderAvatarList(); };
                 
                 let avatarName = '';
                 if(avatarId === 'image_0.png') avatarName = '기본 남자';
                 else if(avatarId === 'image_1.png') avatarName = '기본 여자';
-                else {
-                    avatarName = localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`;
-                }
+                else avatarName = localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`;
 
-                avatarDiv.innerHTML = `
-                    <img src="${avatarId}" alt="아바타">
-                    <p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>
-                `;
+                avatarDiv.innerHTML = `<img src="${avatarId}" alt="아바타"><p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
             });
         }
 
         function applySelectedAvatar() {
             if (!tempSelectedAvatar) return;
-            
             myCurrentAvatar = tempSelectedAvatar;
             db.ref('studentAccounts/' + currentUser).update({ avatarId: tempSelectedAvatar });
             db.ref('onlineUsers/' + currentUser).update({ avatarId: tempSelectedAvatar });
-            
             showPage('student-lobby-page');
         }
     </script>
