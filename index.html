@@ -133,17 +133,13 @@
         // 데이터베이스 실시간 계정 동기화
         db.ref('studentAccounts').on('value', (snapshot) => {
             localStudentAccounts = snapshot.val() || {};
-            if (document.getElementById('student-manage-page').classList.contains('active')) {
-                renderStudentList();
-            }
+            renderStudentList(); // 화면에 상관없이 백그라운드에서 항상 목록 갱신
         });
 
         // 데이터베이스 실시간 접속자 동기화
         db.ref('onlineUsers').on('value', (snapshot) => {
             localOnlineUsers = snapshot.val() || {};
-            if (document.getElementById('student-lobby-page').classList.contains('active')) {
-                renderOnlineUsers();
-            }
+            renderOnlineUsers(); // 화면에 상관없이 백그라운드에서 항상 접속자 명단 갱신
         });
 
         function showPage(pageId) {
