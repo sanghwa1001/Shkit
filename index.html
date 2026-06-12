@@ -116,7 +116,7 @@
         <div id="admin-menu-page" class="page">
             <h2>🛠️ 관리자 메뉴</h2>
             <div class="login-btn-group">
-                <button onclick="enterAdminLobby()" style="background-color: #6f42c1; border-color:#59339d; box-shadow: 0 6px 0 #452679;">🌟 로비로 이동</button>
+                <button onclick="enterAdminLobby()" style="background-color: #6f42c1; border-color:#59339d; box-shadow: 0 6px 0 #452679;">로비로 이동</button>
                 <button onclick="showPage('student-create-page')">학생 계정 생성</button>
                 <button onclick="showManagePage('admin-menu-page')">학생 계정 수정</button>
                 <button onclick="showAdminShopPage('admin-menu-page')" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
@@ -589,7 +589,7 @@
                         <span title="저장" style="cursor: pointer; font-size: 16px; background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 8px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
                     </div>
                     <div id="view-price-mode-${index}" style="margin-top: 8px; margin-bottom: 8px; display:flex; align-items:center; gap:5px; justify-content:center;">
-                        <span style="font-size: 18px; color: #d84315;">💎 ${currentPrice}</span>
+                        <span style="font-size: 18px; color: #d84315;">${currentPrice}</span>
                         <span title="가격 수정" style="cursor: pointer; font-size: 16px; background: #eee; padding: 4px 8px; border-radius: 8px;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
                     </div>
                     <div id="edit-price-mode-${index}" style="margin-top: 8px; margin-bottom: 8px; display:none; align-items:center; gap:5px; justify-content:center;">
