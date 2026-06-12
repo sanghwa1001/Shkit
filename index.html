@@ -71,6 +71,21 @@
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
         .gem-display { font-size: 24px; color: #d84315; background: #ffcc80; padding: 12px 25px; border-radius: 25px; display: inline-block; margin-bottom: 20px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
+
+        /* 하이파이브 미니게임 전용 CSS */
+        .hf-ready-text { font-size: 14px; font-weight: bold; color: #888; margin-top: 5px; }
+        .hf-ready-text.ready { color: #28a745; }
+        .hf-ready-text.paired { color: #e83e8c; }
+        @keyframes bounceBadge {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .hf-badge {
+            position: absolute; top: -15px; right: -15px; background: #ff9800; border: 2px solid #fff; 
+            border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; 
+            justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 16px; 
+            z-index: 10; animation: bounceBadge 0.8s infinite;
+        }
     </style>
 </head>
 <body>
@@ -196,10 +211,12 @@
             <div class="lobby-menu-group">
                 <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
                 <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
+                <button id="student-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563;">✋ 하이파이브</button>
                 <button id="student-logout-btn" class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
                 
                 <button id="admin-shop-lobby-btn" onclick="showAdminShopPage('student-lobby-page')" style="display: none; background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 상점 관리</button>
                 <button id="admin-manage-lobby-btn" onclick="showManagePage('student-lobby-page')" style="display: none;">학생 계정 수정</button>
+                <button id="admin-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563;">✋ 하이파이브</button>
                 <button id="admin-back-lobby-btn" class="secondary-btn" onclick="showPage('admin-menu-page')" style="display: none;">이전으로</button>
             </div>
         </div>
@@ -218,6 +235,29 @@
             <button class="bulk-btn" onclick="applySelectedAvatar()">장착하기</button>
             <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
         </div>
+
+        <div id="highfive-page" class="page">
+            <h2 class="lobby-title" style="color: #e83e8c; text-shadow: 2px 2px 0px #fad1e1;">✋ 하이파이브 짝매칭</h2>
+            
+            <div class="online-users-container" style="border-color: #f48fb1; background-color: #fce4ec;">
+                <div class="online-users-header" style="border-bottom-color: #f48fb1;">
+                    <div class="online-users-title" style="color: #d81b60;">✋ 대기실</div>
+                    <div id="hf-controls" style="display: flex; align-items: center; gap: 6px;">
+                        <button id="hf-request-btn" onclick="sendHighFiveRequest()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674; width: auto; opacity: 0.5;">✋ 하이?</button>
+                        <button id="hf-accept-btn" onclick="acceptHighFive()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ff9800; border-color:#e65100; box-shadow: 0 4px 0 #bf360c; width: auto; opacity: 0.5;">🤝 파이브!</button>
+                    </div>
+                </div>
+                <div id="hf-users-list" style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 10px; justify-content: flex-start;"></div>
+            </div>
+
+            <div class="login-btn-group" style="margin-top: 20px;">
+                <button id="hf-ready-btn" onclick="toggleHfReady()" style="background-color: #28a745;">준비</button>
+                <button id="hf-admin-start-btn" onclick="startHfGame()" style="display:none; background-color: #6f42c1;">시작</button>
+                <button id="hf-admin-reset-btn" onclick="resetHfGame()" style="display:none; background-color: #dc3545;">초기화 (대기실 복귀)</button>
+                <button class="secondary-btn" onclick="exitHighFiveRoom()">나가기</button>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -255,6 +295,13 @@
         let localShopNames = {}; 
         let localShopPrices = {}; 
 
+        // --- [하이파이브 게임 전용 변수] ---
+        let hfParticipants = {};
+        let hfState = { isStarted: false, pairCount: 0 };
+        let hfRequests = {};
+        let selectedHfUser = null;
+        const PAIR_COLORS = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#33FFF3', '#FFC300', '#C70039', '#581845'];
+
         db.ref('studentAccounts').on('value', (snapshot) => {
             localStudentAccounts = snapshot.val() || {};
             if (document.getElementById('student-manage-page').classList.contains('active')) renderStudentList();
@@ -283,6 +330,20 @@
             localShopPrices = snapshot.val() || {};
             if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
             if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
+        });
+
+        // --- [하이파이브 DB 리스너] ---
+        db.ref('highfive/state').on('value', snap => {
+            hfState = snap.val() || { isStarted: false, pairCount: 0 };
+            if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
+        });
+        db.ref('highfive/participants').on('value', snap => {
+            hfParticipants = snap.val() || {};
+            if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
+        });
+        db.ref('highfive/requests').on('value', snap => {
+            hfRequests = snap.val() || {};
+            if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
         });
 
         db.ref('chatLog').on('child_added', (snapshot) => {
@@ -682,6 +743,7 @@
             document.getElementById('admin-mute-btn').style.display = 'none';
             document.getElementById('shop-btn').style.display = 'block';
             document.getElementById('storage-btn').style.display = 'block';
+            document.getElementById('student-hf-btn').style.display = 'block';
             document.getElementById('student-logout-btn').style.display = 'block';
             
             document.getElementById('admin-gem-controls').style.display = 'none';
@@ -689,6 +751,7 @@
             
             document.getElementById('admin-shop-lobby-btn').style.display = 'none';
             document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+            document.getElementById('admin-hf-btn').style.display = 'none';
             document.getElementById('admin-back-lobby-btn').style.display = 'none';
             
             selectedStudentsForGems = [];
@@ -719,7 +782,6 @@
             showPage('student-lobby-page');
         }
 
-        // ⭐ 수정된 부분: 관리자가 로비 입장 시 현재 음소거 상태(isChatMuted)에 맞춰 버튼을 동기화합니다.
         function enterAdminLobby() {
             isAdmin = true;
             currentUser = '⭐상티';
@@ -731,6 +793,7 @@
             document.getElementById('admin-mute-btn').style.display = 'block';
             document.getElementById('shop-btn').style.display = 'none';
             document.getElementById('storage-btn').style.display = 'none';
+            document.getElementById('student-hf-btn').style.display = 'none';
             document.getElementById('student-logout-btn').style.display = 'none';
             
             document.getElementById('admin-gem-controls').style.display = 'flex';
@@ -738,6 +801,7 @@
             
             document.getElementById('admin-shop-lobby-btn').style.display = 'block';
             document.getElementById('admin-manage-lobby-btn').style.display = 'block';
+            document.getElementById('admin-hf-btn').style.display = 'block';
             document.getElementById('admin-back-lobby-btn').style.display = 'block';
             
             document.getElementById('chat-input').disabled = false;
@@ -747,7 +811,6 @@
             document.getElementById('chat-send-btn').style.borderColor = "";
             document.getElementById('chat-send-btn').style.boxShadow = "";
 
-            // 💡 [핵심 추가 코드] 입장할 때 DB의 isChatMuted 값을 확인해서 음소거 버튼 스타일을 맞춰줍니다.
             const muteBtn = document.getElementById('admin-mute-btn');
             if (isChatMuted) {
                 muteBtn.innerText = "음소거 해제";
@@ -779,6 +842,8 @@
             document.getElementById('student-gem-controls').style.display = 'none';
             document.getElementById('admin-shop-lobby-btn').style.display = 'none';
             document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+            document.getElementById('student-hf-btn').style.display = 'none';
+            document.getElementById('admin-hf-btn').style.display = 'none';
             document.getElementById('admin-back-lobby-btn').style.display = 'none';
             
             selectedStudentsForGems = [];
@@ -1038,7 +1103,6 @@
                     };
                 }
 
-                // 조르기 요청 알림 배지에 카운트다운(시간) 렌더링을 위한 ID 부여
                 let requestBadge = '';
                 if (!isAdmin && currentUser) {
                     const reqFromThisUser = pendingRequests.find(req => req.from === id);
@@ -1112,7 +1176,6 @@
                 avatarDiv.className = 'avatar-item';
                 if (avatarId === tempSelectedAvatar) avatarDiv.classList.add('selected');
                 
-                // ✨ 흔들림(깜빡임) 수정한 부분
                 avatarDiv.onclick = () => { 
                     tempSelectedAvatar = avatarId; 
                     const allItems = listDiv.querySelectorAll('.avatar-item');
@@ -1123,6 +1186,194 @@
                 let avatarName = (avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`);
                 avatarDiv.innerHTML = `<img src="${avatarId}" alt="아바타"><p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
+            });
+        }
+
+        // --- [하이파이브 메인 함수] ---
+        function enterHighFiveRoom() {
+            if (!isAdmin) {
+                db.ref('highfive/participants/' + currentUser).set({ status: 'waiting', pairId: null, pairColor: null });
+                db.ref('highfive/participants/' + currentUser).onDisconnect().remove();
+            }
+            selectedHfUser = null;
+            showPage('highfive-page');
+            renderHighFiveRoom();
+        }
+
+        function exitHighFiveRoom() {
+            if (!isAdmin) {
+                db.ref('highfive/participants/' + currentUser).remove();
+                db.ref('highfive/participants/' + currentUser).onDisconnect().cancel();
+                db.ref('highfive/requests/' + currentUser).remove(); 
+            }
+            showPage('student-lobby-page');
+        }
+
+        function toggleHfReady() {
+            if (hfState.isStarted) return;
+            const myData = hfParticipants[currentUser];
+            if (!myData) return;
+            const newStatus = myData.status === 'ready' ? 'waiting' : 'ready';
+            db.ref('highfive/participants/' + currentUser).update({ status: newStatus });
+        }
+
+        function startHfGame() {
+            db.ref('highfive/state').update({ isStarted: true, pairCount: 0 });
+            db.ref('highfive/requests').remove();
+        }
+
+        function resetHfGame() {
+            db.ref('highfive/state').update({ isStarted: false, pairCount: 0 });
+            db.ref('highfive/requests').remove();
+            const updates = {};
+            for (let uid in hfParticipants) {
+                updates[`highfive/participants/${uid}/status`] = 'waiting';
+                updates[`highfive/participants/${uid}/pairId`] = null;
+                updates[`highfive/participants/${uid}/pairColor`] = null;
+            }
+            db.ref().update(updates);
+        }
+
+        function renderHighFiveRoom() {
+            const startBtn = document.getElementById('hf-admin-start-btn');
+            const resetBtn = document.getElementById('hf-admin-reset-btn');
+            const readyBtn = document.getElementById('hf-ready-btn');
+            
+            // 1. 하단 버튼 처리
+            if (isAdmin) {
+                readyBtn.style.display = 'none';
+                startBtn.style.display = 'block';
+                resetBtn.style.display = 'block';
+                
+                const studentIds = Object.keys(hfParticipants);
+                const allReady = studentIds.length >= 2 && studentIds.every(id => hfParticipants[id].status === 'ready');
+                startBtn.disabled = !allReady || hfState.isStarted;
+                startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
+            } else {
+                startBtn.style.display = 'none';
+                resetBtn.style.display = 'none';
+                if (hfState.isStarted) {
+                    readyBtn.style.display = 'none';
+                } else {
+                    readyBtn.style.display = 'block';
+                    const myData = hfParticipants[currentUser] || {};
+                    if (myData.status === 'ready') {
+                        readyBtn.innerText = '취소';
+                        readyBtn.style.backgroundColor = '#6c757d';
+                        readyBtn.style.borderColor = '#545b62';
+                    } else {
+                        readyBtn.innerText = '준비';
+                        readyBtn.style.backgroundColor = '#28a745';
+                        readyBtn.style.borderColor = '#1e7e34';
+                    }
+                }
+            }
+
+            // 2. 게임 버튼 (하이?, 파이브!) 활성화 로직
+            const reqBtn = document.getElementById('hf-request-btn');
+            const acceptBtn = document.getElementById('hf-accept-btn');
+            const myData = hfParticipants[currentUser];
+            const isPaired = myData?.pairId != null;
+
+            if (hfState.isStarted && !isAdmin && !isPaired) {
+                reqBtn.disabled = !selectedHfUser || selectedHfUser === currentUser || hfParticipants[selectedHfUser]?.pairId != null;
+                reqBtn.style.opacity = reqBtn.disabled ? '0.5' : '1';
+
+                const myRequests = hfRequests[currentUser] || {};
+                const selectedIsRequester = selectedHfUser && myRequests[selectedHfUser];
+                acceptBtn.disabled = !selectedIsRequester;
+                acceptBtn.style.opacity = acceptBtn.disabled ? '0.5' : '1';
+            } else {
+                reqBtn.disabled = true; acceptBtn.disabled = true;
+                reqBtn.style.opacity = '0.5'; acceptBtn.style.opacity = '0.5';
+            }
+
+            // 3. 참가자 목록 렌더링
+            const listDiv = document.getElementById('hf-users-list');
+            listDiv.innerHTML = '';
+            const ids = Object.keys(hfParticipants);
+            if (ids.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">대기실에 아무도 없습니다.</p>';
+                return;
+            }
+
+            ids.forEach(id => {
+                const data = hfParticipants[id];
+                const realAcc = localStudentAccounts[id] || {};
+                const isMe = id === currentUser;
+                const userIsPaired = data.pairId != null;
+                
+                let avatarSrc = realAcc.avatarId || 'image_0.png';
+                let displayName = realAcc.nickname || id;
+                let statusTextHtml = '';
+                
+                if (hfState.isStarted && !userIsPaired) {
+                    avatarSrc = 'unknown.png'; 
+                    displayName = '???';
+                } else if (!hfState.isStarted) {
+                    statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>';
+                } else if (userIsPaired) {
+                    statusTextHtml = '<div class="hf-ready-text paired">💖짝꿍💖</div>';
+                }
+
+                let badgeHtml = '';
+                if (!isAdmin && hfState.isStarted && !isPaired) {
+                    if (hfRequests[currentUser] && hfRequests[currentUser][id]) {
+                        badgeHtml = '<div class="hf-badge">✋</div>';
+                    }
+                }
+
+                const userDiv = document.createElement('div');
+                userDiv.className = 'online-user-item';
+                
+                if (userIsPaired && data.pairColor) {
+                    userDiv.style.borderColor = data.pairColor;
+                    userDiv.style.borderWidth = '4px';
+                    userDiv.style.backgroundColor = data.pairColor + '15';
+                } else if (selectedHfUser === id) {
+                    userDiv.classList.add('selected');
+                }
+
+                if (!isAdmin && hfState.isStarted && !userIsPaired && id !== currentUser) {
+                    userDiv.style.cursor = 'pointer';
+                    userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
+                }
+
+                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center;">${displayName} ${isMe && !hfState.isStarted ? '<span style="color: #ff9800; font-size:12px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
+                listDiv.appendChild(userDiv);
+            });
+        }
+
+        function sendHighFiveRequest() {
+            if (!selectedHfUser) return;
+            db.ref(`highfive/requests/${selectedHfUser}/${currentUser}`).set(Date.now());
+            selectedHfUser = null;
+            renderHighFiveRoom();
+        }
+
+        function acceptHighFive() {
+            if (!selectedHfUser) return;
+            const targetId = selectedHfUser; 
+            
+            const nextPairId = hfState.pairCount + 1;
+            const pairColor = PAIR_COLORS[nextPairId % PAIR_COLORS.length];
+            
+            const updates = {};
+            updates[`highfive/state/pairCount`] = nextPairId;
+            updates[`highfive/participants/${currentUser}/pairId`] = nextPairId;
+            updates[`highfive/participants/${currentUser}/pairColor`] = pairColor;
+            updates[`highfive/participants/${targetId}/pairId`] = nextPairId;
+            updates[`highfive/participants/${targetId}/pairColor`] = pairColor;
+            
+            updates[`highfive/requests/${currentUser}`] = null;
+            updates[`highfive/requests/${targetId}`] = null;
+
+            db.ref().update(updates).then(() => {
+                selectedHfUser = null;
+                for (let uid in hfRequests) {
+                    if (hfRequests[uid][currentUser]) db.ref(`highfive/requests/${uid}/${currentUser}`).remove();
+                    if (hfRequests[uid][targetId]) db.ref(`highfive/requests/${uid}/${targetId}`).remove();
+                }
             });
         }
     </script>
