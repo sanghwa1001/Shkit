@@ -871,7 +871,13 @@
             if (currentUser && !isAdmin) {
                 db.ref('onlineUsers/' + currentUser).remove();
                 db.ref(`gemRequests/${currentUser}`).off(); 
-                db.ref('highfive/participants/' + currentUser).update({ isOnline: false });
+                
+                const pRef = db.ref('highfive/participants/' + currentUser);
+                if (hfState.isStarted) {
+                    pRef.update({ isOnline: false });
+                } else {
+                    pRef.remove();
+                }
             }
             currentUser = null;
             isAdmin = false;
@@ -1258,8 +1264,15 @@
                 showPage('student-lobby-page');
             } else {
                 const pRef = db.ref('highfive/participants/' + currentUser);
-                pRef.update({ isOnline: false });
                 pRef.child('isOnline').onDisconnect().cancel();
+                
+                if (hfState.isStarted) {
+                    pRef.update({ isOnline: false });
+                } else {
+                    pRef.remove();
+                    db.ref('highfive/requests/' + currentUser).remove();
+                }
+                
                 showPage('student-lobby-page');
             }
         }
