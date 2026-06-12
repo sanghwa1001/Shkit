@@ -72,7 +72,7 @@
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
         .gem-display { font-size: 24px; color: #d84315; background: #ffcc80; padding: 12px 25px; border-radius: 25px; display: inline-block; margin-bottom: 20px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
 
-        /* 🔥 하이파이브 게임 전용 스타일 (렉 방지를 위해 transition 최소화) */
+        /* 🔥 하이파이브 게임 전용 스타일 */
         .hand-container { position: absolute; display: flex; flex-direction: column; align-items: center; user-select: none; transform: translate(-50%, -50%); z-index: 5; }
         .emoji { font-size: 35px; line-height: 1; transition: font-size 0.2s; }
         .hf-label { margin-top: 5px; font-size: 12px; font-weight: bold; background-color: #333; color: #fff; padding: 4px 8px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.1s; }
@@ -411,15 +411,13 @@
             const data = snap.val() || { status: 'closed', users: {} };
             hfStatus = data.status;
             
-            // 🔥 [버그 해결] 좀비 노드(찌꺼기 데이터) 철저한 필터링
+            // 좀비 노드 필터링
             const rawUsers = data.users || {};
             localHfUsers = {};
             Object.keys(rawUsers).forEach(uid => {
-                // 닉네임 정보가 정상적으로 포함되어 있는 데이터만 진짜 유저로 취급
                 if (rawUsers[uid] && rawUsers[uid].nickname) {
                     localHfUsers[uid] = rawUsers[uid];
                 } else if (isAdmin) {
-                    // 비정상(좀비) 데이터는 관리자 화면에서 즉각 DB 삭제 청소
                     db.ref('highFive/users/' + uid).remove();
                 }
             });
@@ -463,7 +461,6 @@
                     renderHfWaitingUI();
                 } else if (hfStatus === 'playing') {
                     
-                    // 관리자가 '다시하기'를 눌러 DB 정보가 리셋된 경우 클라이언트 화면 초기화
                     let needsReinit = false;
                     Object.keys(localHfUsers).forEach(uid => {
                         let u = localHfUsers[uid];
@@ -494,6 +491,8 @@
                             layer.appendChild(el);
                         }
 
+                        // 🔥 [렉 해결을 위한 방어 로직] 
+                        // 다시하기 버튼으로 튕기지 않도록, 동기화는 수동 강제조작(startHighFiveGame)이 아닌 DB명령(Interval)만 따름
                         if (!isAdmin && !u.matched && u.angle !== undefined && hfPhysicsData[uid]) {
                             if (hfPhysicsData[uid].lastDbAngle !== u.angle) {
                                 hfPhysicsData[uid].lastDbAngle = u.angle;
@@ -531,7 +530,6 @@
             if (hfStatus === 'closed') db.ref('highFive/status').set('waiting');
             
             const ref = db.ref('highFive/users/' + currentUser);
-            // 🔥 방어 로직: 닉네임이 로드되지 않았을 경우 자신의 아이디라도 넣어서 보냄
             const safeNickname = localStudentAccounts[currentUser]?.nickname || currentUser;
             ref.set({
                 nickname: safeNickname,
@@ -694,9 +692,10 @@
         function startHighFiveGame() {
             if (!isAdmin) return;
 
-            if (document.getElementById('highfive-game-page').classList.contains('active')) {
-                initLocalPhysics();
-            }
+            // 🔥 [중요 수정] 다시하기 버튼 클릭 시 로컬 화면을 지우는 코드를 삭제하여 튕김 현상 원천 차단
+            // if (document.getElementById('highfive-game-page').classList.contains('active')) {
+            //     initLocalPhysics(); 
+            // }
             
             let updates = {};
             Object.keys(localHfUsers).forEach(uid => {
@@ -718,6 +717,7 @@
                          speedUpdates['highFive/users/' + uid + '/targetSpeed'] = Math.random() * 0.05 + 0.01;
                          if (Math.random() > 0.6) speedUpdates['highFive/users/' + uid + '/direction'] = localHfUsers[uid].direction * -1;
                          
+                         // 계속 최신 각도를 던져서 중간 접속자 동기화 보장 (단, 클라이언트 측의 diff 0.2 방어로 튕기지 않음)
                          speedUpdates['highFive/users/' + uid + '/angle'] = hfPhysicsData[uid].angle;
                          speedUpdates['highFive/users/' + uid + '/currentSpeed'] = hfPhysicsData[uid].currentSpeed;
                     }
