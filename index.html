@@ -355,23 +355,19 @@
             }
         });
 
-        // ⭐ 수정된 부분: 유령 데이터 청소 로직이 포함된 조르기 요청 감지 함수
         function listenForGemRequests() {
             db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
                 const reqs = snapshot.val();
                 pendingRequests = [];
-                const now = Date.now(); // 현재 시간 가져오기
+                const now = Date.now(); 
                 
                 if (reqs) {
                     for (let key in reqs) {
                         const req = reqs[key];
                         
-                        // 💡 [핵심] 타이머 패치 이전 데이터이거나, 이미 1분이 지나버린 유령 데이터 필터링
                         if (!req.expiresAt || now > req.expiresAt) {
-                            // 화면에 표시하지 않고 DB에서 조용히 삭제 (청소)
                             db.ref(`gemRequests/${currentUser}/${key}`).remove();
                         } else {
-                            // 유효 시간(1분)이 아직 남아있는 정상적인 요청만 배열에 담기
                             pendingRequests.push({ key, ...req });
                         }
                     }
@@ -379,7 +375,6 @@
                 
                 const acceptBtn = document.getElementById('accept-request-btn');
                 
-                // 유효한 요청이 1개 이상 있을 때만 주황색 활성화
                 if (pendingRequests.length > 0) {
                     acceptBtn.disabled = false;
                     acceptBtn.style.backgroundColor = '#ff9800'; 
@@ -387,7 +382,6 @@
                     acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
                     acceptBtn.innerText = `🤝 수락 (${pendingRequests.length})`; 
                 } 
-                // 유효한 요청이 없으면 무조건 회색 비활성화
                 else {
                     acceptBtn.disabled = true;
                     acceptBtn.style.backgroundColor = '#ccc';
@@ -719,6 +713,7 @@
             showPage('student-lobby-page');
         }
 
+        // ⭐ 수정된 부분: 관리자가 로비 입장 시 현재 음소거 상태(isChatMuted)에 맞춰 버튼을 동기화합니다.
         function enterAdminLobby() {
             isAdmin = true;
             currentUser = '⭐상티';
@@ -745,6 +740,20 @@
             document.getElementById('chat-send-btn').style.backgroundColor = ""; 
             document.getElementById('chat-send-btn').style.borderColor = "";
             document.getElementById('chat-send-btn').style.boxShadow = "";
+
+            // 💡 [핵심 추가 코드] 입장할 때 DB의 isChatMuted 값을 확인해서 음소거 버튼 스타일을 맞춰줍니다.
+            const muteBtn = document.getElementById('admin-mute-btn');
+            if (isChatMuted) {
+                muteBtn.innerText = "음소거 해제";
+                muteBtn.style.backgroundColor = "#dc3545"; 
+                muteBtn.style.borderColor = "#bd2130";
+                muteBtn.style.boxShadow = "0 6px 0 #8b1c24";
+            } else {
+                muteBtn.innerText = "음소거";
+                muteBtn.style.backgroundColor = ""; 
+                muteBtn.style.borderColor = "";
+                muteBtn.style.boxShadow = "";
+            }
 
             selectedStudentsForGems = []; 
             showPage('student-lobby-page');
