@@ -256,7 +256,7 @@
                     <div class="online-users-title" style="color: #d81b60;">대기실</div>
                     <div id="hf-controls" style="display: flex; align-items: center; gap: 6px;">
                         <button id="hf-request-btn" onclick="sendHighFiveRequest()" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674; width: auto;">하이?</button>
-                        <button id="hf-accept-btn" onclick="acceptHighFive()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ff9800; border-color:#e65100; box-shadow: 0 4px 0 #bf360c; width: auto; opacity: 0.5;">🤝 파이브!</button>
+                        <button id="hf-accept-btn" onclick="acceptHighFive()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777; width: auto;">🤝 파이브!</button>
                     </div>
                 </div>
                 <div id="hf-users-list" style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 10px; justify-content: flex-start;"></div>
@@ -1255,7 +1255,7 @@
                 db.ref('highfive/state').update({ isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] });
                 db.ref('highfive/participants').remove();
                 db.ref('highfive/requests').remove();
-                showPage('admin-menu-page');
+                showPage('student-lobby-page');
             } else {
                 const pRef = db.ref('highfive/participants/' + currentUser);
                 pRef.update({ isOnline: false });
@@ -1299,6 +1299,13 @@
             const startBtn = document.getElementById('hf-admin-start-btn');
             const readyBtn = document.getElementById('hf-ready-btn');
             
+            // --- Calculate Global State ---
+            const studentIds = Object.keys(hfParticipants);
+            const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
+            const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
+            const isMatchComplete = onlineStudentIds.length >= 2 && unPairedCount <= 1;
+            const isFailureState = hfState.isStarted && unPairedCount === 1;
+
             // 1. 관리자 상단 버튼 제어 (하이버튼, 파이브버튼 숨김)
             document.getElementById('hf-controls').style.display = isAdmin ? 'none' : 'flex';
 
@@ -1307,11 +1314,6 @@
                 studentBtnGroup.style.display = 'none';
                 adminBtnGroup.style.display = 'flex';
                 
-                const studentIds = Object.keys(hfParticipants);
-                const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
-                const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
-                const isMatchComplete = onlineStudentIds.length >= 2 && unPairedCount <= 1;
-
                 if (hfState.isStarted && isMatchComplete) {
                     startBtn.innerText = '다시하기';
                     startBtn.disabled = false;
@@ -1358,13 +1360,19 @@
                 reqBtn.disabled = false;
                 reqBtn.style.opacity = '1';
 
-                // 파이브 버튼은 게임 시작 후 + 나에게 온 요청이 있을 때만 활성화
-                if (hfState.isStarted) {
-                    acceptBtn.disabled = requestCount === 0;
-                    acceptBtn.style.opacity = acceptBtn.disabled ? '0.5' : '1';
+                // 파이브 버튼은 게임 시작 후 + 나에게 온 요청이 있을 때만 활성화 (조르기 수락과 같은 디자인)
+                if (hfState.isStarted && requestCount > 0) {
+                    acceptBtn.disabled = false;
+                    acceptBtn.style.backgroundColor = '#ff9800'; 
+                    acceptBtn.style.borderColor = '#e65100';
+                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
+                    acceptBtn.innerText = `🤝 파이브! (${requestCount})`; 
                 } else {
                     acceptBtn.disabled = true;
-                    acceptBtn.style.opacity = '0.5';
+                    acceptBtn.style.backgroundColor = '#ccc';
+                    acceptBtn.style.borderColor = '#999';
+                    acceptBtn.style.boxShadow = '0 4px 0 #777';
+                    acceptBtn.innerText = '🤝 파이브!';
                 }
             }
 
@@ -1393,20 +1401,28 @@
                 const isMe = id === currentUser;
                 const userIsPaired = data.pairId != null;
                 const isOffline = data.isOnline === false;
+                const isFailedUser = isFailureState && !userIsPaired && !isOffline;
                 
                 let avatarSrc = realAcc.avatarId || 'image_0.png';
                 let displayName = realAcc.nickname || id;
                 let statusTextHtml = '';
                 
                 if (hfState.isStarted && !userIsPaired) {
-                    avatarSrc = 'unknown.png'; 
-                    displayName = '???';
+                    if (isFailedUser) {
+                        avatarSrc = realAcc.avatarId || 'image_0.png';
+                        displayName = realAcc.nickname || id;
+                    } else {
+                        avatarSrc = 'unknown.png'; 
+                        displayName = '???';
+                    }
                 } 
                 
                 if (isOffline) {
                     statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>';
                 } else if (userIsPaired) {
                     statusTextHtml = `<div class="hf-ready-text" style="color: ${data.pairColor};">하이파이브 완료!</div>`;
+                } else if (isFailedUser) {
+                    statusTextHtml = `<div class="hf-ready-text" style="color: #dc3545;">하이파이브 실패</div>`;
                 } else if (!hfState.isStarted) {
                     statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>';
                 } else {
@@ -1414,7 +1430,7 @@
                 }
 
                 let badgeHtml = '';
-                if (!isAdmin && hfState.isStarted && !userIsPaired && !isOffline) {
+                if (!isAdmin && hfState.isStarted && !userIsPaired && !isOffline && !isFailedUser) {
                     if (hfRequests[currentUser] && hfRequests[currentUser][id]) {
                         badgeHtml = '<div class="hf-badge">✋</div>';
                     }
@@ -1431,11 +1447,15 @@
                     userDiv.style.borderColor = data.pairColor;
                     userDiv.style.borderWidth = '4px';
                     userDiv.style.backgroundColor = data.pairColor + '15';
+                } else if (isFailedUser) {
+                    userDiv.style.borderColor = '#dc3545';
+                    userDiv.style.borderWidth = '4px';
+                    userDiv.style.backgroundColor = '#f8d7da'; // light red
                 } else if (selectedHfUser === id) {
                     userDiv.classList.add('selected');
                 }
 
-                if (!isAdmin && hfState.isStarted && !userIsPaired && id !== currentUser && !isOffline) {
+                if (!isAdmin && hfState.isStarted && !userIsPaired && id !== currentUser && !isOffline && !isFailedUser) {
                     userDiv.style.cursor = 'pointer';
                     userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
                 }
@@ -1447,8 +1467,15 @@
 
         function sendHighFiveRequest() {
             if (!hfState.isStarted) return alert('게임이 아직 시작되지 않았습니다.');
+            
             const myData = hfParticipants[currentUser];
             if (myData?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
+            
+            const studentIds = Object.keys(hfParticipants);
+            const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
+            const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
+            if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+
             if (!selectedHfUser) return alert('하이파이브 하고 싶은 친구를 선택하세요.');
             if (selectedHfUser === currentUser) return alert('자신에게 요청할 수 없습니다.');
             if (hfParticipants[selectedHfUser]?.pairId != null) return alert('이미 짝이 된 친구입니다.');
@@ -1460,8 +1487,15 @@
 
         function acceptHighFive() {
             if (!hfState.isStarted) return alert('게임이 아직 시작되지 않았습니다.');
+            
             const myData = hfParticipants[currentUser];
             if (myData?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
+            
+            const studentIds = Object.keys(hfParticipants);
+            const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
+            const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
+            if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+
             if (!selectedHfUser) return alert('하이파이브 할 친구를 선택하세요.');
             
             const myRequests = hfRequests[currentUser] || {};
