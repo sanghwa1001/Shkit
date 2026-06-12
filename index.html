@@ -12,64 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        /* ⭐ 전체 배경 스타일 수정 (Flex 정중앙 정렬로 원복) */
-        body { 
-            font-family: 'Jua', sans-serif; 
-            display: flex; 
-            justify-content: center; /* 가로 중앙 */
-            align-items: center; /* 세로 중앙 */
-            height: 100vh; 
-            margin: 0; 
-            background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); 
-        }
-
-        /* ⭐ 흰색 상자 스타일 수정 (위치 고정) */
-        .container { 
-            position: relative; /* ⭐ 중요: 로고 절대 배치의 기준점 */
-            background-color: #ffffff; 
-            padding: 30px 40px 40px 40px; /* 위쪽 패딩 살짝 조정 */
-            border: 5px solid #333; 
-            border-radius: 25px; 
-            box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
-            text-align: center; 
-            width: 95%; 
-            max-width: 1000px; 
-            box-sizing: border-box; 
-            /* 이미지 6에 있던 transition: margin-top 속성 제거 */
-        }
-
-        /* ⭐ 로고 스타일 수정 (상자 위 하늘색 배경에 띄움) */
-        .game-logo-outside {
-            display: block; 
-            width: 280px; /* 로고 크기 */
-            height: auto;
-            
-            /* ⭐ 절대 배치 사용 (상자 밖 위쪽) */
-            position: absolute; 
-            top: -160px; /* ⭐ 로고 높이(+여백)만큼 위로 올림 */
-            left: 50%; /* 가로 중앙 기준 */
-            /* transform은 아래 키프레임 애니메이션에서 좌우 중앙 유지(-50%)를 처리함 */
-            
-            margin: 0; 
-            border: none; /* 테두리 없음 */
-            background: none; /* 배경 없음 */
-            padding: 0;
-
-            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25)); /* 투명 배경 로고 강조 */
-            
-            /* ⭐ 절대 배치에 맞춘 둥둥 애니메이션 사용 */
-            animation: floatingLogoStatic 3s ease-in-out infinite;
-            transition: opacity 0.3s ease; /* 사라질 때만 부드럽게 */
-            z-index: 10; /* 흰 상자 테두리보다 위에 오도록 */
-        }
-
-        /* ⭐ 절대 배치 전용 로고 애니메이션 (left:50% 상태에서 translateY만 조절) */
-        @keyframes floatingLogoStatic {
-            0% { transform: translateX(-50%) translateY(0px); }
-            50% { transform: translateX(-50%) translateY(-12px); }
-            100% { transform: translateX(-50%) translateY(0px); }
-        }
-        
+        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); }
+        .container { background-color: #ffffff; padding: 40px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 95%; max-width: 1000px; box-sizing: border-box; }
         h2 { color: #333; margin-top: 0; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 36px; }
         input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; display: block; }
         .login-btn-group { max-width: 350px; margin: 0 auto; }
@@ -131,11 +75,10 @@
 </head>
 <body>
 
-    <div class="container" id="main-container">
-        <img src="logo.png" alt="Avatar World Logo" id="main-logo" class="game-logo-outside">
-
+    <div class="container">
         <div id="main-page" class="page active">
-            <div class="login-btn-group" style="margin-top: 30px; margin-bottom: 10px;">
+            <h2>🎮 로그인 화면</h2>
+            <div class="login-btn-group">
                 <button onclick="showPage('student-page')">학생 로그인</button>
                 <button class="secondary-btn" onclick="showPage('admin-login-page')">관리자 로그인</button>
             </div>
@@ -490,102 +433,6 @@
         function showPage(pageId) {
             const pages = document.querySelectorAll('.page');
             pages.forEach(page => page.classList.remove('active'));
-            
-            const logo = document.getElementById('main-logo');
-            
-            // ⭐ 절대 배치를 사용하므로 로고를 숨겨도 상자가 움직이지 않음
-            const preLoginPages = ['main-page', 'student-page', 'admin-login-page', 'nickname-page'];
-            
-            if (preLoginPages.includes(pageId)) {
-                logo.style.opacity = '1';
-                logo.style.display = 'block';
-            } else {
-                logo.style.opacity = '0';
-                setTimeout(() => {
-                    if (logo.style.opacity === '0') logo.style.display = 'none';
-                }, 300); 
-            }
-
-            document.getElementById(pageId).classList.add('active');
-            if (pageId === 'student-lobby-page') {
-                const logDiv = document.getElementById('chat-log');
-                logDiv.scrollTop = logDiv.scrollHeight;
-                renderOnlineUsers();
-            }
-        }
-
-        function applySelectedAvatar() {
-            if (!tempSelectedAvatar) return;
-            myCurrentAvatar = tempSelectedAvatar;
-            db.ref('studentAccounts/' + currentUser).update({ avatarId: tempSelectedAvatar });
-            db.ref('onlineUsers/' + currentUser).update({ avatarId: tempSelectedAvatar });
-            
-            showPage('student-lobby-page');
-            renderOnlineUsers();
-        }
-
-        function checkAdminLogin() {
-            const inputId = document.getElementById('admin-id').value.trim();
-            const inputPw = document.getElementById('admin-pw').value.trim();
-            if (inputId === '' || inputPw === '') { alert('아이디와 비밀번호를 모두 입력해주세요.'); return; }
-            const adminEmail = inputId + "@gmail.com";
-            firebase.auth().signInWithEmailAndPassword(adminEmail, inputPw)
-                .then((userCredential) => { showPage('admin-menu-page'); })
-                .catch((error) => { alert('관리자 정보가 일치하지 않습니다.'); });
-        }
-
-        function createStudentAccount() {
-            const newId = document.getElementById('new-student-id').value.trim();
-            const newPw = document.getElementById('new-student-pw').value.trim();
-            if (newId === '' || newPw === '') return alert('아이디와 비밀번호를 모두 입력해주세요.');
-            if (localStudentAccounts[newId]) return alert('이미 존재하는 아이디입니다.');
-            db.ref('studentAccounts/' + newId).set({ pw: newPw, nickname: newId, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 });
-            alert(`학생 계정(${newId})이 생성되었습니다!`);
-            showPage('admin-menu-page');
-        }
-
-        function handleExcelUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-                let successCount = 0; let duplicateCount = 0; let updates = {};
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row[0] === undefined || row[1] === undefined) continue;
-                    const id = String(row[0]).trim(); const pw = String(row[1]).trim();
-                    if (id === '' || pw === '' || id === '아이디' || id.toLowerCase() === 'id') continue;
-                    if (localStudentAccounts[id]) { duplicateCount++; continue; }
-                    updates[id] = { pw: pw, nickname: id, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 };
-                    successCount++;
-                }
-                if (successCount > 0) db.ref('studentAccounts').update(updates);
-                alert(`일괄 등록 완료!\n생성: ${successCount}개\n중복 제외: ${duplicateCount}개`);
-                event.target.value = ''; showPage('admin-menu-page');
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function showPage(pageId) {
-            const pages = document.querySelectorAll('.page');
-            pages.forEach(page => page.classList.remove('active'));
-            
-            const logo = document.getElementById('main-logo');
-            const preLoginPages = ['main-page', 'student-page', 'admin-login-page', 'nickname-page'];
-            
-            if (preLoginPages.includes(pageId)) {
-                logo.style.opacity = '1';
-                logo.style.display = 'block';
-            } else {
-                logo.style.opacity = '0';
-                setTimeout(() => {
-                    if (logo.style.opacity === '0') logo.style.display = 'none';
-                }, 300); 
-            }
-
             document.getElementById(pageId).classList.add('active');
             if (pageId === 'student-lobby-page') {
                 const logDiv = document.getElementById('chat-log');
@@ -866,6 +713,7 @@
             showPage('student-lobby-page');
         }
 
+        // ⭐ 수정된 부분: 관리자가 로비 입장 시 현재 음소거 상태(isChatMuted)에 맞춰 버튼을 동기화합니다.
         function enterAdminLobby() {
             isAdmin = true;
             currentUser = '⭐상티';
@@ -893,6 +741,7 @@
             document.getElementById('chat-send-btn').style.borderColor = "";
             document.getElementById('chat-send-btn').style.boxShadow = "";
 
+            // 💡 [핵심 추가 코드] 입장할 때 DB의 isChatMuted 값을 확인해서 음소거 버튼 스타일을 맞춰줍니다.
             const muteBtn = document.getElementById('admin-mute-btn');
             if (isChatMuted) {
                 muteBtn.innerText = "음소거 해제";
@@ -1183,6 +1032,7 @@
                     };
                 }
 
+                // 조르기 요청 알림 배지에 카운트다운(시간) 렌더링을 위한 ID 부여
                 let requestBadge = '';
                 if (!isAdmin && currentUser) {
                     const reqFromThisUser = pendingRequests.find(req => req.from === id);
