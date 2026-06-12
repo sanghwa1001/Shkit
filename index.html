@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아바타 월드 로그인 (말풍선 채팅 & 10명 와이드 로비)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); }
+        .container { background-color: #ffffff; padding: 40px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 95%; max-width: 1000px; box-sizing: border-box; }
+        h2 { color: #333; margin-top: 0; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 36px; }
+        input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; display: block; }
+        .login-btn-group { max-width: 350px; margin: 0 auto; }
+        button { font-family: 'Jua', sans-serif; width: 100%; padding: 15px 10px; margin: 10px 0; border: 3px solid #0056b3; border-radius: 15px; background-color: #007bff; color: white; font-size: 20px; cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 1px; white-space: nowrap; overflow: hidden; }
+        button:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #004494 !important; }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .bulk-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724; }
+        .delete-btn { background-color: #dc3545; border-color: #bd2130; box-shadow: 0 6px 0 #8b1c24; }
+        .secondary-btn { background-color: #6c757d; border-color: #545b62; box-shadow: 0 6px 0 #3d4246; }
+        .edit-btn { background-color: #28a745; border-color: #1e7e34; box-shadow: 0 4px 0 #155724; padding: 10px; font-size: 16px;}
+        input { font-family: 'Jua', sans-serif; width: 100%; padding: 15px; margin: 10px 0; border: 3px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 20px; background-color: #f9f9f9; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #007bff; background-color: #fff; }
+        input:disabled { background-color: #e9ecef; cursor: not-allowed; }
+        .page { display: none; } .active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .list-container { max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 15px; }
+        .list-container::-webkit-scrollbar { width: 10px; }
+        .list-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 5px; }
+        
+        .list-header { display: flex; gap: 10px; margin-bottom: 15px; font-size: 18px; color: #555; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 10px;}
+        .list-header .h-id { flex: 1.5; } .list-header .h-nick { flex: 1.5; } .list-header .h-pw { flex: 1.5; } .list-header .h-btn { flex: 2; }
+        
+        .account-item { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; background: white; padding: 8px; border-radius: 10px; border: 2px solid #eee;}
+        .account-item input { flex: 1.5; margin: 0; padding: 8px; font-size: 14px; text-align: center; border-width: 2px;}
+        .account-item button { flex: 1; margin: 0; font-size: 14px; padding: 8px 2px; white-space: nowrap; }
+        
+        .lobby-title { color: #ff9800; font-size: 44px; margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; }
+        .welcome-text { font-size: 26px; color: #333; margin-bottom: 25px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 3px solid #ffeeba;}
+        .online-users-container { background-color: #e3f2fd; border: 3px solid #90caf9; border-radius: 15px; padding: 20px; max-height: 280px; overflow-y: auto; }
+        
+        .online-users-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #90caf9; padding-bottom: 10px; margin-bottom: 15px; }
+        .online-users-title { font-size: 22px; color: #1565c0; text-align: left; margin: 0;}
+        
+        #online-users-list { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 10px; justify-content: flex-start; }
+        .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 16px; color: #333; background: white; padding: 10px 5px; border-radius: 12px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 75px;}
+        .online-user-avatar { height: 60px; width: auto; margin-bottom: 8px; }
+        .speech-bubble { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); background: #fff; border: 3px solid #ff9800; border-radius: 15px; padding: 6px 12px; font-size: 15px; color: #333; white-space: nowrap; z-index: 10; box-shadow: 0 4px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: #ff9800 transparent transparent transparent; display: block; width: 0; }
+        @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+        .chat-section { background: #f1f8e9; border: 3px solid #8bc34a; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-log { height: 120px; overflow-y: auto; background: #fff; border: 2px solid #ccc; border-radius: 10px; padding: 10px; text-align: left; font-size: 18px; }
+        .chat-log::-webkit-scrollbar { width: 8px; }
+        .chat-log::-webkit-scrollbar-thumb { background: #8bc34a; border-radius: 4px; }
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input-area input { flex: 1; margin: 0; font-size: 18px; padding: 10px; }
+        .chat-input-area button { width: 100px; margin: 0; font-size: 18px; padding: 10px; }
+        .lobby-menu-group { display: flex; gap: 10px; margin-top: 15px; }
+        .lobby-menu-group button { margin: 0; flex: 1; }
+        
+        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; overflow-x: hidden; padding: 20px; }
+        .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
+        .avatar-item:hover { transform: scale(1.05); z-index: 1; }
+        .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
+        .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
+        .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
+        .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
+        .gem-display { font-size: 24px; color: #d84315; background: #ffcc80; padding: 12px 25px; border-radius: 25px; display: inline-block; margin-bottom: 20px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="main-page" class="page active">
+            <h2>🎮 로그인 화면</h2>
+            <div class="login-btn-group">
+                <button onclick="showPage('student-page')">학생 로그인</button>
+                <button class="secondary-btn" onclick="showPage('admin-login-page')">관리자 로그인</button>
+            </div>
+        </div>
+
+        <div id="student-page" class="page">
+            <h2>학생 로그인</h2>
+            <input type="text" id="student-id" class="login-input" placeholder="학생 아이디">
+            <input type="password" id="student-pw" class="login-input" placeholder="학생 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="checkStudentLogin()">접속하기!</button>
+                <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            </div>
+        </div>
+        
+        <div id="nickname-page" class="page">
+            <h2>🏷️ 별명 설정</h2>
+            <p style="font-size: 18px; color: #555;">대기실과 채팅창에서 사용할 멋진 별명을 입력하세요!</p>
+            <input type="text" id="student-nickname" class="login-input" placeholder="별명 (최대 8자)" maxlength="8">
+            <div class="login-btn-group">
+                <button onclick="enterLobbyWithNickname()">입장하기</button>
+            </div>
+        </div>
+
+        <div id="admin-login-page" class="page">
+            <h2>관리자 로그인</h2>
+            <input type="text" id="admin-id" class="login-input" placeholder="관리자 아이디">
+            <input type="password" id="admin-pw" class="login-input" placeholder="관리자 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="checkAdminLogin()">로그인</button>
+                <button class="secondary-btn" onclick="showPage('main-page')">처음으로</button>
+            </div>
+        </div>
+
+        <div id="admin-menu-page" class="page">
+            <h2>🛠️ 관리자 메뉴</h2>
+            <div class="login-btn-group">
+                <button onclick="enterAdminLobby()" style="background-color: #6f42c1; border-color:#59339d; box-shadow: 0 6px 0 #452679;">로비로 이동</button>
+                <button onclick="showPage('student-create-page')">학생 계정 생성</button>
+                <button onclick="showManagePage('admin-menu-page')">학생 계정 수정</button>
+                <button onclick="showAdminShopPage('admin-menu-page')" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
+                <button class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+            </div>
+        </div>
+
+        <div id="student-create-page" class="page">
+            <h2>계정 만들기</h2>
+            <input type="text" id="new-student-id" class="login-input" placeholder="생성할 아이디">
+            <input type="password" id="new-student-pw" class="login-input" placeholder="생성할 비밀번호">
+            <div class="login-btn-group">
+                <button onclick="createStudentAccount()">계정 생성</button>
+                <button class="bulk-btn" onclick="document.getElementById('excel-file-input').click()">엑셀로 일괄 생성</button>
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
+                <button class="secondary-btn" onclick="showPage('admin-menu-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="student-manage-page" class="page">
+            <h2>학생 목록</h2>
+            <div id="student-list" class="list-container"></div>
+            <button class="delete-btn" onclick="deleteAllAccounts()">전체 삭제</button>
+            <button class="secondary-btn" onclick="closeManagePage()">이전으로</button>
+        </div>
+
+        <div id="admin-shop-page" class="page">
+            <h2>상점 관리</h2>
+            <p style="font-size: 18px; color: #666; margin-bottom: 15px;">✏️이름 / 💎가격을 수정하고 판매할 아바타를 클릭하세요!</p>
+            <div id="admin-shop-list" class="avatar-list-container"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="bulk-btn" onclick="saveShopItems()">판매하기</button>
+                <button class="secondary-btn" onclick="closeAdminShopPage()">이전으로</button>
+            </div>
+        </div>
+
+        <div id="student-lobby-page" class="page">
+            <h2 class="lobby-title">🎉 메인 로비 🎉</h2>
+            <div class="welcome-text" id="welcome-message"></div>
+            
+            <div class="online-users-container">
+                <div class="online-users-header">
+                    <div class="online-users-title">🟢 대기실</div>
+                    
+                    <div id="admin-gem-controls" style="display: none; align-items: center; gap: 6px;">
+                        <span style="font-weight:bold; font-size:16px; color:#1565c0;">보석</span>
+                        <input type="number" id="gem-control-amount" value="1" min="1" style="width: 50px; margin: 0; padding: 5px; font-size: 16px; text-align: center; border: 2px solid #90caf9; border-radius: 8px;">
+                        <span style="font-weight:bold; font-size:16px; color:#1565c0;">개</span>
+                        <button onclick="modifyGems('add')" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724; width: auto;">✅ 지급</button>
+                        <button onclick="modifyGems('sub')" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #dc3545; border-color:#bd2130; box-shadow: 0 4px 0 #8b1c24; width: auto;">⛔ 차감</button>
+                    </div>
+
+                    <div id="student-gem-controls" style="display: none; align-items: center; gap: 6px;">
+                        <span style="font-weight:bold; font-size:16px; color:#1565c0;">보석</span>
+                        <input type="number" id="student-gem-amount" value="1" min="1" style="width: 50px; margin: 0; padding: 5px; font-size: 16px; text-align: center; border: 2px solid #90caf9; border-radius: 8px;">
+                        <span style="font-weight:bold; font-size:16px; color:#1565c0;">개</span>
+                        <button onclick="giftGems()" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724; width: auto;">🎁 선물</button>
+                        <button onclick="requestGems()" style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674; width: auto;">🙏 조르기</button>
+                        <button id="accept-request-btn" onclick="acceptGemRequest()" disabled style="margin:0; padding: 6px 12px; font-size: 15px; background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777; width: auto;">🤝 수락</button>
+                    </div>
+                </div>
+                <div id="online-users-list"></div>
+            </div>
+
+            <div class="chat-section">
+                <div class="chat-log" id="chat-log"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="채팅을 입력하세요!" onkeypress="if(event.key==='Enter') sendChat()">
+                    <button id="chat-send-btn" class="bulk-btn" onclick="sendChat()">전송</button>
+                    <button id="admin-mute-btn" class="secondary-btn" style="display: none; width: 100px; margin: 0; font-size: 18px; padding: 10px;" onclick="toggleMute()">음소거</button>
+                    <button id="admin-chat-reset-btn" class="delete-btn" style="display: none; width: 100px; margin: 0; font-size: 18px; padding: 10px;" onclick="clearAllChat()">초기화</button>
+                </div>
+            </div>
+
+            <div class="lobby-menu-group">
+                <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 아바타 상점</button>
+                <button id="storage-btn" onclick="showStoragePage()">🎒 내 보관함</button>
+                <button id="student-logout-btn" class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
+                
+                <button id="admin-shop-lobby-btn" onclick="showAdminShopPage('student-lobby-page')" style="display: none; background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">💎 상점 관리</button>
+                <button id="admin-manage-lobby-btn" onclick="showManagePage('student-lobby-page')" style="display: none;">학생 계정 수정</button>
+                <button id="admin-back-lobby-btn" class="secondary-btn" onclick="showPage('admin-menu-page')" style="display: none;">이전으로</button>
+            </div>
+        </div>
+
+        <div id="student-shop-page" class="page">
+            <h2>💎 아바타 상점</h2>
+            <div id="my-gems-display" class="gem-display">내 보석: 💎 0</div>
+            <div id="student-shop-list" class="avatar-list-container"></div>
+            <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
+        </div>
+
+        <div id="storage-page" class="page">
+            <h2>🎒 아바타 보관함</h2>
+            <p style="font-size: 18px; color: #555;">장착할 아바타 고르기!</p>
+            <div id="avatar-list" class="avatar-list-container"></div>
+            <button class="bulk-btn" onclick="applySelectedAvatar()">장착하기</button>
+            <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAs5o4rlC1-bhA4J0P8LXp54CzDQ_aRNCo",
+            authDomain: "shkit-300c7.firebaseapp.com",
+            projectId: "shkit-300c7",
+            storageBucket: "shkit-300c7.firebasestorage.app",
+            messagingSenderId: "233422083288",
+            appId: "1:233422083288:web:2943bf7fdcc1c64ab333ad",
+            measurementId: "G-3X7SHWR081",
+            databaseURL: "https://shkit-300c7-default-rtdb.firebaseio.com" 
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const DEFAULT_AVATARS = ['image_0.png', 'image_1.png'];
+        const ALL_SHOP_AVATARS = ['1.png', '2.png', '3.png', '4.png', '5.png', '6.png', '7.png', '8.png', '9.png', '10.png'];
+        
+        let currentUser = null;
+        let myCurrentAvatar = null;
+        let tempSelectedAvatar = null; 
+        let isAdmin = false; 
+        let selectedStudentsForGems = []; 
+        let pendingRequests = []; 
+        let adminShopReturnPage = 'admin-menu-page'; 
+        let adminManageReturnPage = 'admin-menu-page';
+        let isChatMuted = false; 
+
+        let tempShopItems = [];
+        let localStudentAccounts = {}; 
+        let localOnlineUsers = {}; 
+        let localShopItems = []; 
+        let localShopNames = {}; 
+        let localShopPrices = {}; 
+
+        db.ref('studentAccounts').on('value', (snapshot) => {
+            localStudentAccounts = snapshot.val() || {};
+            if (document.getElementById('student-manage-page').classList.contains('active')) renderStudentList();
+            if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
+        });
+
+        db.ref('onlineUsers').on('value', (snapshot) => {
+            localOnlineUsers = snapshot.val() || {};
+            if (document.getElementById('student-lobby-page').classList.contains('active')) renderOnlineUsers();
+        });
+
+        db.ref('shopItems').on('value', (snapshot) => {
+            localShopItems = snapshot.val() || [];
+            if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
+            if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
+        });
+
+        db.ref('shopItemNames').on('value', (snapshot) => {
+            localShopNames = snapshot.val() || {};
+            if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
+            if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
+            if (document.getElementById('storage-page').classList.contains('active')) renderAvatarList();
+        });
+
+        db.ref('shopItemPrices').on('value', (snapshot) => {
+            localShopPrices = snapshot.val() || {};
+            if (document.getElementById('admin-shop-page').classList.contains('active')) renderAdminShopPage();
+            if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
+        });
+
+        db.ref('chatLog').on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            const logDiv = document.getElementById('chat-log');
+            
+            if (data.isAlert) {
+                const color = data.alertColor || '#007bff'; 
+                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80;">📢 ${data.message}</div>`;
+            } else {
+                const displayName = data.senderName || data.sender;
+                const isMe = data.sender === currentUser;
+                
+                let nameColor = '#333';
+                let msgColor = '#333';
+                
+                if (data.sender === '⭐상티' || displayName === '⭐상티') {
+                    nameColor = '#007bff';
+                    msgColor = '#007bff';
+                } else if (isMe) {
+                    nameColor = '#007bff';
+                }
+                
+                logDiv.innerHTML += `<div style="margin-bottom: 5px;"><strong style="color:${nameColor}">${displayName}:</strong> <span style="color:${msgColor}">${data.message}</span></div>`;
+            }
+            
+            logDiv.scrollTop = logDiv.scrollHeight;
+        });
+
+        db.ref('chatLog').on('value', (snapshot) => {
+            if (!snapshot.exists()) {
+                document.getElementById('chat-log').innerHTML = '';
+            }
+        });
+
+        db.ref('chatState/isMuted').on('value', (snapshot) => {
+            isChatMuted = snapshot.val() || false;
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const muteBtn = document.getElementById('admin-mute-btn');
+
+            if (isChatMuted) {
+                if (!isAdmin) {
+                    chatInput.disabled = true;
+                    chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                    chatSendBtn.disabled = true;
+                    chatSendBtn.style.backgroundColor = "#ccc";
+                    chatSendBtn.style.borderColor = "#999";
+                    chatSendBtn.style.boxShadow = "0 6px 0 #777";
+                }
+                if (isAdmin && muteBtn) {
+                    muteBtn.innerText = "음소거 해제";
+                    muteBtn.style.backgroundColor = "#dc3545"; 
+                    muteBtn.style.borderColor = "#bd2130";
+                    muteBtn.style.boxShadow = "0 6px 0 #8b1c24";
+                }
+            } else {
+                if (!isAdmin) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = "채팅을 입력하세요!";
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.style.backgroundColor = ""; 
+                    chatSendBtn.style.borderColor = "";
+                    chatSendBtn.style.boxShadow = "";
+                }
+                if (isAdmin && muteBtn) {
+                    muteBtn.innerText = "음소거";
+                    muteBtn.style.backgroundColor = ""; 
+                    muteBtn.style.borderColor = "";
+                    muteBtn.style.boxShadow = "";
+                }
+            }
+        });
+
+        function listenForGemRequests() {
+            db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
+                const reqs = snapshot.val();
+                pendingRequests = [];
+                const now = Date.now(); 
+                
+                if (reqs) {
+                    for (let key in reqs) {
+                        const req = reqs[key];
+                        
+                        if (!req.expiresAt || now > req.expiresAt) {
+                            db.ref(`gemRequests/${currentUser}/${key}`).remove();
+                        } else {
+                            pendingRequests.push({ key, ...req });
+                        }
+                    }
+                }
+                
+                const acceptBtn = document.getElementById('accept-request-btn');
+                
+                if (pendingRequests.length > 0) {
+                    acceptBtn.disabled = false;
+                    acceptBtn.style.backgroundColor = '#ff9800'; 
+                    acceptBtn.style.borderColor = '#e65100';
+                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
+                    acceptBtn.innerText = `🤝 수락 (${pendingRequests.length})`; 
+                } 
+                else {
+                    acceptBtn.disabled = true;
+                    acceptBtn.style.backgroundColor = '#ccc';
+                    acceptBtn.style.borderColor = '#999';
+                    acceptBtn.style.boxShadow = '0 4px 0 #777';
+                    acceptBtn.innerText = '🤝 수락';
+                }
+
+                if (document.getElementById('student-lobby-page').classList.contains('active')) {
+                    renderOnlineUsers();
+                }
+            });
+        }
+
+        setInterval(() => {
+            if (!currentUser || isAdmin) return;
+            
+            const now = Date.now();
+            let needsRender = false;
+
+            pendingRequests.forEach(req => {
+                if (req.expiresAt && now > req.expiresAt) {
+                    if (req.isDeleting) return;
+                    req.isDeleting = true; 
+
+                    db.ref(`gemRequests/${currentUser}/${req.key}`).remove().then(() => {
+                        const requesterNick = localStudentAccounts[req.from]?.nickname || req.from;
+                        const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
+                        
+                        db.ref('chatLog').push().set({
+                            sender: 'system',
+                            message: `${requesterNick}이(가) ${myNick}에게 보낸 조르기 요청이 1분 경과로 취소되었습니다. ⏳`,
+                            isAlert: true,
+                            alertColor: '#6c757d', 
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    });
+                } else if (req.expiresAt) {
+                    let timeLeft = Math.max(0, Math.ceil((req.expiresAt - now) / 1000));
+                    const safeId = req.from.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const badgeEl = document.getElementById(`badge-${safeId}`);
+                    if (badgeEl) {
+                        badgeEl.innerText = `🙏${req.amount}개 (${timeLeft}s)`;
+                    }
+                }
+            });
+        }, 1000);
+
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if (pageId === 'student-lobby-page') {
+                const logDiv = document.getElementById('chat-log');
+                logDiv.scrollTop = logDiv.scrollHeight;
+                renderOnlineUsers();
+            }
+        }
+
+        function applySelectedAvatar() {
+            if (!tempSelectedAvatar) return;
+            myCurrentAvatar = tempSelectedAvatar;
+            db.ref('studentAccounts/' + currentUser).update({ avatarId: tempSelectedAvatar });
+            db.ref('onlineUsers/' + currentUser).update({ avatarId: tempSelectedAvatar });
+            
+            showPage('student-lobby-page');
+            renderOnlineUsers();
+        }
+
+        function checkAdminLogin() {
+            const inputId = document.getElementById('admin-id').value.trim();
+            const inputPw = document.getElementById('admin-pw').value.trim();
+            if (inputId === '' || inputPw === '') { alert('아이디와 비밀번호를 모두 입력해주세요.'); return; }
+            const adminEmail = inputId + "@gmail.com";
+            firebase.auth().signInWithEmailAndPassword(adminEmail, inputPw)
+                .then((userCredential) => { showPage('admin-menu-page'); })
+                .catch((error) => { alert('관리자 정보가 일치하지 않습니다.'); });
+        }
+
+        function createStudentAccount() {
+            const newId = document.getElementById('new-student-id').value.trim();
+            const newPw = document.getElementById('new-student-pw').value.trim();
+            if (newId === '' || newPw === '') return alert('아이디와 비밀번호를 모두 입력해주세요.');
+            if (localStudentAccounts[newId]) return alert('이미 존재하는 아이디입니다.');
+            db.ref('studentAccounts/' + newId).set({ pw: newPw, nickname: newId, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 });
+            alert(`학생 계정(${newId})이 생성되었습니다!`);
+            showPage('admin-menu-page');
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                let successCount = 0; let duplicateCount = 0; let updates = {};
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row[0] === undefined || row[1] === undefined) continue;
+                    const id = String(row[0]).trim(); const pw = String(row[1]).trim();
+                    if (id === '' || pw === '' || id === '아이디' || id.toLowerCase() === 'id') continue;
+                    if (localStudentAccounts[id]) { duplicateCount++; continue; }
+                    updates[id] = { pw: pw, nickname: id, avatarId: DEFAULT_AVATARS[0], ownedAvatars: DEFAULT_AVATARS, gems: 10 };
+                    successCount++;
+                }
+                if (successCount > 0) db.ref('studentAccounts').update(updates);
+                alert(`일괄 등록 완료!\n생성: ${successCount}개\n중복 제외: ${duplicateCount}개`);
+                event.target.value = ''; showPage('admin-menu-page');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showManagePage(returnPage = 'admin-menu-page') { 
+            adminManageReturnPage = returnPage;
+            renderStudentList(); 
+            showPage('student-manage-page'); 
+        }
+
+        function closeManagePage() {
+            showPage(adminManageReturnPage);
+        }
+
+        function renderStudentList() {
+            const listDiv = document.getElementById('student-list');
+            listDiv.innerHTML = '';
+            const ids = Object.keys(localStudentAccounts);
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color:#888; font-size:18px;">생성된 학생 계정이 없습니다.</p>'; return; }
+            
+            listDiv.innerHTML = `<div class="list-header"><div class="h-id">아이디</div><div class="h-nick">별명</div><div class="h-pw">비밀번호</div><div class="h-btn">관리</div></div>`;
+            
+            ids.forEach((id) => {
+                if (id.toLowerCase() === 'admin' || id === '⭐상티') return;
+
+                const account = localStudentAccounts[id];
+                const currentNick = account.nickname || id;
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'account-item';
+                itemDiv.innerHTML = `
+                    <input type="text" value="${id}" readonly style="background:#eee; flex: 1.5; font-size:14px;">
+                    <input type="text" id="edit-nickname-${id}" value="${currentNick}" placeholder="별명" style="flex: 1.5; font-size:14px;">
+                    <input type="text" id="edit-pw-${id}" value="${account.pw}" placeholder="비밀번호" style="flex: 1.5; font-size:14px;">
+                    <button class="edit-btn" onclick="updateAccount('${id}')" style="flex: 1; font-size:14px; padding:8px 2px;">수정</button>
+                    <button class="delete-btn" onclick="deleteAccount('${id}')" style="flex: 1; font-size:14px; padding:8px 2px;">삭제</button>
+                `;
+                listDiv.appendChild(itemDiv);
+            });
+        }
+
+        function updateAccount(id) {
+            const newPw = document.getElementById(`edit-pw-${id}`).value.trim();
+            const newNick = document.getElementById(`edit-nickname-${id}`).value.trim();
+            if (newPw === '') return alert('비밀번호를 입력해주세요.');
+            
+            db.ref('studentAccounts/' + id).update({ pw: newPw, nickname: newNick });
+            if (localOnlineUsers[id]) {
+                db.ref('onlineUsers/' + id).update({ nickname: newNick });
+            }
+            alert('계정 정보가 성공적으로 수정되었습니다.');
+        }
+
+        function deleteAccount(id) {
+            if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 없습니다.');
+            if (confirm('정말 삭제하시겠습니까?')) db.ref('studentAccounts/' + id).remove();
+        }
+
+        function deleteAllAccounts() {
+            if (Object.keys(localStudentAccounts).length === 0) return alert('삭제할 계정이 없습니다.');
+            if (Object.keys(localOnlineUsers).length > 0) return alert('접속 중인 학생이 있어 삭제할 수 없습니다.');
+            if (confirm('⚠️ 모든 학생 계정을 삭제하시겠습니까?')) db.ref('studentAccounts').remove();
+        }
+
+        function showAdminShopPage(returnPage = 'admin-menu-page') { 
+            adminShopReturnPage = returnPage;
+            tempShopItems = [...localShopItems]; 
+            renderAdminShopPage(); 
+            showPage('admin-shop-page'); 
+        }
+
+        function closeAdminShopPage() {
+            showPage(adminShopReturnPage);
+        }
+
+        function renderAdminShopPage() {
+            const listDiv = document.getElementById('admin-shop-list');
+            listDiv.innerHTML = '';
+            ALL_SHOP_AVATARS.forEach((avatarId, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'avatar-item';
+                if (tempShopItems.includes(avatarId)) itemDiv.classList.add('selected');
+
+                const dbKey = avatarId.replace('.', '_');
+                const currentName = localShopNames[dbKey] || `아바타 ${index + 1}`;
+                const currentPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+                
+                itemDiv.innerHTML = `
+                    <img src="${avatarId}" alt="아바타">
+                    <div id="view-name-mode-${index}" style="margin-top: 8px; display:flex; align-items:center; gap:5px; justify-content:center;">
+                        <span style="font-size: 18px; color: #333;">${currentName}</span>
+                        <span title="이름 수정" style="cursor: pointer; font-size: 16px; background: #eee; padding: 4px 8px; border-radius: 8px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
+                    </div>
+                    <div id="edit-name-mode-${index}" style="margin-top: 8px; display:none; align-items:center; gap:5px; justify-content:center;">
+                        <input type="text" id="name-input-${index}" value="${currentName}" style="width: 100px; padding: 6px; font-size: 16px; text-align: center; border: 2px solid #ccc; border-radius: 8px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'name')">
+                        <span title="저장" style="cursor: pointer; font-size: 16px; background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 8px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
+                    </div>
+                    <div id="view-price-mode-${index}" style="margin-top: 8px; margin-bottom: 8px; display:flex; align-items:center; gap:5px; justify-content:center;">
+                        <span style="font-size: 18px; color: #d84315;">${currentPrice}</span>
+                        <span title="가격 수정" style="cursor: pointer; font-size: 16px; background: #eee; padding: 4px 8px; border-radius: 8px;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
+                    </div>
+                    <div id="edit-price-mode-${index}" style="margin-top: 8px; margin-bottom: 8px; display:none; align-items:center; gap:5px; justify-content:center;">
+                        <input type="number" id="price-input-${index}" value="${currentPrice}" min="0" style="width: 60px; padding: 6px; font-size: 16px; text-align: center; border: 2px solid #ccc; border-radius: 8px;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'price')">
+                        <span title="저장" style="cursor: pointer; font-size: 16px; background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 8px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'price')">✔️</span>
+                    </div>
+                `;
+                itemDiv.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
+                        if (tempShopItems.includes(avatarId)) {
+                            tempShopItems = tempShopItems.filter(id => id !== avatarId);
+                            itemDiv.classList.remove('selected'); 
+                        } else {
+                            tempShopItems.push(avatarId);
+                            itemDiv.classList.add('selected'); 
+                        }
+                    }
+                };
+                listDiv.appendChild(itemDiv);
+            });
+        }
+
+        function enableEditMode(event, index, type) {
+            event.stopPropagation();
+            document.getElementById(`view-${type}-mode-${index}`).style.display = 'none';
+            document.getElementById(`edit-${type}-mode-${index}`).style.display = 'flex';
+            document.getElementById(`${type}-input-${index}`).focus(); 
+        }
+
+        function saveSingleData(event, avatarId, index, type) {
+            event.stopPropagation();
+            const inputField = document.getElementById(`${type}-input-${index}`);
+            const newValue = inputField.value.trim();
+            const dbKey = avatarId.replace('.', '_');
+
+            if (type === 'name') {
+                const currentNameInDB = localShopNames[dbKey];
+                if (newValue === '') {
+                    if (currentNameInDB !== undefined) db.ref('shopItemNames/' + dbKey).remove().then(() => renderAdminShopPage());
+                    else renderAdminShopPage(); 
+                } else {
+                    if (newValue !== currentNameInDB) db.ref('shopItemNames/' + dbKey).set(newValue).then(() => renderAdminShopPage());
+                    else renderAdminShopPage(); 
+                }
+            } else if (type === 'price') {
+                const currentPriceInDB = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+                let parsedPrice = parseInt(newValue, 10);
+                if (isNaN(parsedPrice) || parsedPrice < 0) parsedPrice = 1;
+                if (parsedPrice !== currentPriceInDB) db.ref('shopItemPrices/' + dbKey).set(parsedPrice).then(() => renderAdminShopPage());
+                else renderAdminShopPage();
+            }
+        }
+
+        function handleEnter(event, avatarId, index, type) { if(event.key === 'Enter') saveSingleData(event, avatarId, index, type); }
+        
+        function saveShopItems() { 
+            db.ref('shopItems').set(tempShopItems); 
+            showPage(adminShopReturnPage); 
+        }
+
+        function checkStudentLogin() {
+            const inputId = document.getElementById('student-id').value.trim();
+            const inputPw = document.getElementById('student-pw').value.trim();
+            const account = localStudentAccounts[inputId];
+
+            if (account && account.pw === inputPw) {
+                currentUser = inputId;
+                isAdmin = false;
+                myCurrentAvatar = account.avatarId || DEFAULT_AVATARS[0];
+                if (!account.ownedAvatars) db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: DEFAULT_AVATARS });
+                if (account.gems === undefined) db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
+                
+                document.getElementById('student-nickname').value = account.nickname || inputId;
+                showPage('nickname-page');
+            } else {
+                alert('아이디 또는 비밀번호가 틀렸습니다.');
+            }
+        }
+        
+        function enterLobbyWithNickname() {
+            const nicknameInput = document.getElementById('student-nickname').value.trim();
+            const finalNickname = nicknameInput === '' ? currentUser : nicknameInput;
+
+            db.ref('studentAccounts/' + currentUser).update({ nickname: finalNickname });
+            document.getElementById('welcome-message').innerText = `환영합니다, ${finalNickname}님! ✨`;
+            
+            document.getElementById('admin-chat-reset-btn').style.display = 'none';
+            document.getElementById('admin-mute-btn').style.display = 'none';
+            document.getElementById('shop-btn').style.display = 'block';
+            document.getElementById('storage-btn').style.display = 'block';
+            document.getElementById('student-logout-btn').style.display = 'block';
+            
+            document.getElementById('admin-gem-controls').style.display = 'none';
+            document.getElementById('student-gem-controls').style.display = 'flex'; 
+            
+            document.getElementById('admin-shop-lobby-btn').style.display = 'none';
+            document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+            document.getElementById('admin-back-lobby-btn').style.display = 'none';
+            
+            selectedStudentsForGems = [];
+            listenForGemRequests(); 
+
+            const myOnlineRef = db.ref('onlineUsers/' + currentUser);
+            myOnlineRef.set({ avatarId: myCurrentAvatar, nickname: finalNickname });
+            myOnlineRef.onDisconnect().remove(); 
+            
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            if (isChatMuted) {
+                chatInput.disabled = true;
+                chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                chatSendBtn.disabled = true;
+                chatSendBtn.style.backgroundColor = "#ccc";
+                chatSendBtn.style.borderColor = "#999";
+                chatSendBtn.style.boxShadow = "0 6px 0 #777";
+            } else {
+                chatInput.disabled = false;
+                chatInput.placeholder = "채팅을 입력하세요!";
+                chatSendBtn.disabled = false;
+                chatSendBtn.style.backgroundColor = ""; 
+                chatSendBtn.style.borderColor = "";
+                chatSendBtn.style.boxShadow = "";
+            }
+
+            showPage('student-lobby-page');
+        }
+
+        // ⭐ 수정된 부분: 관리자가 로비 입장 시 현재 음소거 상태(isChatMuted)에 맞춰 버튼을 동기화합니다.
+        function enterAdminLobby() {
+            isAdmin = true;
+            currentUser = '⭐상티';
+            myCurrentAvatar = ""; 
+            
+            document.getElementById('welcome-message').innerText = `환영합니다, 상티님! 로비 상태를 확인하세요.`;
+            
+            document.getElementById('admin-chat-reset-btn').style.display = 'block';
+            document.getElementById('admin-mute-btn').style.display = 'block';
+            document.getElementById('shop-btn').style.display = 'none';
+            document.getElementById('storage-btn').style.display = 'none';
+            document.getElementById('student-logout-btn').style.display = 'none';
+            
+            document.getElementById('admin-gem-controls').style.display = 'flex';
+            document.getElementById('student-gem-controls').style.display = 'none';
+            
+            document.getElementById('admin-shop-lobby-btn').style.display = 'block';
+            document.getElementById('admin-manage-lobby-btn').style.display = 'block';
+            document.getElementById('admin-back-lobby-btn').style.display = 'block';
+            
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-input').placeholder = "채팅을 입력하세요!";
+            document.getElementById('chat-send-btn').disabled = false;
+            document.getElementById('chat-send-btn').style.backgroundColor = ""; 
+            document.getElementById('chat-send-btn').style.borderColor = "";
+            document.getElementById('chat-send-btn').style.boxShadow = "";
+
+            // 💡 [핵심 추가 코드] 입장할 때 DB의 isChatMuted 값을 확인해서 음소거 버튼 스타일을 맞춰줍니다.
+            const muteBtn = document.getElementById('admin-mute-btn');
+            if (isChatMuted) {
+                muteBtn.innerText = "음소거 해제";
+                muteBtn.style.backgroundColor = "#dc3545"; 
+                muteBtn.style.borderColor = "#bd2130";
+                muteBtn.style.boxShadow = "0 6px 0 #8b1c24";
+            } else {
+                muteBtn.innerText = "음소거";
+                muteBtn.style.backgroundColor = ""; 
+                muteBtn.style.borderColor = "";
+                muteBtn.style.boxShadow = "";
+            }
+
+            selectedStudentsForGems = []; 
+            showPage('student-lobby-page');
+        }
+
+        function logoutStudent() {
+            if (currentUser && !isAdmin) {
+                db.ref('onlineUsers/' + currentUser).remove();
+                db.ref(`gemRequests/${currentUser}`).off(); 
+            }
+            currentUser = null;
+            isAdmin = false;
+            
+            document.getElementById('admin-chat-reset-btn').style.display = 'none';
+            document.getElementById('admin-mute-btn').style.display = 'none';
+            document.getElementById('admin-gem-controls').style.display = 'none';
+            document.getElementById('student-gem-controls').style.display = 'none';
+            document.getElementById('admin-shop-lobby-btn').style.display = 'none';
+            document.getElementById('admin-manage-lobby-btn').style.display = 'none';
+            document.getElementById('admin-back-lobby-btn').style.display = 'none';
+            
+            selectedStudentsForGems = [];
+            showPage('main-page');
+        }
+
+        function sendChat() {
+            if (!isAdmin && isChatMuted) return; 
+
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg || !currentUser) return;
+
+            let senderName = isAdmin ? '⭐상티' : (localStudentAccounts[currentUser]?.nickname || currentUser);
+
+            const newChatRef = db.ref('chatLog').push();
+            newChatRef.set({ 
+                sender: currentUser, 
+                senderName: senderName,
+                message: msg, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP 
+            });
+
+            if (!isAdmin) {
+                const now = Date.now();
+                db.ref('onlineUsers/' + currentUser).update({ bubble: msg, bubbleTime: now });
+                setTimeout(() => {
+                    db.ref('onlineUsers/' + currentUser).once('value').then(snap => {
+                        const data = snap.val();
+                        if(data && data.bubbleTime === now) {
+                            db.ref('onlineUsers/' + currentUser).update({ bubble: null, bubbleTime: null });
+                        }
+                    });
+                }, 5000);
+            }
+            input.value = '';
+        }
+
+        function clearAllChat() {
+            if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 정 없습니다.')) {
+                db.ref('chatLog').remove()
+                    .then(() => alert('채팅 기록이 깔끔하게 지워졌습니다.'))
+                    .catch((error) => alert('초기화 중 오류가 발생했습니다.'));
+            }
+        }
+
+        function toggleMute() {
+            const newState = !isChatMuted;
+            db.ref('chatState/isMuted').set(newState);
+
+            const sysMsg = newState ? "상티가 채팅창을 비활성화했습니다." : "상티가 채팅창을 활성화했습니다.";
+            
+            db.ref('chatLog').push().set({ 
+                sender: 'system',
+                message: sysMsg, 
+                isAlert: true,
+                alertColor: '#007bff', 
+                timestamp: firebase.database.ServerValue.TIMESTAMP 
+            });
+        }
+
+        function modifyGems(action) {
+            if (selectedStudentsForGems.length === 0) {
+                alert(`보석을 ${action === 'add' ? '지급' : '차감'}할 학생을 선택해 주세요.`);
+                return;
+            }
+            
+            const amountInput = document.getElementById('gem-control-amount');
+            const gemsToModify = parseInt(amountInput.value, 10);
+            
+            if (isNaN(gemsToModify) || gemsToModify <= 0) {
+                alert('올바른 보석 개수를 입력해 주세요. (1 이상의 정수)');
+                return;
+            }
+            
+            let updates = {};
+            let nicknameArray = [];
+            
+            selectedStudentsForGems.forEach(id => {
+                const currentGems = localStudentAccounts[id]?.gems || 0;
+                let newGems = currentGems;
+                
+                if (action === 'add') {
+                    newGems = currentGems + gemsToModify;
+                } else if (action === 'sub') {
+                    newGems = Math.max(0, currentGems - gemsToModify); 
+                }
+                updates[`studentAccounts/${id}/gems`] = newGems;
+                
+                const nick = localStudentAccounts[id]?.nickname || id;
+                nicknameArray.push(nick);
+            });
+            
+            db.ref().update(updates).then(() => {
+                const nicknamesStr = nicknameArray.join(', ');
+                const actionText = action === 'add' ? '지급' : '차감';
+                const alertColor = action === 'add' ? '#28a745' : '#dc3545'; 
+                const sysMsg = `${nicknamesStr}이(가) 보석을 ${gemsToModify}개 ${actionText}받았습니다.`;
+                
+                db.ref('chatLog').push().set({
+                    sender: 'system',
+                    message: sysMsg,
+                    isAlert: true,
+                    alertColor: alertColor,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                selectedStudentsForGems = []; 
+                renderOnlineUsers();
+            }).catch((error) => {
+                alert('보석을 업데이트하는 중 오류가 발생했습니다.');
+            });
+        }
+
+        function giftGems() {
+            if (selectedStudentsForGems.length === 0) return alert('선물할 친구를 선택해 주세요!');
+            
+            const amt = parseInt(document.getElementById('student-gem-amount').value, 10);
+            if (isNaN(amt) || amt <= 0) return alert('올바른 보석 개수를 입력해 주세요.');
+            
+            const totalCost = amt * selectedStudentsForGems.length;
+            const myGems = localStudentAccounts[currentUser]?.gems || 0;
+            
+            if (myGems < totalCost) return alert(`보석이 부족합니다! (필요: ${totalCost}개, 현재: ${myGems}개)`);
+
+            let updates = {};
+            updates[`studentAccounts/${currentUser}/gems`] = myGems - totalCost;
+            
+            let targetNicks = [];
+            selectedStudentsForGems.forEach(id => {
+                const targetGems = localStudentAccounts[id]?.gems || 0;
+                updates[`studentAccounts/${id}/gems`] = targetGems + amt;
+                targetNicks.push(localStudentAccounts[id]?.nickname || id);
+            });
+
+            db.ref().update(updates).then(() => {
+                const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
+                db.ref('chatLog').push().set({
+                    sender: 'system',
+                    message: `${myNick}이(가) ${targetNicks.join(', ')}에게 보석 ${amt}개를 선물했습니다. 🎁`,
+                    isAlert: true,
+                    alertColor: '#28a745',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                selectedStudentsForGems = [];
+                renderOnlineUsers();
+            });
+        }
+
+        function requestGems() {
+            if (selectedStudentsForGems.length === 0) return alert('조를 친구를 선택해 주세요!');
+            
+            const amt = parseInt(document.getElementById('student-gem-amount').value, 10);
+            if (isNaN(amt) || amt <= 0) return alert('올바른 보석 개수를 입력해 주세요.');
+
+            let targetNicks = [];
+            selectedStudentsForGems.forEach(id => {
+                db.ref(`gemRequests/${id}`).push({
+                    from: currentUser,
+                    amount: amt,
+                    expiresAt: Date.now() + 60000 // 60초 만료 설정
+                });
+                targetNicks.push(localStudentAccounts[id]?.nickname || id);
+            });
+
+            const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
+            db.ref('chatLog').push().set({
+                sender: 'system',
+                message: `${myNick}이(가) ${targetNicks.join(', ')}에게 보석 ${amt}개를 조르기했습니다. 🙏`,
+                isAlert: true,
+                alertColor: '#17a2b8', 
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            selectedStudentsForGems = [];
+            renderOnlineUsers();
+            alert('조르기 요청을 보냈습니다! (1분 후 자동 취소됩니다.)');
+        }
+
+        function acceptGemRequest() {
+            if (pendingRequests.length === 0) return;
+            if (selectedStudentsForGems.length === 0) {
+                alert('조르기를 수락할 친구를 대기실에서 먼저 선택해 주세요!');
+                return;
+            }
+
+            let myGems = localStudentAccounts[currentUser]?.gems || 0;
+            let updates = {};
+            let acceptedNicks = [];
+            let totalDeduction = 0;
+
+            let matchedRequests = pendingRequests.filter(req => selectedStudentsForGems.includes(req.from));
+
+            if (matchedRequests.length === 0) {
+                alert('선택한 친구 중에는 조르기를 요청한 친구가 없습니다.');
+                return;
+            }
+
+            matchedRequests.forEach(req => { totalDeduction += req.amount; });
+
+            if (myGems < totalDeduction) {
+                alert(`보석이 부족하여 선택한 요청을 모두 수락할 수 없습니다.\n(필요: ${totalDeduction}개, 보유: ${myGems}개)`);
+                return;
+            }
+
+            updates[`studentAccounts/${currentUser}/gems`] = myGems - totalDeduction;
+
+            matchedRequests.forEach(req => {
+                const requesterGems = localStudentAccounts[req.from]?.gems || 0;
+                updates[`studentAccounts/${req.from}/gems`] = requesterGems + req.amount;
+                updates[`gemRequests/${currentUser}/${req.key}`] = null; 
+                acceptedNicks.push(localStudentAccounts[req.from]?.nickname || req.from);
+            });
+
+            db.ref().update(updates).then(() => {
+                const myNick = localStudentAccounts[currentUser]?.nickname || currentUser;
+                db.ref('chatLog').push().set({
+                    sender: 'system',
+                    message: `${myNick}이(가) ${acceptedNicks.join(', ')}의 조르기를 수락하여 보석을 주었습니다! 🎉`,
+                    isAlert: true,
+                    alertColor: '#28a745',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                alert('선택한 친구들의 조르기를 수락했습니다!');
+                selectedStudentsForGems = [];
+                renderOnlineUsers();
+            });
+        }
+
+        function renderOnlineUsers() {
+            const listDiv = document.getElementById('online-users-list');
+            listDiv.innerHTML = '';
+            const ids = Object.keys(localOnlineUsers);
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return; }
+            
+            const now = Date.now();
+            ids.forEach(id => {
+                if (id === '⭐상티') return; 
+
+                const user = localOnlineUsers[id];
+                const userDiv = document.createElement('div');
+                userDiv.className = 'online-user-item';
+                
+                if (selectedStudentsForGems.includes(id)) {
+                    userDiv.classList.add('selected');
+                }
+                
+                if (id !== currentUser) {
+                    userDiv.style.cursor = 'pointer';
+                    userDiv.onclick = () => {
+                        if (selectedStudentsForGems.includes(id)) {
+                            selectedStudentsForGems = selectedStudentsForGems.filter(sid => sid !== id);
+                        } else {
+                            selectedStudentsForGems.push(id);
+                        }
+                        renderOnlineUsers();
+                    };
+                }
+
+                // 조르기 요청 알림 배지에 카운트다운(시간) 렌더링을 위한 ID 부여
+                let requestBadge = '';
+                if (!isAdmin && currentUser) {
+                    const reqFromThisUser = pendingRequests.find(req => req.from === id);
+                    if (reqFromThisUser) {
+                        let timeLeft = Math.max(0, Math.ceil((reqFromThisUser.expiresAt - now) / 1000));
+                        const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+                        requestBadge = `<div id="badge-${safeId}" style="position:absolute; top:-10px; right:-20px; background:#dc3545; color:white; font-size:12px; font-weight:bold; padding:2px 6px; border-radius:10px; z-index:11; box-shadow:0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;">🙏${reqFromThisUser.amount}개 (${timeLeft}s)</div>`;
+                    }
+                }
+
+                let bubbleHTML = '';
+                if (user.bubble && user.bubbleTime && (now - user.bubbleTime < 5000)) {
+                    let displayMsg = user.bubble.length > 15 ? user.bubble.substring(0, 15) + '...' : user.bubble;
+                    bubbleHTML = `<div class="speech-bubble">${displayMsg}</div>`;
+                }
+                
+                let displayId = user.nickname || id;
+                if (displayId.length > 8) displayId = displayId.substring(0,8) + '..';
+                
+                const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:14px;"><br>(나)</span>' : '';
+                
+                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${user.avatarId}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center;">${displayId} ${isMe}</span>`;
+                listDiv.appendChild(userDiv);
+            });
+        }
+
+        function showStudentShopPage() { renderStudentShop(); showPage('student-shop-page'); }
+        function renderStudentShop() {
+            const listDiv = document.getElementById('student-shop-list');
+            listDiv.innerHTML = '';
+            const myGems = localStudentAccounts[currentUser]?.gems || 0;
+            document.getElementById('my-gems-display').innerText = `내 보석: 💎 ${myGems}`;
+            if (localShopItems.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px; grid-column: 1 / -1;">현재 등록된 상품이 없습니다.</p>'; return; }
+            const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
+            localShopItems.forEach(avatarId => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'avatar-item';
+                const dbKey = avatarId.replace('.', '_');
+                const avatarName = localShopNames[dbKey] || `${avatarId.split('.')[0]}번 아바타`;
+                const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+                const nameText = `<span style="font-size: 18px; color: #333; margin-top: 8px;">${avatarName}</span>`;
+                if (myOwnedAvatars.includes(avatarId)) {
+                    itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타" style="opacity: 0.5;">${nameText}<div class="owned-tag">보유 중</div>`;
+                } else {
+                    itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타">${nameText}<button class="buy-btn" onclick="buyAvatar('${avatarId}')">💎 ${avatarPrice} 구입하기</button>`;
+                }
+                listDiv.appendChild(itemDiv);
+            });
+        }
+
+        function buyAvatar(avatarId) {
+            const dbKey = avatarId.replace('.', '_');
+            const price = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
+            let myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
+            let myGems = localStudentAccounts[currentUser]?.gems || 0;
+            if (myOwnedAvatars.includes(avatarId)) return alert('이미 보유한 아바타입니다.');
+            if (myGems < price) return alert('보석이 부족합니다!');
+            myGems -= price; myOwnedAvatars.push(avatarId); 
+            db.ref('studentAccounts/' + currentUser).update({ ownedAvatars: myOwnedAvatars, gems: myGems });
+            alert('아바타를 성공적으로 구입했습니다! 보관함에서 확인해보세요. 🎉');
+        }
+
+        function showStoragePage() { tempSelectedAvatar = myCurrentAvatar; renderAvatarList(); showPage('storage-page'); }
+
+        function renderAvatarList() {
+            const listDiv = document.getElementById('avatar-list');
+            listDiv.innerHTML = '';
+            const myOwnedAvatars = localStudentAccounts[currentUser]?.ownedAvatars || DEFAULT_AVATARS;
+            myOwnedAvatars.forEach(avatarId => {
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar-item';
+                if (avatarId === tempSelectedAvatar) avatarDiv.classList.add('selected');
+                
+                // ✨ 흔들림(깜빡임) 수정한 부분
+                avatarDiv.onclick = () => { 
+                    tempSelectedAvatar = avatarId; 
+                    const allItems = listDiv.querySelectorAll('.avatar-item');
+                    allItems.forEach(item => item.classList.remove('selected'));
+                    avatarDiv.classList.add('selected');
+                };
+
+                let avatarName = (avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`);
+                avatarDiv.innerHTML = `<img src="${avatarId}" alt="아바타"><p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>`;
+                listDiv.appendChild(avatarDiv);
+            });
+        }
+    </script>
+</body>
+</html>
