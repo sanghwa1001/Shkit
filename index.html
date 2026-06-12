@@ -64,7 +64,7 @@
         .lobby-menu-group button { margin: 0; flex: 1; }
         
         .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; max-height: 450px; overflow-y: auto; overflow-x: hidden; padding: 20px; }
-        .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
+        .avatar-item { border: 3px solid #eee; border-radius: 15px; padding: 15px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.05); z-index: 1; }
         .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 12px rgba(255,152,0,0.6); }
         .buy-btn { width: 100%; padding: 10px 5px; font-size: 15px; margin: 10px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 10px; white-space: nowrap;}
@@ -72,7 +72,7 @@
         .owned-tag { font-size: 16px; color: #fff; background: #888; border-radius: 8px; padding: 6px 12px; margin-top: 10px; }
         .gem-display { font-size: 24px; color: #d84315; background: #ffcc80; padding: 12px 25px; border-radius: 25px; display: inline-block; margin-bottom: 20px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
 
-        /* 🔥 하이파이브 게임 전용 스타일 */
+        /* 🔥 하이파이브 게임 전용 스타일 (렉 방지를 위해 transition 최소화) */
         .hand-container { position: absolute; display: flex; flex-direction: column; align-items: center; user-select: none; transform: translate(-50%, -50%); z-index: 5; }
         .emoji { font-size: 35px; line-height: 1; transition: font-size 0.2s; }
         .hf-label { margin-top: 5px; font-size: 12px; font-weight: bold; background-color: #333; color: #fff; padding: 4px 8px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.1s; }
@@ -222,19 +222,15 @@
             <h2>💎 아바타 상점</h2>
             <div id="my-gems-display" class="gem-display">내 보석: 💎 0</div>
             <div id="student-shop-list" class="avatar-list-container"></div>
-            <div class="login-btn-group" style="flex-direction: row; flex-wrap: wrap;">
-                <button class="secondary-btn" onclick="showPage('student-lobby-page')" style="flex: 1;">이전으로</button>
-            </div>
+            <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
         </div>
 
         <div id="storage-page" class="page">
             <h2>🎒 아바타 보관함</h2>
             <p style="font-size: 18px; color: #555;">장착할 아바타 고르기!</p>
             <div id="avatar-list" class="avatar-list-container"></div>
-            <div class="login-btn-group" style="flex-direction: row; flex-wrap: wrap;">
-                <button class="bulk-btn" onclick="applySelectedAvatar()" style="flex: 1;">장착하기</button>
-                <button class="secondary-btn" onclick="showPage('student-lobby-page')" style="flex: 1;">이전으로</button>
-            </div>
+            <button class="bulk-btn" onclick="applySelectedAvatar()">장착하기</button>
+            <button class="secondary-btn" onclick="showPage('student-lobby-page')">이전으로</button>
         </div>
 
         <div id="highfive-waiting-page" class="page">
@@ -269,11 +265,11 @@
                 <div id="hf-hands-layer"></div>
             </div>
 
-            <button id="my-clap-btn" class="btn-clap" onclick="sendMyClap()" style="display:none; margin: 0 auto; width: 300px;">짝! 👏</button>
+            <button id="my-clap-btn" class="btn-clap" onclick="sendMyClap()" style="display:none; margin: 0 auto;">짝! 👏</button>
             
             <div id="admin-hf-controls" style="display:none; justify-content: center; gap: 10px; margin: 0 auto; width: 300px;">
-                <button class="bulk-btn" onclick="startHighFiveGame()" style="margin: 0; flex: 1; font-size: 18px;">다시하기 🔄</button>
-                <button class="delete-btn" onclick="endHighFiveGame()" style="margin: 0; flex: 1; font-size: 18px;">게임 종료 🛑</button>
+                <button class="bulk-btn" onclick="startHighFiveGame()" style="margin: 0; flex: 1;">다시하기 🔄</button>
+                <button class="delete-btn" onclick="endHighFiveGame()" style="margin: 0; flex: 1;">게임 종료 🛑</button>
             </div>
 
             <div id="hf-message" style="margin-top: 20px; height: 30px; font-size: 18px; font-weight: bold; color: #E64A19;"></div>
@@ -411,11 +407,11 @@
             const data = snap.val() || { status: 'closed', users: {} };
             hfStatus = data.status;
             
-            // 좀비 노드 필터링
+            // 좀비 노드(찌꺼기 데이터) 필터링
             const rawUsers = data.users || {};
             localHfUsers = {};
             Object.keys(rawUsers).forEach(uid => {
-                if (rawUsers[uid] && rawUsers[uid].nickname) {
+                if (rawUsers[uid].nickname) {
                     localHfUsers[uid] = rawUsers[uid];
                 } else if (isAdmin) {
                     db.ref('highFive/users/' + uid).remove();
@@ -455,15 +451,17 @@
                     cancelAnimationFrame(hfAnimationId);
                     showPage('student-lobby-page');
                 } else if (hfStatus === 'waiting') {
-                    // 관리자가 '게임 종료'를 눌러 상태를 waiting으로 돌린 경우
+                    // 🔥 [추가] 관리자가 '게임 종료'를 눌러 대기실로 돌아가게 된 경우
                     cancelAnimationFrame(hfAnimationId);
                     showPage('highfive-waiting-page');
                     renderHfWaitingUI();
                 } else if (hfStatus === 'playing') {
                     
+                    // 🔥 [추가] 관리자가 '다시하기'를 눌렀을 때 캔버스 및 DOM을 완전히 초기화하는 로직
                     let needsReinit = false;
                     Object.keys(localHfUsers).forEach(uid => {
                         let u = localHfUsers[uid];
+                        // 로컬에서는 매칭된 상태(hasMerged)인데 DB에서는 다시 매칭 대기상태(false)로 바뀐 경우 = 게임 재시작
                         if (hfPhysicsData[uid] && hfPhysicsData[uid].hasMerged && !u.matched) {
                             needsReinit = true;
                         }
@@ -491,8 +489,6 @@
                             layer.appendChild(el);
                         }
 
-                        // 🔥 [렉 해결을 위한 방어 로직] 
-                        // 다시하기 버튼으로 튕기지 않도록, 동기화는 수동 강제조작(startHighFiveGame)이 아닌 DB명령(Interval)만 따름
                         if (!isAdmin && !u.matched && u.angle !== undefined && hfPhysicsData[uid]) {
                             if (hfPhysicsData[uid].lastDbAngle !== u.angle) {
                                 hfPhysicsData[uid].lastDbAngle = u.angle;
@@ -530,9 +526,8 @@
             if (hfStatus === 'closed') db.ref('highFive/status').set('waiting');
             
             const ref = db.ref('highFive/users/' + currentUser);
-            const safeNickname = localStudentAccounts[currentUser]?.nickname || currentUser;
             ref.set({
-                nickname: safeNickname,
+                nickname: localStudentAccounts[currentUser]?.nickname || currentUser,
                 avatarId: myCurrentAvatar,
                 isWaiting: false
             });
@@ -568,7 +563,6 @@
 
         function renderHfWaitingUI() {
             const listDiv = document.getElementById('hf-waiting-list');
-            if (!listDiv) return;
             listDiv.innerHTML = '';
             
             const uids = Object.keys(localHfUsers);
@@ -692,10 +686,10 @@
         function startHighFiveGame() {
             if (!isAdmin) return;
 
-            // 🔥 [중요 수정] 다시하기 버튼 클릭 시 로컬 화면을 지우는 코드를 삭제하여 튕김 현상 원천 차단
-            // if (document.getElementById('highfive-game-page').classList.contains('active')) {
-            //     initLocalPhysics(); 
-            // }
+            // 이미 게임중일때 다시하기 버튼을 눌렀다면 강제 1회 초기화 진행
+            if (document.getElementById('highfive-game-page').classList.contains('active')) {
+                initLocalPhysics();
+            }
             
             let updates = {};
             Object.keys(localHfUsers).forEach(uid => {
@@ -717,7 +711,6 @@
                          speedUpdates['highFive/users/' + uid + '/targetSpeed'] = Math.random() * 0.05 + 0.01;
                          if (Math.random() > 0.6) speedUpdates['highFive/users/' + uid + '/direction'] = localHfUsers[uid].direction * -1;
                          
-                         // 계속 최신 각도를 던져서 중간 접속자 동기화 보장 (단, 클라이언트 측의 diff 0.2 방어로 튕기지 않음)
                          speedUpdates['highFive/users/' + uid + '/angle'] = hfPhysicsData[uid].angle;
                          speedUpdates['highFive/users/' + uid + '/currentSpeed'] = hfPhysicsData[uid].currentSpeed;
                     }
@@ -729,7 +722,7 @@
         function endHighFiveGame() {
             if (isAdmin) {
                 clearInterval(hfSpeedChangerId);
-                // 🛑 방 폭파 대신 'waiting' 대기실 상태로 전환
+                // 방을 폭파하지 않고 상태를 waiting(대기실)으로 되돌림
                 let updates = {};
                 updates['highFive/status'] = 'waiting';
                 Object.keys(localHfUsers).forEach(uid => {
