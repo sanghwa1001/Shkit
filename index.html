@@ -599,9 +599,13 @@
                 `;
                 itemDiv.onclick = (e) => {
                     if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SPAN') {
-                        if (tempShopItems.includes(avatarId)) tempShopItems = tempShopItems.filter(id => id !== avatarId);
-                        else tempShopItems.push(avatarId);
-                        renderAdminShopPage(); 
+                        if (tempShopItems.includes(avatarId)) {
+                            tempShopItems = tempShopItems.filter(id => id !== avatarId);
+                            itemDiv.classList.remove('selected'); 
+                        } else {
+                            tempShopItems.push(avatarId);
+                            itemDiv.classList.add('selected'); 
+                        }
                     }
                 };
                 listDiv.appendChild(itemDiv);
@@ -812,7 +816,7 @@
         }
 
         function clearAllChat() {
-            if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+            if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 정 없습니다.')) {
                 db.ref('chatLog').remove()
                     .then(() => alert('채팅 기록이 깔끔하게 지워졌습니다.'))
                     .catch((error) => alert('초기화 중 오류가 발생했습니다.'));
@@ -1105,7 +1109,15 @@
                 const avatarDiv = document.createElement('div');
                 avatarDiv.className = 'avatar-item';
                 if (avatarId === tempSelectedAvatar) avatarDiv.classList.add('selected');
-                avatarDiv.onclick = () => { tempSelectedAvatar = avatarId; renderAvatarList(); };
+                
+                // ✨ 흔들림(깜빡임) 수정한 부분
+                avatarDiv.onclick = () => { 
+                    tempSelectedAvatar = avatarId; 
+                    const allItems = listDiv.querySelectorAll('.avatar-item');
+                    allItems.forEach(item => item.classList.remove('selected'));
+                    avatarDiv.classList.add('selected');
+                };
+
                 let avatarName = (avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[avatarId.replace('.', '_')] || `${avatarId.split('.')[0]}번 아바타`);
                 avatarDiv.innerHTML = `<img src="${avatarId}" alt="아바타"><p style="font-size: 18px; color: #333; margin-top: 15px;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
