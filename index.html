@@ -366,7 +366,7 @@
             if (!isAdmin && newState.isOpen === false) {
                 if (document.getElementById('highfive-page').classList.contains('active')) {
                     alert('관리자가 하이파이브 게임을 종료하여 메인 로비로 이동합니다.');
-                    db.ref('highfive/participants/' + currentUser).update({ isOnline: false });
+                    db.ref('highfive/participants/' + currentUser).child('isOnline').onDisconnect().cancel(); 
                     showPage('student-lobby-page');
                 }
             }
@@ -1274,6 +1274,16 @@
 
         function startHfGame() {
             const onlineIds = Object.keys(hfParticipants).filter(id => hfParticipants[id].isOnline !== false);
+            
+            if (onlineIds.length < 2) {
+                return alert('대기실에 최소 2명 이상의 학생이 있어야 시작할 수 있습니다.');
+            }
+            
+            const allReady = onlineIds.every(id => hfParticipants[id].status === 'ready');
+            if (!allReady) {
+                return alert('아직 모든 학생이 준비를 완료하지 않았습니다!');
+            }
+
             const shuffledIds = shuffleArray([...onlineIds]);
             db.ref('highfive/state').update({ isStarted: true, pairCount: 0, shuffledIds: shuffledIds });
             db.ref('highfive/requests').remove();
@@ -1322,8 +1332,8 @@
                 } else {
                     startBtn.innerText = '시작';
                     startBtn.onclick = startHfGame;
-                    const allReady = onlineStudentIds.length >= 2 && onlineStudentIds.every(id => hfParticipants[id].status === 'ready');
-                    startBtn.disabled = !allReady || hfState.isStarted;
+                    // 게임 중이 아닐 때는 항상 버튼 활성화
+                    startBtn.disabled = hfState.isStarted;
                     startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
                 }
             } else {
@@ -1356,7 +1366,7 @@
             const requestCount = Object.keys(myRequests).length;
 
             if (!isAdmin) {
-                // 하이 버튼은 항시 활성화 (클릭 시점에 조건 판별)
+                // 하이 버튼은 항시 활성화
                 reqBtn.disabled = false;
                 reqBtn.style.opacity = '1';
 
@@ -1376,7 +1386,7 @@
                 }
             }
 
-            // 4. 참가자 목록 렌더링 (셔플 로직 적용)
+            // 4. 참가자 목록 렌더링
             const listDiv = document.getElementById('hf-users-list');
             listDiv.innerHTML = '';
             
@@ -1384,7 +1394,6 @@
             if (hfState.isStarted && hfState.shuffledIds && hfState.shuffledIds.length > 0) {
                 // 셔플된 배열 기준으로 온라인 아이디 우선 배치
                 ids = hfState.shuffledIds.filter(id => hfParticipants[id]);
-                // 혹시 DB에 셔플 목록에 없는 새로운 참가자가 있다면 뒤에 추가
                 Object.keys(hfParticipants).forEach(id => {
                     if (!ids.includes(id)) ids.push(id);
                 });
@@ -1450,7 +1459,7 @@
                 } else if (isFailedUser) {
                     userDiv.style.borderColor = '#dc3545';
                     userDiv.style.borderWidth = '4px';
-                    userDiv.style.backgroundColor = '#f8d7da'; // light red
+                    userDiv.style.backgroundColor = '#f8d7da';
                 } else if (selectedHfUser === id) {
                     userDiv.classList.add('selected');
                 }
@@ -1460,7 +1469,7 @@
                     userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
                 }
 
-                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center;">${displayName} ${isMe && !hfState.isStarted ? '<span style="color: #ff9800; font-size:12px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
+                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center;">${displayName} ${isMe ? '<span style="color: #ff9800; font-size:12px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
                 listDiv.appendChild(userDiv);
             });
         }
