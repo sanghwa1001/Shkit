@@ -355,27 +355,40 @@
             }
         });
 
-        // ⭐ 수정된 부분: 조르기 버튼 상태 변경 로직 적용
+        // ⭐ 수정된 부분: 유령 데이터 청소 로직이 포함된 조르기 요청 감지 함수
         function listenForGemRequests() {
             db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
                 const reqs = snapshot.val();
                 pendingRequests = [];
+                const now = Date.now(); // 현재 시간 가져오기
                 
                 if (reqs) {
                     for (let key in reqs) {
-                        pendingRequests.push({ key, ...reqs[key] });
+                        const req = reqs[key];
+                        
+                        // 💡 [핵심] 타이머 패치 이전 데이터이거나, 이미 1분이 지나버린 유령 데이터 필터링
+                        if (!req.expiresAt || now > req.expiresAt) {
+                            // 화면에 표시하지 않고 DB에서 조용히 삭제 (청소)
+                            db.ref(`gemRequests/${currentUser}/${key}`).remove();
+                        } else {
+                            // 유효 시간(1분)이 아직 남아있는 정상적인 요청만 배열에 담기
+                            pendingRequests.push({ key, ...req });
+                        }
                     }
                 }
                 
                 const acceptBtn = document.getElementById('accept-request-btn');
                 
+                // 유효한 요청이 1개 이상 있을 때만 주황색 활성화
                 if (pendingRequests.length > 0) {
                     acceptBtn.disabled = false;
                     acceptBtn.style.backgroundColor = '#ff9800'; 
                     acceptBtn.style.borderColor = '#e65100';
                     acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
                     acceptBtn.innerText = `🤝 수락 (${pendingRequests.length})`; 
-                } else {
+                } 
+                // 유효한 요청이 없으면 무조건 회색 비활성화
+                else {
                     acceptBtn.disabled = true;
                     acceptBtn.style.backgroundColor = '#ccc';
                     acceptBtn.style.borderColor = '#999';
