@@ -92,13 +92,13 @@
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 14px; color: #333; background: white; padding: 8px 3px; border-radius: 10px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 82px; box-sizing: border-box;}
         .online-user-avatar { height: 50px; width: auto; margin-bottom: 6px; }
         
-        /* 닉네임 전용 피팅 클래스 (글자 수에 따라 JS에서 크기를 제어하므로 폰트 크기 속성 제거) */
+        /* 닉네임 전용 피팅 클래스 */
         .name-text-fit {
             font-weight: bold;
             text-align: center;
             white-space: nowrap !important;
             overflow: hidden !important; 
-            text-overflow: clip !important; /* ... 말줄임표 절대 방지 */
+            text-overflow: clip !important; 
             display: block;
             width: 100%;
             margin-top: 2px;
@@ -120,7 +120,9 @@
         .lobby-menu-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: nowrap; }
         .lobby-menu-group button { margin: 0; flex: 1; min-width: 0; padding: 10px 2px; }
         
-        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; margin-bottom: 20px; max-height: 380px; overflow-y: auto; overflow-x: hidden; padding: 10px; }
+        /* 🔥 수정됨: PC 환경에서 아바타 컨테이너 기본 폭 확장 (130px) -> 한 줄에 표시되는 아바타 수 감소 */
+        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; max-height: 380px; overflow-y: auto; overflow-x: hidden; padding: 10px; }
+        
         .avatar-item { border: 3px solid #eee; border-radius: 12px; padding: 10px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.03); z-index: 1; }
         .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 10px rgba(255,152,0,0.5); }
@@ -186,7 +188,9 @@
             .lobby-menu-group { gap: 6px; margin-top: 10px; }
             .login-btn-group.row button { padding: 10px 2px; }
             
-            .avatar-list-container { gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
+            /* 🔥 수정됨: 모바일 환경에서 아바타 컨테이너 기본 폭 확장 (120px) */
+            .avatar-list-container { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
+            
             .avatar-item { padding: 8px; border-width: 2px; border-radius: 10px; }
             .owned-tag { font-size: 12px; padding: 4px 6px; margin-top: 5px; }
             .gem-display { padding: 8px 16px; margin-bottom: 10px; border-width: 2px; }
@@ -392,7 +396,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 오직 gif 파일만 지원 (PNG 레거시 삭제 완벽 최적화)
+        // 오직 gif 파일만 지원
         const DEFAULT_AVATARS = ['image_0.gif', 'image_1.gif'];
         const ALL_SHOP_AVATARS = ['1.gif', '2.gif', '3.gif', '4.gif', '5.gif', '6.gif', '7.gif', '8.gif', '9.gif', '10.gif'];
         
@@ -419,13 +423,13 @@
         let selectedHfUser = null;
         const PAIR_COLORS = ['#ff9800', '#17a2b8', '#28a745', '#e83e8c', '#6f42c1', '#d84315', '#007bff', '#20c997'];
 
-        // 이름 길이에 따른 동적 인라인 스타일 반환 (10자 완벽 대응 & 줄바꿈 방지)
+        // 🔥 수정됨: 칸이 넓어졌으므로 폰트 사이즈를 조금 더 여유롭게 조절
         function getNameStyle(text) {
             const len = text ? text.length : 0;
-            if (len <= 4) return 'font-size: 13px; letter-spacing: -0.5px;';
-            if (len <= 6) return 'font-size: 11.5px; letter-spacing: -0.5px;';
-            if (len <= 8) return 'font-size: 10px; letter-spacing: -0.8px;';
-            return 'font-size: 8.5px; letter-spacing: -1px;';
+            if (len <= 4) return 'font-size: 14px; letter-spacing: -0.5px;';
+            if (len <= 6) return 'font-size: 12.5px; letter-spacing: -0.5px;';
+            if (len <= 8) return 'font-size: 11px; letter-spacing: -0.8px;';
+            return 'font-size: 10px; letter-spacing: -1px;';
         }
 
         function shuffleArray(array) {
@@ -790,23 +794,24 @@
                 const currentName = localShopNames[dbKey] || `아바타 ${index + 1}`;
                 const currentPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : 1;
                 
+                // 🔥 수정됨: 인풋창의 넓이를 고정픽셀(px) 대신 flex:1 (비율)로 주어 아이콘과 겹치지 않게 조절
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
                     <div id="view-name-mode-${index}" style="margin-top: 8px; display:flex; align-items:center; gap:4px; justify-content:center; width:100%;">
                         <span class="name-text-fit" style="${getNameStyle(currentName)} margin-top:0; flex:1;">${currentName}</span>
-                        <span title="이름 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
+                        <span title="이름 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px; flex-shrink: 0;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
                     </div>
                     <div id="edit-name-mode-${index}" style="margin-top: 8px; display:none; align-items:center; gap:4px; justify-content:center; width:100%;">
-                        <input type="text" id="name-input-${index}" value="${currentName}" maxlength="10" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 2px solid #ccc; border-radius: 6px; margin:0;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'name')">
-                        <span title="저장" style="cursor: pointer; font-size: 14px; background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 6px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
+                        <input type="text" id="name-input-${index}" value="${currentName}" maxlength="10" style="flex:1; width: 0; padding: 4px; font-size: 13px; text-align: center; border: 2px solid #ccc; border-radius: 6px; margin:0;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'name')">
+                        <span title="저장" style="cursor: pointer; font-size: 14px; background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 6px; flex-shrink: 0;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'name')">✔️</span>
                     </div>
                     <div id="view-price-mode-${index}" style="margin-top: 8px; margin-bottom: 5px; display:flex; align-items:center; gap:4px; justify-content:center; width:100%;">
-                        <span style="font-size: 16px; color: #d84315;">${currentPrice}</span>
-                        <span title="가격 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
+                        <span style="font-size: 16px; color: #d84315; flex:1;">${currentPrice}</span>
+                        <span title="가격 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px; flex-shrink: 0;" onclick="enableEditMode(event, ${index}, 'price')">💎</span>
                     </div>
                     <div id="edit-price-mode-${index}" style="margin-top: 8px; margin-bottom: 5px; display:none; align-items:center; gap:4px; justify-content:center; width:100%;">
-                        <input type="number" id="price-input-${index}" value="${currentPrice}" min="0" style="width: 50px; padding: 4px; font-size: 14px; text-align: center; border: 2px solid #ccc; border-radius: 6px; margin:0;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'price')">
-                        <span title="저장" style="cursor: pointer; font-size: 14px; background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 6px;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'price')">✔️</span>
+                        <input type="number" id="price-input-${index}" value="${currentPrice}" min="0" style="flex:1; width: 0; padding: 4px; font-size: 13px; text-align: center; border: 2px solid #ccc; border-radius: 6px; margin:0;" onclick="event.stopPropagation();" onkeypress="handleEnter(event, '${avatarId}', ${index}, 'price')">
+                        <span title="저장" style="cursor: pointer; font-size: 14px; background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 6px; flex-shrink: 0;" onclick="saveSingleData(event, '${avatarId}', ${index}, 'price')">✔️</span>
                     </div>
                 `;
                 itemDiv.onclick = (e) => {
