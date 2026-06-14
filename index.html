@@ -12,9 +12,37 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        /* 중앙 정렬 및 전체 레이아웃 (모바일 포함) */
-        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); padding: 15px; box-sizing: border-box; overflow: hidden; }
-        .container { background-color: #ffffff; padding: 30px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 100%; max-width: 1000px; max-height: 95vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; margin: auto; }
+        /* 중앙 정렬 및 전체 레이아웃 (모바일 완벽 대응) */
+        body { 
+            font-family: 'Jua', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            height: 100dvh; /* 최신 모바일 브라우저 주소창 고려 완벽 중앙 정렬 */
+            margin: 0; 
+            background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); 
+            padding: 15px; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+        }
+        
+        .container { 
+            background-color: #ffffff; 
+            padding: 30px; 
+            border: 5px solid #333; 
+            border-radius: 25px; 
+            box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
+            text-align: center; 
+            width: 100%; 
+            max-width: 1000px; 
+            max-height: 95vh; 
+            max-height: 95dvh; 
+            overflow-y: auto; 
+            overflow-x: hidden; 
+            box-sizing: border-box; 
+            margin: 0; /* 강제로 위로 쏠리는 현상 방지 핵심 코드 */
+        }
         .container::-webkit-scrollbar { width: 8px; }
         .container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
         
@@ -23,8 +51,7 @@
         .login-btn-group { max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; }
         
-        /* 버튼 텍스트 ... 생략 제거 & 자동 줄바꿈 적용 */
-        button { font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; border: 3px solid #0056b3; border-radius: 12px; background-color: #007bff; color: white; font-size: clamp(14px, 4vw, 18px); cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 0.5px; white-space: normal; word-break: keep-all; line-height: 1.2; }
+        button { font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; border: 3px solid #0056b3; border-radius: 12px; background-color: #007bff; color: white; font-size: 18px; cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 0.5px; white-space: nowrap; }
         button:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #004494 !important; }
         button:disabled { cursor: not-allowed; opacity: 0.7; }
         
@@ -65,6 +92,19 @@
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 14px; color: #333; background: white; padding: 8px 3px; border-radius: 10px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 68px; box-sizing: border-box;}
         .online-user-avatar { height: 50px; width: auto; margin-bottom: 6px; }
         
+        /* 닉네임 및 아바타 이름 전용 피팅 클래스 (말줄임표 제거) */
+        .name-text-fit {
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            overflow: visible; /* 자르지 않고 다 보여줌 */
+            display: block;
+            width: 100%;
+            margin-top: 2px;
+            font-size: 14px;
+            color: #333;
+        }
+
         .speech-bubble { position: absolute; top: -38px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #ff9800; border-radius: 12px; padding: 4px 8px; font-size: 13px; color: #333; white-space: normal; word-break: keep-all; line-height: 1.1; z-index: 10; box-shadow: 0 3px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #ff9800 transparent transparent transparent; display: block; width: 0; }
         @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
@@ -85,7 +125,7 @@
         .avatar-item:hover { transform: scale(1.03); z-index: 1; }
         .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 10px rgba(255,152,0,0.5); }
         .avatar-item img { max-width: 100%; height: auto; }
-        .buy-btn { width: 100%; padding: 8px 2px; font-size: clamp(11px, 3.5vw, 14px); margin: 8px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 8px;}
+        .buy-btn { width: 100%; padding: 8px 2px; font-size: clamp(12px, 3.5vw, 15px); margin: 8px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 8px;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
         .owned-tag { font-size: 14px; color: #fff; background: #888; border-radius: 6px; padding: 4px 10px; margin-top: 8px; word-break: keep-all; }
         .gem-display { font-size: clamp(18px, 5vw, 24px); color: #d84315; background: #ffcc80; padding: 10px 20px; border-radius: 20px; display: inline-block; margin-bottom: 15px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
@@ -94,19 +134,27 @@
         .controls-wrapper { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
         .gem-label { font-weight: bold; font-size: 15px; color: #1565c0; white-space: nowrap; }
         .gem-input { width: 45px; margin: 0; padding: 4px; font-size: 15px; text-align: center; border: 2px solid #90caf9; border-radius: 6px; }
-        .gem-action-btn, .hf-action-btn { margin: 0; padding: 6px 8px; font-size: clamp(12px, 3.5vw, 15px); width: auto; flex-shrink: 0; box-shadow: 0 4px 0; border-width: 2px; border-radius: 8px;}
+        .gem-action-btn, .hf-action-btn { margin: 0; padding: 6px 8px; font-size: clamp(13px, 3.5vw, 15px); width: auto; flex-shrink: 0; box-shadow: 0 4px 0; border-width: 2px; border-radius: 8px;}
         
         .hf-ready-text { font-size: clamp(9px, 2.5vw, 11px); letter-spacing: -0.5px; font-weight: bold; color: #888; margin-top: 5px; white-space: normal; word-break: keep-all; line-height: 1.1; width: 100%; box-sizing: border-box; padding: 0 2px; text-align: center; }
         .hf-ready-text.ready { color: #28a745; }
         .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
-        /* ===== 모바일 환경 전용 최적화 ===== */
+        /* ===== 모바일 화면 완벽 최적화 ===== */
         @media screen and (max-width: 600px) {
-            .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 98vh; }
+            .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
             h2 { font-size: 24px; margin-bottom: 15px; }
             
-            /* 버튼 그림자 오류 복구 및 반응형 축소 */
-            button { padding: 10px 2px; border-width: 2px; border-radius: 8px; box-shadow: 0 4px 0 #004494; letter-spacing: -0.5px; }
+            /* 버튼: 줄바꿈 허용 안함 & 파란색 그림자 명시적 복구 */
+            button { 
+                padding: 10px 2px; 
+                border-width: 2px; 
+                border-radius: 8px; 
+                box-shadow: 0 4px 0 #004494; /* 파란 버튼 그림자 복원 */
+                letter-spacing: -0.5px; 
+                font-size: clamp(13px, 3.5vw, 16px);
+                white-space: nowrap; 
+            }
             .bulk-btn { box-shadow: 0 4px 0 #155724 !important; }
             .delete-btn { box-shadow: 0 4px 0 #8b1c24 !important; }
             .secondary-btn { box-shadow: 0 4px 0 #3d4246 !important; }
@@ -125,8 +173,18 @@
             .online-users-title { font-size: 18px; text-align: center; border-bottom: 1px dashed #90caf9; padding-bottom: 5px;}
             .controls-wrapper { justify-content: center; width: 100%; gap: 3px;}
             
-            .online-user-item { width: 62px; padding: 6px 2px; border-width: 1px; }
+            /* 모바일 대기실 아바타 박스 폭 약간 넓힘 (텍스트 공간 확보) */
+            .online-user-item { width: 75px; padding: 6px 2px; border-width: 1px; }
             .online-user-avatar { height: 45px; margin-bottom: 4px; }
+            
+            /* 핵심: 10글자 무조건 보이게 폰트 대폭 축소 및 컷팅 방지 */
+            .name-text-fit {
+                font-size: 8.5px !important; 
+                letter-spacing: -0.5px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+
             .speech-bubble { font-size: 11px; padding: 4px 6px; top: -32px; border-width: 1px; box-shadow: 0 2px 0 rgba(255,152,0,0.5);}
             .speech-bubble::after { bottom: -4px; border-width: 4px 4px 0; }
             
@@ -345,7 +403,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 모든 아바타 기본 확장자를 .gif 로 통일
         const DEFAULT_AVATARS = ['image_0.gif', 'image_1.gif'];
         const ALL_SHOP_AVATARS = ['1.gif', '2.gif', '3.gif', '4.gif', '5.gif', '6.gif', '7.gif', '8.gif', '9.gif', '10.gif'];
         
@@ -366,7 +423,6 @@
         let localShopNames = {}; 
         let localShopPrices = {}; 
 
-        // --- [하이파이브 게임 전용 변수] ---
         let hfParticipants = {};
         let hfState = { isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] };
         let hfRequests = {};
@@ -443,7 +499,7 @@
             
             if (data.isAlert) {
                 const color = data.alertColor || '#007bff'; 
-                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80; font-size:clamp(12px, 3.5vw, 15px); word-break:keep-all;">📢 ${data.message}</div>`;
+                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80; font-size:14px; word-break:keep-all;">📢 ${data.message}</div>`;
             } else {
                 const displayName = data.senderName || data.sender;
                 const isMe = data.sender === currentUser;
@@ -473,14 +529,14 @@
             if (isChatMuted) {
                 if (!isAdmin) {
                     chatInput.disabled = true;
-                    chatInput.placeholder = "채팅 금지 🤫";
+                    chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
                     chatSendBtn.disabled = true;
                     chatSendBtn.style.backgroundColor = "#ccc";
                     chatSendBtn.style.borderColor = "#999";
                     chatSendBtn.style.boxShadow = "0 4px 0 #777";
                 }
                 if (isAdmin && muteBtn) {
-                    muteBtn.innerText = "해제";
+                    muteBtn.innerText = "음소거 해제";
                     muteBtn.style.backgroundColor = "#dc3545"; 
                     muteBtn.style.borderColor = "#bd2130";
                     muteBtn.style.boxShadow = "0 4px 0 #8b1c24";
@@ -758,7 +814,7 @@
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
                     <div id="view-name-mode-${index}" style="margin-top: 8px; display:flex; align-items:center; gap:4px; justify-content:center; width:100%;">
-                        <span style="font-size: clamp(11px, 3vw, 15px); color: #333; word-break: keep-all; line-height: 1.2; text-align:center; flex:1;">${currentName}</span>
+                        <span class="name-text-fit" style="margin-top:0; flex:1;">${currentName}</span>
                         <span title="이름 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
                     </div>
                     <div id="edit-name-mode-${index}" style="margin-top: 8px; display:none; align-items:center; gap:4px; justify-content:center; width:100%;">
@@ -1179,7 +1235,7 @@
             const listDiv = document.getElementById('online-users-list');
             listDiv.innerHTML = '';
             const ids = Object.keys(localOnlineUsers);
-            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">현재 대기실에 아무도 없습니다.</p>'; return; }
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return; }
             
             const now = Date.now();
             ids.forEach(id => {
@@ -1222,11 +1278,10 @@
                 }
                 
                 let displayId = user.nickname || id;
-                
-                const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:12px;"><br>(나)</span>' : '';
+                const isMe = (id === currentUser) ? '<span style="color: #ff9800; margin-left:2px;">(나)</span>' : '';
                 
                 let avatarSrc = (user.avatarId || 'image_0.gif').replace('.png', '.gif');
-                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:clamp(10px, 3vw, 13px); word-break:break-all; line-height:1.1; width:100%; display:block; margin-top:4px;">${displayId} ${isMe}</span>`;
+                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%;"><span class="name-text-fit">${displayId}</span><span style="font-size:10px; color:#ff9800; margin-top:2px;">${(id === currentUser) ? '(나)' : ''}</span></div>`;
                 listDiv.appendChild(userDiv);
             });
         }
@@ -1246,8 +1301,9 @@
                 const fallbackKey = avatarId.split('.')[0] + '_png';
                 
                 const avatarName = localShopNames[dbKey] || localShopNames[fallbackKey] || `${avatarId.split('.')[0]}번 아바타`;
+                const nameText = `<span class="name-text-fit">${avatarName}</span>`;
                 const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : (localShopPrices[fallbackKey] !== undefined ? localShopPrices[fallbackKey] : 1);
-                const nameText = `<span style="font-size: clamp(11px, 3.5vw, 16px); color: #333; margin-top: 8px; word-break: keep-all; line-height: 1.2; display: block; width:100%;">${avatarName}</span>`;
+                
                 if (myOwnedAvatars.includes(avatarId)) {
                     itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타" style="opacity: 0.5;">${nameText}<div class="owned-tag">보유 중</div>`;
                 } else {
@@ -1294,7 +1350,7 @@
                 let avatarName = (avatarId === 'image_0.gif' || avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.gif' || avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[dbKey] || localShopNames[fallbackKey] || `${avatarId.split('.')[0]}번 아바타`);
                 
                 let avatarSrc = avatarId.replace('.png', '.gif');
-                avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타"><p style="font-size: clamp(11px, 3.5vw, 16px); color: #333; margin-top: 10px; word-break: keep-all; line-height: 1.2; width:100%; margin-bottom: 0;">${avatarName}</p>`;
+                avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타"><p class="name-text-fit" style="margin-bottom:0;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
             });
         }
@@ -1537,7 +1593,7 @@
                     userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
                 }
 
-                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:clamp(10px, 3vw, 13px); word-break:break-all; line-height:1.1; width:100%; display:block; margin-top:4px;">${displayName} ${isMe ? '<span style="color: #ff9800; font-size:11px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
+                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%;"><span class="name-text-fit">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; height:12px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
                 listDiv.appendChild(userDiv);
             });
         }
