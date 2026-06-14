@@ -12,8 +12,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); padding: 10px; box-sizing: border-box; overflow: hidden; }
-        .container { background-color: #ffffff; padding: 30px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 100%; max-width: 1000px; max-height: 95vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; }
+        /* 중앙 정렬 및 전체 레이아웃 (모바일 포함) */
+        body { font-family: 'Jua', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); padding: 15px; box-sizing: border-box; overflow: hidden; }
+        .container { background-color: #ffffff; padding: 30px; border: 5px solid #333; border-radius: 25px; box-shadow: 0 12px 0 rgba(0,0,0,0.2); text-align: center; width: 100%; max-width: 1000px; max-height: 95vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; margin: auto; }
         .container::-webkit-scrollbar { width: 8px; }
         .container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
         
@@ -22,8 +23,8 @@
         .login-btn-group { max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; }
         
-        /* 말줄임표 제거 및 한 줄 유지 설정 */
-        button { font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; border: 3px solid #0056b3; border-radius: 12px; background-color: #007bff; color: white; font-size: 18px; cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 0.5px; white-space: nowrap; }
+        /* 버튼 텍스트 ... 생략 제거 & 자동 줄바꿈 적용 */
+        button { font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; border: 3px solid #0056b3; border-radius: 12px; background-color: #007bff; color: white; font-size: clamp(14px, 4vw, 18px); cursor: pointer; box-shadow: 0 6px 0 #004494; transition: all 0.1s ease; letter-spacing: 0.5px; white-space: normal; word-break: keep-all; line-height: 1.2; }
         button:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #004494 !important; }
         button:disabled { cursor: not-allowed; opacity: 0.7; }
         
@@ -41,18 +42,18 @@
         
         .list-container { max-height: 350px; overflow-y: auto; overflow-x: hidden; margin-bottom: 15px; padding-right: 5px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 10px; }
         .list-container::-webkit-scrollbar { width: 8px; }
-        .list-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+        .list-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 5px; }
         
         .list-header { display: flex; gap: 8px; margin-bottom: 10px; font-size: 16px; color: #555; text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 8px;}
-        .list-header .h-id, .list-header .h-nick, .list-header .h-pw { flex: 1.5; min-width: 0; overflow: hidden; text-overflow: ellipsis; } 
+        .list-header .h-id, .list-header .h-nick, .list-header .h-pw { flex: 1.5; min-width: 0; word-break: break-all; } 
         .list-header .h-btn { flex: 2; }
         
         .account-item { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; background: white; padding: 6px; border-radius: 8px; border: 2px solid #eee;}
         .account-item input { flex: 1.5; margin: 0; padding: 6px; font-size: 13px; text-align: center; border-width: 2px; min-width: 0;}
         .account-item button { flex: 1; margin: 0; font-size: 13px; padding: 6px 2px; min-width: 0;}
         
-        .lobby-title { color: #ff9800; font-size: 38px; margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; margin-bottom: 15px;}
-        .welcome-text { font-size: 20px; color: #333; margin-bottom: 15px; background: #fff3cd; padding: 12px; border-radius: 10px; border: 3px solid #ffeeba;}
+        .lobby-title { color: #ff9800; font-size: clamp(28px, 6vw, 38px); margin-top: 0; text-shadow: 2px 2px 0px #ffe0b2; margin-bottom: 15px;}
+        .welcome-text { font-size: clamp(16px, 4vw, 20px); color: #333; margin-bottom: 15px; background: #fff3cd; padding: 12px; border-radius: 10px; border: 3px solid #ffeeba; word-break: keep-all;}
         .online-users-container { background-color: #e3f2fd; border: 3px solid #90caf9; border-radius: 12px; padding: 15px; max-height: 250px; overflow-y: auto; overflow-x: hidden;}
         .online-users-container::-webkit-scrollbar { width: 8px; }
         .online-users-container::-webkit-scrollbar-thumb { background: #90caf9; border-radius: 4px; }
@@ -64,8 +65,9 @@
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 14px; color: #333; background: white; padding: 8px 3px; border-radius: 10px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 68px; box-sizing: border-box;}
         .online-user-avatar { height: 50px; width: auto; margin-bottom: 6px; }
         
-        .speech-bubble { position: absolute; top: -38px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #ff9800; border-radius: 12px; padding: 4px 8px; font-size: 13px; color: #333; white-space: nowrap; z-index: 10; box-shadow: 0 3px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .speech-bubble { position: absolute; top: -38px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #ff9800; border-radius: 12px; padding: 4px 8px; font-size: 13px; color: #333; white-space: normal; word-break: keep-all; line-height: 1.1; z-index: 10; box-shadow: 0 3px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #ff9800 transparent transparent transparent; display: block; width: 0; }
+        @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
         
         .chat-section { background: #f1f8e9; border: 3px solid #8bc34a; border-radius: 12px; padding: 12px; margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
         .chat-log { height: 110px; overflow-y: auto; overflow-x: hidden; background: #fff; border: 2px solid #ccc; border-radius: 8px; padding: 8px; text-align: left; font-size: 16px; word-break: break-all;}
@@ -76,37 +78,40 @@
         .chat-action-btn { width: 70px; margin: 0; font-size: 15px; padding: 8px 4px; flex-shrink: 0;}
         
         .lobby-menu-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: nowrap; }
-        .lobby-menu-group button { margin: 0; flex: 1; min-width: 0; font-size: 15px; padding: 10px 2px; }
+        .lobby-menu-group button { margin: 0; flex: 1; min-width: 0; padding: 10px 2px; }
         
-        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 20px; max-height: 380px; overflow-y: auto; overflow-x: hidden; padding: 10px; }
+        .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; margin-bottom: 20px; max-height: 380px; overflow-y: auto; overflow-x: hidden; padding: 10px; }
         .avatar-item { border: 3px solid #eee; border-radius: 12px; padding: 10px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
         .avatar-item:hover { transform: scale(1.03); z-index: 1; }
         .avatar-item.selected, .online-user-item.selected { border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 10px rgba(255,152,0,0.5); }
         .avatar-item img { max-width: 100%; height: auto; }
-        .buy-btn { width: 100%; padding: 8px 2px; font-size: 14px; margin: 8px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 8px;}
+        .buy-btn { width: 100%; padding: 8px 2px; font-size: clamp(11px, 3.5vw, 14px); margin: 8px 0 0 0; background-color: #17a2b8; border-color: #117a8b; box-shadow: 0 4px 0 #0f6674; border-radius: 8px;}
         .buy-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #0f6674; }
-        .owned-tag { font-size: 14px; color: #fff; background: #888; border-radius: 6px; padding: 4px 10px; margin-top: 8px; }
-        .gem-display { font-size: 20px; color: #d84315; background: #ffcc80; padding: 10px 20px; border-radius: 20px; display: inline-block; margin-bottom: 15px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
+        .owned-tag { font-size: 14px; color: #fff; background: #888; border-radius: 6px; padding: 4px 10px; margin-top: 8px; word-break: keep-all; }
+        .gem-display { font-size: clamp(18px, 5vw, 24px); color: #d84315; background: #ffcc80; padding: 10px 20px; border-radius: 20px; display: inline-block; margin-bottom: 15px; border: 3px solid #ffb74d; box-shadow: 0 4px 0 #ff9800;}
 
-        /* 유틸리티 및 하이파이브 모바일 최적화 클래스 */
+        /* 유틸리티 및 하이파이브 최적화 클래스 */
         .controls-wrapper { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
         .gem-label { font-weight: bold; font-size: 15px; color: #1565c0; white-space: nowrap; }
         .gem-input { width: 45px; margin: 0; padding: 4px; font-size: 15px; text-align: center; border: 2px solid #90caf9; border-radius: 6px; }
-        .gem-action-btn, .hf-action-btn { margin: 0; padding: 6px 8px; font-size: 14px; width: auto; flex-shrink: 0; box-shadow: 0 4px 0; border-width: 2px; border-radius: 8px;}
+        .gem-action-btn, .hf-action-btn { margin: 0; padding: 6px 8px; font-size: clamp(12px, 3.5vw, 15px); width: auto; flex-shrink: 0; box-shadow: 0 4px 0; border-width: 2px; border-radius: 8px;}
         
-        .hf-ready-text { font-size: 11px; letter-spacing: -0.5px; font-weight: bold; color: #888; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; box-sizing: border-box; padding: 0 2px; text-align: center; }
+        .hf-ready-text { font-size: clamp(9px, 2.5vw, 11px); letter-spacing: -0.5px; font-weight: bold; color: #888; margin-top: 5px; white-space: normal; word-break: keep-all; line-height: 1.1; width: 100%; box-sizing: border-box; padding: 0 2px; text-align: center; }
         .hf-ready-text.ready { color: #28a745; }
         .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
-        /* ===== 모바일(스마트폰) 화면 폭에 맞춘 반응형 폰트(clamp) 적용 ===== */
+        /* ===== 모바일 환경 전용 최적화 ===== */
         @media screen and (max-width: 600px) {
-            .container { padding: 15px; border-width: 3px; border-radius: 15px; }
+            .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 98vh; }
             h2 { font-size: 24px; margin-bottom: 15px; }
-            .lobby-title { font-size: 28px; margin-bottom: 10px; }
-            .welcome-text { font-size: 16px; padding: 10px; margin-bottom: 10px; border-width: 2px; }
             
-            /* 버튼 텍스트가 줄바꿈 없이 유동적으로 조절되도록 수정 */
-            button { font-size: clamp(12px, 3.5vw, 16px); padding: 10px 2px; border-width: 2px; border-radius: 8px; box-shadow: 0 4px 0; letter-spacing: -0.5px; }
+            /* 버튼 그림자 오류 복구 및 반응형 축소 */
+            button { padding: 10px 2px; border-width: 2px; border-radius: 8px; box-shadow: 0 4px 0 #004494; letter-spacing: -0.5px; }
+            .bulk-btn { box-shadow: 0 4px 0 #155724 !important; }
+            .delete-btn { box-shadow: 0 4px 0 #8b1c24 !important; }
+            .secondary-btn { box-shadow: 0 4px 0 #3d4246 !important; }
+            .edit-btn { box-shadow: 0 3px 0 #155724 !important; }
+            
             button:active:not(:disabled) { transform: translateY(4px); }
             input { font-size: 16px; padding: 10px; border-width: 2px; margin: 8px 0;}
             
@@ -120,32 +125,28 @@
             .online-users-title { font-size: 18px; text-align: center; border-bottom: 1px dashed #90caf9; padding-bottom: 5px;}
             .controls-wrapper { justify-content: center; width: 100%; gap: 3px;}
             
-            .online-user-item { width: 62px; font-size: 12px; padding: 6px 2px; border-width: 1px; }
+            .online-user-item { width: 62px; padding: 6px 2px; border-width: 1px; }
             .online-user-avatar { height: 45px; margin-bottom: 4px; }
             .speech-bubble { font-size: 11px; padding: 4px 6px; top: -32px; border-width: 1px; box-shadow: 0 2px 0 rgba(255,152,0,0.5);}
             .speech-bubble::after { bottom: -4px; border-width: 4px 4px 0; }
-            .hf-ready-text { font-size: 10px; }
             
             .chat-section { padding: 10px; margin-top: 10px; border-width: 2px; }
             .chat-log { font-size: 14px; height: 90px; padding: 8px; border-width: 1px; }
             .chat-input-area { gap: 4px; }
             .chat-input-area input { font-size: 14px; padding: 6px; }
-            .chat-action-btn { font-size: clamp(11px, 3vw, 13px); width: 55px; padding: 6px 2px; border-width: 2px;}
+            .chat-action-btn { width: 55px; padding: 6px 2px; border-width: 2px;}
             
             .lobby-menu-group { gap: 6px; margin-top: 10px; }
-            .lobby-menu-group button { font-size: clamp(11px, 3vw, 14px); padding: 8px 2px; letter-spacing: -0.5px; }
-            .login-btn-group.row button { font-size: clamp(12px, 3.5vw, 15px); padding: 10px 2px; }
+            .login-btn-group.row button { padding: 10px 2px; }
             
-            .avatar-list-container { grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
+            .avatar-list-container { gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
             .avatar-item { padding: 8px; border-width: 2px; border-radius: 10px; }
-            .avatar-item p, .avatar-item span { font-size: 14px !important; margin-top: 8px !important; }
-            .buy-btn { font-size: clamp(11px, 3vw, 13px); padding: 6px 2px; margin-top: 5px; }
             .owned-tag { font-size: 12px; padding: 4px 6px; margin-top: 5px; }
-            .gem-display { font-size: 18px; padding: 8px 16px; margin-bottom: 10px; border-width: 2px; }
+            .gem-display { padding: 8px 16px; margin-bottom: 10px; border-width: 2px; }
             
             .gem-label { font-size: 13px; }
             .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
-            .gem-action-btn, .hf-action-btn { font-size: clamp(11px, 3vw, 13px); padding: 5px 4px; border-width: 1px; box-shadow: 0 3px 0;}
+            .gem-action-btn, .hf-action-btn { padding: 5px 4px; border-width: 1px; box-shadow: 0 3px 0;}
         }
     </style>
 </head>
@@ -172,7 +173,7 @@
         
         <div id="nickname-page" class="page">
             <h2>🏷️ 별명 설정</h2>
-            <p style="font-size: 16px; color: #555;">대기실과 채팅창에서 사용할 멋진 별명을 입력하세요!</p>
+            <p style="font-size: 16px; color: #555; word-break: keep-all;">대기실과 채팅창에서 사용할 멋진 별명을 입력하세요!</p>
             <input type="text" id="student-nickname" class="login-input" placeholder="별명 (최대 8자)" maxlength="8">
             <div class="login-btn-group">
                 <button onclick="enterLobbyWithNickname()">입장하기</button>
@@ -223,7 +224,7 @@
 
         <div id="admin-shop-page" class="page">
             <h2>상점 관리</h2>
-            <p style="font-size: 16px; color: #666; margin-bottom: 10px;">✏️이름 / 💎가격을 수정하고 판매할 아바타를 클릭하세요!</p>
+            <p style="font-size: 15px; color: #666; margin-bottom: 10px; word-break: keep-all;">✏️이름 / 💎가격을 수정하고 판매할 아바타를 클릭하세요!</p>
             <div id="admin-shop-list" class="avatar-list-container"></div>
             <div class="login-btn-group row">
                 <button class="bulk-btn" onclick="saveShopItems()">판매하기</button>
@@ -243,17 +244,17 @@
                         <span class="gem-label">보석</span>
                         <input type="number" id="gem-control-amount" value="1" min="1" class="gem-input">
                         <span class="gem-label">개</span>
-                        <button class="gem-action-btn" onclick="modifyGems('add')" style="background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724;">✅ 지급</button>
-                        <button class="gem-action-btn" onclick="modifyGems('sub')" style="background-color: #dc3545; border-color:#bd2130; box-shadow: 0 4px 0 #8b1c24;">⛔ 차감</button>
+                        <button class="gem-action-btn" onclick="modifyGems('add')" style="background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724 !important;">✅ 지급</button>
+                        <button class="gem-action-btn" onclick="modifyGems('sub')" style="background-color: #dc3545; border-color:#bd2130; box-shadow: 0 4px 0 #8b1c24 !important;">⛔ 차감</button>
                     </div>
 
                     <div id="student-gem-controls" class="controls-wrapper" style="display: none;">
                         <span class="gem-label">보석</span>
                         <input type="number" id="student-gem-amount" value="1" min="1" class="gem-input">
                         <span class="gem-label">개</span>
-                        <button class="gem-action-btn" onclick="giftGems()" style="background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724;">🎁 선물</button>
-                        <button class="gem-action-btn" onclick="requestGems()" style="background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674;">🙏 조르기</button>
-                        <button id="accept-request-btn" class="gem-action-btn" onclick="acceptGemRequest()" disabled style="background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777;">🤝 수락</button>
+                        <button class="gem-action-btn" onclick="giftGems()" style="background-color: #28a745; border-color:#1e7e34; box-shadow: 0 4px 0 #155724 !important;">🎁 선물</button>
+                        <button class="gem-action-btn" onclick="requestGems()" style="background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674 !important;">🙏 조르기</button>
+                        <button id="accept-request-btn" class="gem-action-btn" onclick="acceptGemRequest()" disabled style="background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777 !important;">🤝 수락</button>
                     </div>
                 </div>
                 <div id="online-users-list"></div>
@@ -270,14 +271,14 @@
             </div>
 
             <div class="lobby-menu-group">
-                <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">아바타 상점</button>
+                <button id="shop-btn" onclick="showStudentShopPage()" style="background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c !important;">아바타 상점</button>
                 <button id="storage-btn" onclick="showStoragePage()">내 보관함</button>
-                <button id="student-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563;">하이파이브</button>
+                <button id="student-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563 !important;">하이파이브</button>
                 <button id="student-logout-btn" class="secondary-btn" onclick="logoutStudent()">로그아웃</button>
                 
-                <button id="admin-shop-lobby-btn" onclick="showAdminShopPage('student-lobby-page')" style="display: none; background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c;">상점 관리</button>
+                <button id="admin-shop-lobby-btn" onclick="showAdminShopPage('student-lobby-page')" style="display: none; background-color: #ff9800; border-color:#e65100; box-shadow: 0 6px 0 #bf360c !important;">상점 관리</button>
                 <button id="admin-manage-lobby-btn" onclick="showManagePage('student-lobby-page')" style="display: none;">학생 관리</button>
-                <button id="admin-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563;">하이파이브</button>
+                <button id="admin-hf-btn" onclick="enterHighFiveRoom()" style="display: none; background-color: #e83e8c; border-color:#d3337a; box-shadow: 0 6px 0 #b12563 !important;">하이파이브</button>
                 <button id="admin-back-lobby-btn" class="secondary-btn" onclick="showPage('admin-menu-page')" style="display: none;">이전으로</button>
             </div>
         </div>
@@ -293,7 +294,7 @@
 
         <div id="storage-page" class="page">
             <h2>🎒 아바타 보관함</h2>
-            <p style="font-size: 16px; color: #555; margin-bottom:10px;">장착할 아바타를 고르세요!</p>
+            <p style="font-size: 16px; color: #555; margin-bottom:10px; word-break: keep-all;">장착할 아바타를 고르세요!</p>
             <div id="avatar-list" class="avatar-list-container"></div>
             <div class="login-btn-group row">
                 <button class="bulk-btn" onclick="applySelectedAvatar()">장착하기</button>
@@ -308,8 +309,8 @@
                 <div class="online-users-header" style="border-bottom-color: #f48fb1;">
                     <div class="online-users-title" style="color: #d81b60;">대기실</div>
                     <div id="hf-controls" class="controls-wrapper">
-                        <button id="hf-request-btn" class="hf-action-btn" onclick="sendHighFiveRequest()" style="background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674;">하이?</button>
-                        <button id="hf-accept-btn" class="hf-action-btn" onclick="acceptHighFive()" disabled style="background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777; opacity: 0.5;">🤝 파이브!</button>
+                        <button id="hf-request-btn" class="hf-action-btn" onclick="sendHighFiveRequest()" style="background-color: #17a2b8; border-color:#117a8b; box-shadow: 0 4px 0 #0f6674 !important;">하이?</button>
+                        <button id="hf-accept-btn" class="hf-action-btn" onclick="acceptHighFive()" disabled style="background-color: #ccc; border-color:#999; box-shadow: 0 4px 0 #777 !important; opacity: 0.5;">🤝 파이브!</button>
                     </div>
                 </div>
                 <div id="hf-users-list"></div>
@@ -317,7 +318,7 @@
 
             <div class="login-btn-group row" style="margin-top: 15px;">
                 <div id="hf-admin-btn-group" style="display: none; width: 100%; gap: 10px;">
-                    <button id="hf-admin-start-btn" onclick="startHfGame()" style="background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724; flex:1;">시작</button>
+                    <button id="hf-admin-start-btn" onclick="startHfGame()" style="background-color: #28a745; border-color: #1e7e34; box-shadow: 0 6px 0 #155724 !important; flex:1;">시작</button>
                     <button class="secondary-btn" onclick="exitHighFiveRoom()" style="flex:1;">나가기</button>
                 </div>
                 <div id="hf-student-btn-group" style="display: none; width: 100%; gap: 10px;">
@@ -442,7 +443,7 @@
             
             if (data.isAlert) {
                 const color = data.alertColor || '#007bff'; 
-                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80; font-size:14px;">📢 ${data.message}</div>`;
+                logDiv.innerHTML += `<div style="margin-bottom: 8px; color: ${color}; font-weight: bold; text-align: center; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 2px dashed ${color}80; font-size:clamp(12px, 3.5vw, 15px); word-break:keep-all;">📢 ${data.message}</div>`;
             } else {
                 const displayName = data.senderName || data.sender;
                 const isMe = data.sender === currentUser;
@@ -472,14 +473,14 @@
             if (isChatMuted) {
                 if (!isAdmin) {
                     chatInput.disabled = true;
-                    chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                    chatInput.placeholder = "채팅 금지 🤫";
                     chatSendBtn.disabled = true;
                     chatSendBtn.style.backgroundColor = "#ccc";
                     chatSendBtn.style.borderColor = "#999";
                     chatSendBtn.style.boxShadow = "0 4px 0 #777";
                 }
                 if (isAdmin && muteBtn) {
-                    muteBtn.innerText = "음소거 해제";
+                    muteBtn.innerText = "해제";
                     muteBtn.style.backgroundColor = "#dc3545"; 
                     muteBtn.style.borderColor = "#bd2130";
                     muteBtn.style.boxShadow = "0 4px 0 #8b1c24";
@@ -524,13 +525,13 @@
                     acceptBtn.disabled = false;
                     acceptBtn.style.backgroundColor = '#ff9800'; 
                     acceptBtn.style.borderColor = '#e65100';
-                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
+                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c !important';
                     acceptBtn.innerText = `🤝 수락 (${pendingRequests.length})`; 
                 } else {
                     acceptBtn.disabled = true;
                     acceptBtn.style.backgroundColor = '#ccc';
                     acceptBtn.style.borderColor = '#999';
-                    acceptBtn.style.boxShadow = '0 4px 0 #777';
+                    acceptBtn.style.boxShadow = '0 4px 0 #777 !important';
                     acceptBtn.innerText = '🤝 수락';
                 }
 
@@ -757,7 +758,7 @@
                 itemDiv.innerHTML = `
                     <img src="${avatarId}" alt="아바타">
                     <div id="view-name-mode-${index}" style="margin-top: 8px; display:flex; align-items:center; gap:4px; justify-content:center; width:100%;">
-                        <span style="font-size: 15px; color: #333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${currentName}</span>
+                        <span style="font-size: clamp(11px, 3vw, 15px); color: #333; word-break: keep-all; line-height: 1.2; text-align:center; flex:1;">${currentName}</span>
                         <span title="이름 수정" style="cursor: pointer; font-size: 14px; background: #eee; padding: 2px 6px; border-radius: 6px;" onclick="enableEditMode(event, ${index}, 'name')">✏️</span>
                     </div>
                     <div id="edit-name-mode-${index}" style="margin-top: 8px; display:none; align-items:center; gap:4px; justify-content:center; width:100%;">
@@ -1178,7 +1179,7 @@
             const listDiv = document.getElementById('online-users-list');
             listDiv.innerHTML = '';
             const ids = Object.keys(localOnlineUsers);
-            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 18px;">현재 대기실에 아무도 없습니다.</p>'; return; }
+            if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">현재 대기실에 아무도 없습니다.</p>'; return; }
             
             const now = Date.now();
             ids.forEach(id => {
@@ -1225,7 +1226,7 @@
                 const isMe = (id === currentUser) ? '<span style="color: #ff9800; font-size:12px;"><br>(나)</span>' : '';
                 
                 let avatarSrc = (user.avatarId || 'image_0.gif').replace('.png', '.gif');
-                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${displayId} ${isMe}</span>`;
+                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:clamp(10px, 3vw, 13px); word-break:break-all; line-height:1.1; width:100%; display:block; margin-top:4px;">${displayId} ${isMe}</span>`;
                 listDiv.appendChild(userDiv);
             });
         }
@@ -1246,7 +1247,7 @@
                 
                 const avatarName = localShopNames[dbKey] || localShopNames[fallbackKey] || `${avatarId.split('.')[0]}번 아바타`;
                 const avatarPrice = localShopPrices[dbKey] !== undefined ? localShopPrices[dbKey] : (localShopPrices[fallbackKey] !== undefined ? localShopPrices[fallbackKey] : 1);
-                const nameText = `<span style="font-size: 16px; color: #333; margin-top: 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${avatarName}</span>`;
+                const nameText = `<span style="font-size: clamp(11px, 3.5vw, 16px); color: #333; margin-top: 8px; word-break: keep-all; line-height: 1.2; display: block; width:100%;">${avatarName}</span>`;
                 if (myOwnedAvatars.includes(avatarId)) {
                     itemDiv.innerHTML = `<img src="${avatarId}" alt="아바타" style="opacity: 0.5;">${nameText}<div class="owned-tag">보유 중</div>`;
                 } else {
@@ -1293,7 +1294,7 @@
                 let avatarName = (avatarId === 'image_0.gif' || avatarId === 'image_0.png') ? '기본 남자' : (avatarId === 'image_1.gif' || avatarId === 'image_1.png') ? '기본 여자' : (localShopNames[dbKey] || localShopNames[fallbackKey] || `${avatarId.split('.')[0]}번 아바타`);
                 
                 let avatarSrc = avatarId.replace('.png', '.gif');
-                avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타"><p style="font-size: 16px; color: #333; margin-top: 10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${avatarName}</p>`;
+                avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타"><p style="font-size: clamp(11px, 3.5vw, 16px); color: #333; margin-top: 10px; word-break: keep-all; line-height: 1.2; width:100%; margin-bottom: 0;">${avatarName}</p>`;
                 listDiv.appendChild(avatarDiv);
             });
         }
@@ -1444,13 +1445,13 @@
                     acceptBtn.disabled = false;
                     acceptBtn.style.backgroundColor = '#ff9800'; 
                     acceptBtn.style.borderColor = '#e65100';
-                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c';
+                    acceptBtn.style.boxShadow = '0 4px 0 #bf360c !important';
                     acceptBtn.innerText = `🤝 파이브! (${requestCount})`; 
                 } else {
                     acceptBtn.disabled = true;
                     acceptBtn.style.backgroundColor = '#ccc';
                     acceptBtn.style.borderColor = '#999';
-                    acceptBtn.style.boxShadow = '0 4px 0 #777';
+                    acceptBtn.style.boxShadow = '0 4px 0 #777 !important';
                     acceptBtn.innerText = '🤝 파이브!';
                 }
             }
@@ -1536,7 +1537,7 @@
                     userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
                 }
 
-                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${displayName} ${isMe ? '<span style="color: #ff9800; font-size:11px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
+                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><span style="font-weight:bold; text-align:center; font-size:clamp(10px, 3vw, 13px); word-break:break-all; line-height:1.1; width:100%; display:block; margin-top:4px;">${displayName} ${isMe ? '<span style="color: #ff9800; font-size:11px;"><br>(나)</span>' : ''}</span>${statusTextHtml}`;
                 listDiv.appendChild(userDiv);
             });
         }
