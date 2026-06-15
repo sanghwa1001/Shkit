@@ -139,7 +139,8 @@
         .online-users-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #90caf9; padding-bottom: 10px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;}
         .online-users-title { font-size: 20px; color: #1565c0; text-align: left; margin: 0; flex-shrink: 0;}
         
-        #online-users-list { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 5px; justify-content: flex-start; }
+        /* 🔥 패치됨: #hf-users-list 를 추가하여 하이파이브 대기실도 가로로 나열되도록 설정 */
+        #online-users-list, #hf-users-list { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 5px; justify-content: flex-start; }
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; font-size: 14px; color: #333; background: white; padding: 8px 3px; border-radius: 10px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 82px; box-sizing: border-box;}
         .online-user-avatar { height: 50px; width: auto; margin-bottom: 6px; }
         
@@ -1604,7 +1605,7 @@
             if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
 
             if (!selectedHfUser) return alert('하이파이브 하고 싶은 친구를 선택하세요.');
-            if (selectedHfUser === currentUser) return alert('자신에게 요청할 수 정할 수 없습니다.');
+            if (selectedHfUser === currentUser) return alert('자신에게 요청할 수 없습니다.');
             if (hfParticipants[selectedHfUser]?.pairId != null) return alert('이미 짝이 된 친구입니다.');
 
             db.ref(`highfive/requests/${selectedHfUser}/${currentUser}`).set(Date.now());
