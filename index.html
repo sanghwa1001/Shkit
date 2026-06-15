@@ -142,7 +142,6 @@
         
         #online-users-list, #hf-users-list { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 5px; justify-content: flex-start; }
         
-        /* 🔥 패치됨: 아바타 칸 크기를 늘리고 높이를 고정하여 하단 텍스트 완벽 정렬 */
         .online-user-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; font-size: 14px; color: #333; background: white; padding: 8px 3px; border-radius: 10px; border: 2px solid #bbdefb; box-shadow: 0 3px 0 #bbdefb; width: 96px; height: 120px; box-sizing: border-box;}
         .online-user-avatar { height: 50px; width: auto; margin-bottom: 6px; }
         
@@ -184,7 +183,6 @@
         .gem-label { font-weight: bold; font-size: 15px; color: #1565c0; white-space: nowrap; }
         .gem-input { width: 45px; margin: 0; padding: 4px; font-size: 15px; text-align: center; border: 2px solid #90caf9; border-radius: 6px; }
         
-        /* 🔥 패치됨: 하이파이브 상태 텍스트를 항상 박스 맨 하단에 고정 */
         .hf-ready-text { font-size: clamp(9px, 2.5vw, 11px); letter-spacing: -0.5px; font-weight: bold; color: #888; margin-top: auto; margin-bottom: 2px; white-space: normal; word-break: keep-all; line-height: 1.1; width: 100%; box-sizing: border-box; padding: 0 2px; text-align: center; }
         .hf-ready-text.ready { color: #28a745; }
         .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
@@ -210,7 +208,6 @@
             }
             .btn-sm:active:not(:disabled):not(.btn-disabled) { transform: translateY(3px); }
 
-            /* 컨트롤 전용 버튼들도 크기 조절하여 칸에 딱 맞게 정렬 */
             .chat-action-btn, .gem-action-btn, .hf-action-btn { 
                 min-width: 55px; padding: 6px 6px; font-size: 12px; letter-spacing: -1px;
             }
@@ -226,7 +223,6 @@
             .online-users-title { font-size: 18px; text-align: center; border-bottom: 1px dashed #90caf9; padding-bottom: 5px;}
             .controls-wrapper { justify-content: center; width: 100%; gap: 3px;}
             
-            /* 🔥 패치됨: 모바일 아바타 박스 크기 확장 및 높이 고정 */
             .online-user-item { width: 88px; height: 110px; padding: 6px 2px; border-width: 1px; }
             .online-user-avatar { height: 45px; margin-bottom: 4px; }
             
@@ -447,7 +443,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 오직 gif 파일만 지원
         const DEFAULT_AVATARS = ['image_0.gif', 'image_1.gif'];
         const ALL_SHOP_AVATARS = ['1.gif', '2.gif', '3.gif', '4.gif', '5.gif', '6.gif', '7.gif', '8.gif', '9.gif', '10.gif'];
         
@@ -474,7 +469,6 @@
         let selectedHfUser = null;
         const PAIR_COLORS = ['#ff9800', '#17a2b8', '#28a745', '#e83e8c', '#6f42c1', '#d84315', '#007bff', '#20c997'];
 
-        // 🔥 패치됨: 넓어진 칸에 맞춰 가독성을 위해 폰트 및 자간 재조정
         function getNameStyle(text) {
             const len = text ? text.length : 0;
             if (len <= 4) return 'font-size: 14px; letter-spacing: -0.5px;';
@@ -939,7 +933,7 @@
             const chatSendBtn = document.getElementById('chat-send-btn');
             if (isChatMuted) {
                 chatInput.disabled = true;
-                chatInput.placeholder = "관리자가 채팅을 금지했습니다 🤫";
+                chatInput.placeholder = "관리자가 채팅 금지했습니다 🤫";
                 chatSendBtn.disabled = true;
                 chatSendBtn.className = "btn-disabled chat-action-btn";
             } else {
@@ -1295,8 +1289,8 @@
                 
                 let avatarSrc = user.avatarId || 'image_0.gif';
                 
-                // 🔥 패치됨: 텍스트 래퍼에 flex: 1을 주어 공간을 채우게 설정
-                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: center;"><span class="name-text-fit" style="${getNameStyle(displayId)}">${displayId}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1;">${(id === currentUser) ? '(나)' : ''}</span></div>`;
+                // 🔥 패치됨: 텍스트 부분 높이를 동적으로 맞추어 맨 하단과 균형 정렬
+                userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit" style="${getNameStyle(displayId)}">${displayId}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(id === currentUser) ? '(나)' : ''}</span></div>`;
                 listDiv.appendChild(userDiv);
             });
         }
@@ -1452,8 +1446,22 @@
             const startBtn = document.getElementById('hf-admin-start-btn');
             const readyBtn = document.getElementById('hf-ready-btn');
             
-            const studentIds = Object.keys(hfParticipants);
-            const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
+            const listDiv = document.getElementById('hf-users-list');
+            listDiv.innerHTML = '';
+            
+            let ids = Object.keys(hfParticipants);
+            
+            // 🔥 해결 패치: 게임 시작 전에는 오프라인(나감) 상태인 유저를 배열에서 완전히 제거
+            if (!hfState.isStarted) {
+                ids = ids.filter(id => hfParticipants[id].isOnline !== false);
+            } else if (hfState.shuffledIds && hfState.shuffledIds.length > 0) {
+                ids = hfState.shuffledIds.filter(id => hfParticipants[id]);
+                Object.keys(hfParticipants).forEach(id => {
+                    if (!ids.includes(id)) ids.push(id);
+                });
+            }
+
+            const onlineStudentIds = ids.filter(id => hfParticipants[id].isOnline !== false);
             const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
             const isMatchComplete = onlineStudentIds.length >= 2 && unPairedCount <= 1;
             const isFailureState = hfState.isStarted && unPairedCount === 1;
@@ -1512,17 +1520,6 @@
                     acceptBtn.className = "btn-disabled hf-action-btn";
                     acceptBtn.innerText = '🤝 파이브!';
                 }
-            }
-
-            const listDiv = document.getElementById('hf-users-list');
-            listDiv.innerHTML = '';
-            
-            let ids = Object.keys(hfParticipants);
-            if (hfState.isStarted && hfState.shuffledIds && hfState.shuffledIds.length > 0) {
-                ids = hfState.shuffledIds.filter(id => hfParticipants[id]);
-                Object.keys(hfParticipants).forEach(id => {
-                    if (!ids.includes(id)) ids.push(id);
-                });
             }
 
             if (ids.length === 0) {
@@ -1595,8 +1592,8 @@
                     userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
                 }
 
-                // 🔥 패치됨: 텍스트 래퍼에 flex: 1을 주고, hf-ready-text가 하단에 고정되도록 설정됨
-                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: center;"><span class="name-text-fit" style="${getNameStyle(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
+                // 🔥 패치됨: 텍스트 부분 높이를 동적으로 맞추어 맨 하단과 균형 정렬
+                userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit" style="${getNameStyle(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
                 listDiv.appendChild(userDiv);
             });
         }
