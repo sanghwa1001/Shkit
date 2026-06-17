@@ -1688,4 +1688,255 @@
             const studentIds = Object.keys(hfParticipants);
             const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
             const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
-            if (unPairedCount ===
+            if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+
+            if (!selectedHfUser) return alert('하이파이브 하고 싶은 친구를 선택하세요.');
+            if (selectedHfUser === currentUser) return alert('자신에게 요청할 수 없습니다.');
+            if (hfParticipants[selectedHfUser]?.pairId != null) return alert('이미 짝이 된 친구입니다.');
+
+            db.ref(`highfive/requests/${selectedHfUser}/${currentUser}`).set(Date.now());
+            selectedHfUser = null;
+            renderHighFiveRoom();
+        }
+
+        function acceptHighFive() {
+            if (!hfState.isStarted) return alert('게임이 아직 시작되지 않았습니다.');
+            
+            const myData = hfParticipants[currentUser];
+            if (myData?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
+            
+            const studentIds = Object.keys(hfParticipants);
+            const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
+            const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
+            if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+
+            if (!selectedHfUser) return alert('하이파이브 할 친구를 선택하세요.');
+            
+            const myRequests = hfRequests[currentUser] || {};
+            if (!myRequests[selectedHfUser]) return alert('선택한 친구에게서 온 요청이 없습니다.');
+
+            const targetId = selectedHfUser; 
+            
+            const targetData = hfParticipants[targetId];
+            if (targetData?.pairId != null) {
+                alert('앗! 상대방이 이미 다른 친구와 하이파이브를 완료했습니다. 😥');
+                db.ref(`highfive/requests/${currentUser}/${targetId}`).remove(); 
+                selectedHfUser = null;
+                renderHighFiveRoom();
+                return;
+            }
+            
+            const nextPairId = hfState.pairCount + 1;
+            const pairColor = PAIR_COLORS[nextPairId % PAIR_COLORS.length];
+            
+            const updates = {};
+            updates[`highfive/state/pairCount`] = nextPairId;
+            updates[`highfive/participants/${currentUser}/pairId`] = nextPairId;
+            updates[`highfive/participants/${currentUser}/pairColor`] = pairColor;
+            updates[`highfive/participants/${targetId}/pairId`] = nextPairId;
+            updates[`highfive/participants/${targetId}/pairColor`] = pairColor;
+            
+            updates[`highfive/requests/${currentUser}`] = null;
+            updates[`highfive/requests/${targetId}`] = null;
+
+            db.ref().update(updates).then(() => {
+                selectedHfUser = null;
+                for (let uid in hfRequests) {
+                    if (hfRequests[uid][currentUser]) db.ref(`highfive/requests/${uid}/${currentUser}`).remove();
+                    if (hfRequests[uid][targetId]) db.ref(`highfive/requests/${uid}/${targetId}`).remove();
+                }
+            });
+        }
+
+        // ==========================
+        // 파도타기 전용 함수들
+        // ==========================
+        function enterWaveRoom() {
+            if (isAdmin) {
+                db.ref('wave/state/isOpen').set(true);
+            } else {
+                const pRef = db.ref('wave/participants/' + currentUser);
+                pRef.once('value', snap => {
+                    const data = snap.val();
+                    if (!data) pRef.set({ status: 'waiting', isOnline: true });
+                    else pRef.update({ isOnline: true });
+                    pRef.child('isOnline').onDisconnect().set(false);
+                });
+            }
+            showPage('wave-page');
+            renderWaveRoom();
+        }
+
+        function exitWaveRoom() {
+            if (isAdmin) {
+                db.ref('wave/state').update({ isOpen: false, isStarted: false, shuffledIds: [] });
+                db.ref('wave/participants').remove();
+                db.ref('wave/clicks').remove();
+                showPage('student-lobby-page');
+            } else {
+                const pRef = db.ref('wave/participants/' + currentUser);
+                pRef.child('isOnline').onDisconnect().cancel();
+                if (waveState.isStarted) pRef.update({ isOnline: false });
+                else pRef.remove();
+                showPage('student-lobby-page');
+            }
+        }
+
+        function toggleWaveReady() {
+            if (waveState.isStarted) return;
+            const myData = waveParticipants[currentUser];
+            if (!myData) return;
+            const newStatus = myData.status === 'ready' ? 'waiting' : 'ready';
+            db.ref('wave/participants/' + currentUser).update({ status: newStatus });
+        }
+
+        function startWaveGame() {
+            const onlineIds = Object.keys(waveParticipants).filter(id => waveParticipants[id].isOnline !== false);
+            if (onlineIds.length < 4) return alert('최소 4명 이상의 학생이 있어야 시작할 수 있습니다.');
+            
+            const allReady = onlineIds.every(id => waveParticipants[id].status === 'ready');
+            if (!allReady) return alert('아직 모든 학생이 준비를 완료하지 않았습니다!');
+
+            const shuffledIds = shuffleArray([...onlineIds]);
+            db.ref('wave/state').update({ isStarted: true, shuffledIds: shuffledIds });
+            db.ref('wave/clicks').remove();
+        }
+
+        function restartWaveGame() {
+            const onlineIds = Object.keys(waveParticipants).filter(id => waveParticipants[id].isOnline !== false);
+            const shuffledIds = shuffleArray([...onlineIds]);
+            db.ref('wave/state').update({ isStarted: true, shuffledIds: shuffledIds });
+            db.ref('wave/clicks').remove();
+        }
+
+        function clickWaveBtn() {
+            if (!waveState.isStarted) return;
+            db.ref('wave/clicks').push(currentUser);
+        }
+
+        function renderWaveRoom() {
+            const adminBtnGroup = document.getElementById('wave-admin-btn-group');
+            const studentBtnGroup = document.getElementById('wave-student-btn-group');
+            const startBtn = document.getElementById('wave-admin-start-btn');
+            const readyBtn = document.getElementById('wave-ready-btn');
+            const waveBtn = document.getElementById('wave-action-btn');
+            const listDiv = document.getElementById('wave-users-list');
+            
+            listDiv.innerHTML = '';
+            let ids = Object.keys(waveParticipants);
+            
+            if (!waveState.isStarted) {
+                ids = ids.filter(id => waveParticipants[id].isOnline !== false);
+            } else if (waveState.shuffledIds && waveState.shuffledIds.length > 0) {
+                ids = waveState.shuffledIds.filter(id => waveParticipants[id]);
+                Object.keys(waveParticipants).forEach(id => {
+                    if (!ids.includes(id)) ids.push(id);
+                });
+            }
+
+            const onlineStudentIds = ids.filter(id => waveParticipants[id].isOnline !== false);
+            
+            const clickArray = Object.values(waveClicks || {});
+            const isGameFinished = waveState.isStarted && onlineStudentIds.every(id => clickArray.includes(id));
+
+            document.getElementById('wave-controls').style.display = isAdmin ? 'none' : 'flex';
+
+            if (isAdmin) {
+                studentBtnGroup.style.display = 'none';
+                adminBtnGroup.style.display = 'flex';
+                
+                if (waveState.isStarted && isGameFinished) {
+                    startBtn.innerText = '다시하기';
+                    startBtn.disabled = false;
+                    startBtn.style.opacity = '1';
+                    startBtn.onclick = restartWaveGame;
+                } else {
+                    startBtn.innerText = '시작';
+                    startBtn.onclick = startWaveGame;
+                    startBtn.disabled = waveState.isStarted;
+                    startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
+                }
+            } else {
+                adminBtnGroup.style.display = 'none';
+                studentBtnGroup.style.display = 'flex';
+                
+                if (waveState.isStarted) readyBtn.style.display = 'none';
+                else {
+                    readyBtn.style.display = 'block';
+                    const myData = waveParticipants[currentUser] || {};
+                    if (myData.status === 'ready') {
+                        readyBtn.innerText = '취소';
+                        readyBtn.className = "btn-red";
+                    } else {
+                        readyBtn.innerText = '준비';
+                        readyBtn.className = "btn-green";
+                    }
+                }
+
+                const hasClicked = clickArray.includes(currentUser);
+                if (waveState.isStarted && !hasClicked) {
+                    waveBtn.disabled = false;
+                    waveBtn.className = "btn-cyan hf-action-btn";
+                } else {
+                    waveBtn.disabled = true;
+                    waveBtn.className = "btn-disabled hf-action-btn";
+                }
+            }
+
+            if (ids.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">대기실에 아무도 없습니다.</p>';
+                return;
+            }
+
+            ids.forEach(id => {
+                const data = waveParticipants[id];
+                const realAcc = localStudentAccounts[id] || {};
+                const isMe = id === currentUser;
+                const isOffline = data.isOnline === false;
+                
+                const clickIndex = clickArray.indexOf(id);
+                const userHasClicked = clickIndex !== -1;
+                const teamNumber = userHasClicked ? Math.floor(clickIndex / 4) + 1 : null;
+                const isTeamComplete = userHasClicked && clickArray.length >= teamNumber * 4;
+                
+                let avatarSrc = realAcc.avatarId || 'image_0.gif';
+                let displayName = realAcc.nickname || id;
+                let statusTextHtml = '';
+
+                if (waveState.isStarted && !isTeamComplete && !isOffline) {
+                    avatarSrc = 'unknown.gif';
+                    displayName = '???';
+                }
+
+                if (isOffline) {
+                    statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>';
+                } else if (isTeamComplete) {
+                    const teamColor = PAIR_COLORS[teamNumber % PAIR_COLORS.length];
+                    statusTextHtml = `<div class="hf-ready-text" style="color: ${teamColor};">파도타기 완료!</div>`;
+                } else if (userHasClicked) {
+                    statusTextHtml = '<div class="hf-ready-text" style="color: #17a2b8;">팀원 대기중..</div>';
+                } else if (!waveState.isStarted) {
+                    statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>';
+                } else {
+                    statusTextHtml = '<div class="hf-ready-text" style="color: #d84315;">타이밍!</div>';
+                }
+
+                const userDiv = document.createElement('div');
+                userDiv.className = 'online-user-item';
+                
+                if (isOffline) {
+                    userDiv.style.opacity = '0.5';
+                } else if (isTeamComplete) {
+                    const teamColor = PAIR_COLORS[teamNumber % PAIR_COLORS.length];
+                    userDiv.style.borderColor = teamColor;
+                    userDiv.style.borderWidth = '4px';
+                    userDiv.style.backgroundColor = teamColor + '15';
+                }
+
+                userDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit ${getNameClass(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
+                listDiv.appendChild(userDiv);
+            });
+        }
+    </script>
+</body>
+</html>
