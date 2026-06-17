@@ -678,9 +678,16 @@
             renderOnlineUsers();
         }
 
+        // 수정: 학생 로그인 로직 보완
         function checkStudentLogin() {
             const inputId = document.getElementById('student-id').value.trim();
             const inputPw = document.getElementById('student-pw').value.trim();
+            
+            if (Object.keys(localStudentAccounts).length === 0) {
+                alert('서버와 연결 중입니다. 잠시 후 다시 눌러주세요 ⏳');
+                return;
+            }
+
             const account = localStudentAccounts[inputId];
 
             if (account && account.pw === inputPw) {
@@ -703,14 +710,29 @@
             }
         }
 
+        // 수정: 관리자 로그인 로직 보완
         function checkAdminLogin() {
             const inputId = document.getElementById('admin-id').value.trim();
             const inputPw = document.getElementById('admin-pw').value.trim();
             if (inputId === '' || inputPw === '') { alert('아이디와 비밀번호를 모두 입력해주세요.'); return; }
+            
+            const loginBtn = document.querySelector('#admin-login-page .btn-blue');
+            const originalText = loginBtn.innerText;
+            loginBtn.innerText = "로그인 중... ⏳";
+            loginBtn.disabled = true;
+
             const adminEmail = inputId + "@gmail.com";
             firebase.auth().signInWithEmailAndPassword(adminEmail, inputPw)
-                .then((userCredential) => { showPage('admin-menu-page'); })
-                .catch((error) => { alert('관리자 정보가 일치하지 않습니다.'); });
+                .then((userCredential) => { 
+                    loginBtn.innerText = originalText;
+                    loginBtn.disabled = false;
+                    showPage('admin-menu-page'); 
+                })
+                .catch((error) => { 
+                    loginBtn.innerText = originalText;
+                    loginBtn.disabled = false;
+                    alert('관리자 정보가 일치하지 않습니다.'); 
+                });
         }
 
         function createStudentAccount() {
