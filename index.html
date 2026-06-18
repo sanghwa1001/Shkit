@@ -407,7 +407,7 @@
                 <div class="online-users-header" style="border-bottom-color: #f48fb1;">
                     <div class="online-users-title" style="color: #d81b60;">대기실</div>
                     <div id="hf-controls" class="controls-wrapper">
-                        <button id="hf-request-btn" class="btn-cyan hf-action-btn" onclick="sendHighFiveRequest()">하이?</button>
+                        <button id="hf-request-btn" class="btn-disabled hf-action-btn" onclick="sendHighFiveRequest()" disabled>✋ 하이?</button>
                         <button id="hf-accept-btn" class="btn-disabled hf-action-btn" onclick="acceptHighFive()" disabled>🤝 파이브!</button>
                     </div>
                 </div>
@@ -1590,8 +1590,15 @@
             const requestCount = Object.keys(myRequests).length;
 
             if (!isAdmin) {
-                reqBtn.disabled = false;
-                reqBtn.style.opacity = '1';
+                if (hfState.isStarted) {
+                    reqBtn.disabled = false;
+                    reqBtn.className = "btn-cyan hf-action-btn";
+                    reqBtn.style.opacity = '1';
+                } else {
+                    reqBtn.disabled = true;
+                    reqBtn.className = "btn-disabled hf-action-btn";
+                    reqBtn.style.opacity = '1';
+                }
 
                 if (hfState.isStarted && requestCount > 0) {
                     acceptBtn.disabled = false;
