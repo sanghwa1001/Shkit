@@ -1593,11 +1593,11 @@
                 if (hfState.isStarted) {
                     reqBtn.disabled = false;
                     reqBtn.className = "btn-cyan hf-action-btn";
-                    reqBtn.style.opacity = '1';
+                    reqBtn.style.opacity = ''; // 투명도 CSS에 위임
                 } else {
                     reqBtn.disabled = true;
                     reqBtn.className = "btn-disabled hf-action-btn";
-                    reqBtn.style.opacity = '1';
+                    reqBtn.style.opacity = ''; // 강제 100% 투명도 속성 제거
                 }
 
                 if (hfState.isStarted && requestCount > 0) {
