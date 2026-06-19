@@ -220,17 +220,55 @@
         <div id="student-study-menu-page" class="page">
             <h2>📚 학습 메뉴</h2>
             <div class="login-btn-group">
-                <button class="btn-blue" onclick="showPage('student-solo-study-page')">혼자하기</button>
-                <button class="btn-green" onclick="alert('함께하기 협동 모드는 현재 준비 중입니다! 🤝')">함께하기</button>
+                <button class="btn-blue" onclick="showStudyDataSelectPage('solo')">혼자하기</button>
+                <button class="btn-green" onclick="showStudyDataSelectPage('together')">함께하기</button>
                 <button class="btn-gray" onclick="showPage('student-lobby-page')">이전으로</button>
             </div>
         </div>
 
-        <div id="student-solo-study-page" class="page">
-            <h2>🏃 혼자하기 컨텐츠</h2>
-            <div class="login-btn-group">
-                <button class="btn-orange" onclick="alert('러닝 액션 게임형 학습인 [상티런]은 오픈 준비 중입니다! 🏃💨')">상티런</button>
+        <div id="student-study-data-select-page" class="page">
+            <h2>📖 학습 데이터 선택</h2>
+            <p style="font-size: 15px; color: #666; word-break: keep-all;">플레이할 단어장을 먼저 선택해 주세요!</p>
+            <div id="student-study-data-list" class="list-container"></div>
+            <div class="login-btn-group row">
                 <button class="btn-gray" onclick="showPage('student-study-menu-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="student-solo-study-page" class="page">
+            <h2>🏃 게임 선택</h2>
+            <div class="login-btn-group">
+                <button class="btn-orange" onclick="prepareSangtiRun()">상티런 플레이</button>
+                <button class="btn-gray" onclick="showPage('student-study-data-select-page')">데이터 다시 선택</button>
+            </div>
+        </div>
+
+        <div id="sangti-run-page" class="page" style="padding: 0;">
+            <div id="sr-game-container">
+                <div id="sr-game">
+                    <div id="sr-bg-layer"></div>
+                    <div id="sr-world">
+                        <div id="sr-characterBubble" class="sr-bubble"></div>
+                        <img id="sr-character" src="character.gif">
+                    </div>
+
+                    <div id="sr-timer-container">
+                        <div id="sr-timer-bar"></div>
+                    </div>
+
+                    <div id="sr-score">0</div>
+                    
+                    <div id="sr-gameOver">
+                        <div id="sr-gameOverBox">
+                            <h1>게임 종료! 🛑</h1>
+                            <div id="sr-result"></div>
+                            <div class="login-btn-group row" style="margin-top: 15px; gap: 10px;">
+                                <button class="btn-green" onclick="startSangtiRunGame()">다시하기</button>
+                                <button class="btn-gray" onclick="exitSangtiRun()">나가기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
