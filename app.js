@@ -44,6 +44,12 @@ let waveParticipants = {};
 let waveState = { isOpen: false, isStarted: false, shuffledIds: [] };
 let waveClicks = {}; 
 
+// 학습 관련 전역 변수
+let localLearningData = {};
+let currentEditDataSet = null;
+let currentLearnMode = null; 
+let currentSelectedData = null;
+
 function getNameClass(text) {
     const len = text ? text.length : 0;
     if (len <= 4) return 'name-sm';
@@ -190,6 +196,14 @@ db.ref('chatState/isMuted').on('value', (snapshot) => {
             muteBtn.className = "btn-gray chat-action-btn";
         }
     }
+});
+
+// 학습 데이터 리스너
+db.ref('learningData').on('value', (snapshot) => {
+    localLearningData = snapshot.val() || {};
+    if (document.getElementById('admin-edit-learn-page').classList.contains('active')) renderLearnDataList();
+    if (document.getElementById('admin-edit-words-page').classList.contains('active') && currentEditDataSet) renderWordsList(currentEditDataSet);
+    if (document.getElementById('student-select-data-page').classList.contains('active')) renderStudentDataList();
 });
 
 function listenForGemRequests() {
@@ -489,7 +503,7 @@ function saveSingleData(event, avatarId, index, type) {
     const dbKey = avatarId.replace('.', '_');
 
     if (type === 'name') {
-        newValue = newValue.substring(0, 10); // 최대 10자 보장
+        newValue = newValue.substring(0, 10); 
         const currentNameInDB = localShopNames[dbKey];
         if (newValue === '') {
             if (currentNameInDB !== undefined) db.ref('shopItemNames/' + dbKey).remove().then(() => renderAdminShopPage());
@@ -523,6 +537,10 @@ function enterLobbyWithNickname() {
     
     document.getElementById('admin-chat-reset-btn').style.display = 'none';
     document.getElementById('admin-mute-btn').style.display = 'none';
+    
+    document.getElementById('student-learn-btn').style.display = 'block';
+    document.getElementById('admin-learn-lobby-btn').style.display = 'none';
+    
     document.getElementById('shop-btn').style.display = 'block';
     document.getElementById('storage-btn').style.display = 'block';
     document.getElementById('student-hf-btn').style.display = 'block';
@@ -571,6 +589,10 @@ function enterAdminLobby() {
     
     document.getElementById('admin-chat-reset-btn').style.display = 'block';
     document.getElementById('admin-mute-btn').style.display = 'block';
+    
+    document.getElementById('student-learn-btn').style.display = 'none';
+    document.getElementById('admin-learn-lobby-btn').style.display = 'block';
+    
     document.getElementById('shop-btn').style.display = 'none';
     document.getElementById('storage-btn').style.display = 'none';
     document.getElementById('student-hf-btn').style.display = 'none';
@@ -628,6 +650,10 @@ function logoutStudent() {
     
     document.getElementById('admin-chat-reset-btn').style.display = 'none';
     document.getElementById('admin-mute-btn').style.display = 'none';
+    
+    document.getElementById('student-learn-btn').style.display = 'none';
+    document.getElementById('admin-learn-lobby-btn').style.display = 'none';
+    
     document.getElementById('admin-gem-controls').style.display = 'none';
     document.getElementById('student-gem-controls').style.display = 'none';
     document.getElementById('admin-shop-lobby-btn').style.display = 'none';
@@ -1137,11 +1163,11 @@ function renderHighFiveRoom() {
         if (hfState.isStarted) {
             reqBtn.disabled = false;
             reqBtn.className = "btn-cyan hf-action-btn";
-            reqBtn.style.opacity = ''; // 투명도 CSS에 위임
+            reqBtn.style.opacity = ''; 
         } else {
             reqBtn.disabled = true;
             reqBtn.className = "btn-disabled hf-action-btn";
-            reqBtn.style.opacity = ''; // 강제 100% 투명도 속성 제거
+            reqBtn.style.opacity = ''; 
         }
 
         if (hfState.isStarted && requestCount > 0) {
@@ -1487,4 +1513,168 @@ function renderWaveRoom() {
         userDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit ${getNameClass(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
         listDiv.appendChild(userDiv);
     });
+}
+
+// ==========================
+// 학습 관리 및 게임 기능 함수 모음
+// ==========================
+
+// 1. 엑셀을 통한 학습데이터 업로드 (A열: 영어, B열: 뜻)
+function handleLearnExcelUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const fileName = file.name.replace(/\.[^/.]+$/, ""); 
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+        
+        let words = [];
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row[0] === undefined || row[1] === undefined) continue;
+            const eng = String(row[0]).trim();
+            const kor = String(row[1]).trim();
+            if (eng === '' || kor === '' || eng.toLowerCase() === 'english' || kor === '한글') continue;
+            words.push({ eng: eng, kor: kor });
+        }
+        
+        if (words.length > 0) {
+            const safeName = fileName.replace(/[.#$[\]]/g, '_'); 
+            db.ref('learningData/' + safeName).set({ name: fileName, words: words });
+            alert(`[${fileName}] 데이터가 성공적으로 생성되었습니다! (총 ${words.length}단어)`);
+        } else {
+            alert('유효한 단어가 없습니다. A열에 영어단어, B열에 한글뜻이 있는지 확인해주세요.');
+        }
+        event.target.value = ''; 
+        showPage('admin-learn-menu-page');
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// 2. 학습 데이터 수정 리스트 렌더링
+function showManageLearnPage() {
+    renderLearnDataList();
+    showPage('admin-edit-learn-page');
+}
+
+function renderLearnDataList() {
+    const listDiv = document.getElementById('learn-data-list');
+    listDiv.innerHTML = '';
+    const keys = Object.keys(localLearningData);
+    
+    if (keys.length === 0) { 
+        listDiv.innerHTML = '<p style="color:#888;">생성된 학습데이터가 없습니다.</p>'; 
+        return; 
+    }
+    
+    keys.forEach(key => {
+        const dataSet = localLearningData[key];
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'account-item';
+        itemDiv.innerHTML = `
+            <input type="text" id="edit-dataset-name-${key}" value="${dataSet.name}" placeholder="데이터 이름" style="flex:2;">
+            <button class="btn-green btn-sm edit-btn" onclick="updateDatasetName('${key}')">이름저장</button>
+            <button class="btn-blue btn-sm edit-btn" onclick="openWordsEdit('${key}')">내용수정</button>
+            <button class="btn-red btn-sm edit-btn" onclick="deleteDataset('${key}')">삭제</button>
+        `;
+        listDiv.appendChild(itemDiv);
+    });
+}
+
+// 3. 학습 데이터셋 이름 수정 및 삭제
+function updateDatasetName(key) {
+    const newName = document.getElementById(`edit-dataset-name-${key}`).value.trim();
+    if(newName === '') return alert('데이터 이름을 입력해주세요.');
+    db.ref(`learningData/${key}/name`).set(newName);
+    alert('이름이 성공적으로 변경되었습니다.');
+}
+
+function deleteDataset(key) {
+    if(confirm('이 학습데이터를 완전히 삭제하시겠습니까?')) {
+        db.ref(`learningData/${key}`).remove();
+    }
+}
+
+// 4. 세부 단어 리스트 오픈 및 렌더링
+function openWordsEdit(key) {
+    currentEditDataSet = key;
+    document.getElementById('edit-words-title').innerText = `${localLearningData[key].name} 내용 수정`;
+    renderWordsList(key);
+    showPage('admin-edit-words-page');
+}
+
+function renderWordsList(key) {
+    const listDiv = document.getElementById('words-list');
+    listDiv.innerHTML = '';
+    const words = localLearningData[key]?.words || [];
+    
+    words.forEach((word, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'account-item';
+        itemDiv.innerHTML = `
+            <input type="text" id="edit-eng-${key}-${index}" value="${word.eng}" placeholder="영어단어">
+            <input type="text" id="edit-kor-${key}-${index}" value="${word.kor}" placeholder="한글뜻">
+            <button class="btn-green btn-sm edit-btn" onclick="updateWord('${key}', ${index})">저장</button>
+            <button class="btn-red btn-sm edit-btn" onclick="deleteWord('${key}', ${index})">삭제</button>
+        `;
+        listDiv.appendChild(itemDiv);
+    });
+}
+
+// 5. 개별 단어 수정 및 삭제
+function updateWord(key, index) {
+    const eng = document.getElementById(`edit-eng-${key}-${index}`).value.trim();
+    const kor = document.getElementById(`edit-kor-${key}-${index}`).value.trim();
+    if(eng === '' || kor === '') return alert('영어단어와 뜻을 모두 입력해주세요.');
+    db.ref(`learningData/${key}/words/${index}`).update({ eng: eng, kor: kor });
+    alert('단어가 수정되었습니다.');
+}
+
+function deleteWord(key, index) {
+    if(confirm('이 단어를 삭제하시겠습니까?')) {
+        let words = localLearningData[key].words;
+        words.splice(index, 1);
+        db.ref(`learningData/${key}/words`).set(words);
+    }
+}
+
+// 6. 학생 학습 모드 - 데이터 선택
+function showSelectDataPage(mode) {
+    currentLearnMode = mode;
+    renderStudentDataList();
+    showPage('student-select-data-page');
+}
+
+function renderStudentDataList() {
+    const listDiv = document.getElementById('student-data-list');
+    listDiv.innerHTML = '';
+    const keys = Object.keys(localLearningData);
+    
+    if (keys.length === 0) { 
+        listDiv.innerHTML = '<p style="color:#888;">등록된 학습데이터가 아직 없습니다.</p>'; 
+        return; 
+    }
+    
+    keys.forEach(key => {
+        const dataSet = localLearningData[key];
+        const btn = document.createElement('button');
+        btn.className = 'btn-blue';
+        btn.style.marginBottom = '12px';
+        btn.innerText = `[${dataSet.name}] 시작하기 (총 ${dataSet.words ? dataSet.words.length : 0}단어)`;
+        btn.onclick = () => selectDatasetForGame(key);
+        listDiv.appendChild(btn);
+    });
+}
+
+// 7. 게임 선택 (상티런 등)
+function selectDatasetForGame(key) {
+    currentSelectedData = key;
+    if (currentLearnMode === 'solo') {
+        showPage('student-solo-game-page');
+    } else {
+        alert('함께하기(멀티플레이) 게임 목록은 곧 업데이트됩니다! 🚀');
+    }
 }
