@@ -152,6 +152,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .chat-input-area { display: flex; gap: 8px; }
 .chat-input-area input { flex: 1; margin: 0; font-size: 16px; padding: 8px; min-width: 0;}
 
+/* PC 환경 하단 메뉴 그룹 (flex 기본) */
 .lobby-menu-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: nowrap; }
 .lobby-menu-group button { margin: 0; flex: 1; min-width: 0; padding: 10px 2px; }
 
@@ -219,7 +220,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .chat-input-area { gap: 4px; }
     .chat-input-area input { font-size: 14px; padding: 6px; }
     
-    .lobby-menu-group { gap: 6px; margin-top: 10px; }
+    /* 모바일 하단 메뉴 가로 2개, 세로 3줄 그리드 패치 */
+    .lobby-menu-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .lobby-menu-group button { margin: 0; width: 100%; min-width: 0; padding: 12px 2px; font-size: 14px; }
     .login-btn-group.row button { padding: 10px 2px; }
     
     .avatar-list-container { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
@@ -233,13 +236,15 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 }
 
 /* =======================================================
-   🎮 상티런(Sangti Run) 게임 전용 CSS 통합 (접두사 sr_ 부여)
+   🎮 상티런(Sangti Run) 가로/세로 하이브리드 게임 전용 CSS
    ======================================================= */
 #sr-game-container {
-    display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; 
+    display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%; height: 100%;
 }
 #sr-game {
-    width: 100%; aspect-ratio: 16 / 9; position: relative;
+    width: 100%; 
+    height: 70vh; /* 반응형 화면을 위해 고정 비율 제거, 뷰포트 높이 기반 설정 */
+    position: relative;
     background-color: #90caf9; border: 5px solid #333; border-radius: 20px;
     box-shadow: 8px 12px 0px rgba(0,0,0,0.15), inset 0px 5px 10px rgba(0,0,0,0.1); overflow: hidden;
 }
@@ -250,7 +255,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 #sr-world { position: absolute; top: 0; left: 0; width: 100%; z-index: 5; }
 
 #sr-timer-container {
-    position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 50%; height: 25px;
+    position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 60%; height: 20px;
     background-color: #F8F9FA; border: 3px solid #333; border-radius: 15px; z-index: 1000; overflow: hidden;
     box-shadow: 0px 4px 0px rgba(0,0,0,0.2); display: none; 
 }
@@ -270,16 +275,24 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .sr-timer-sub { animation: sr-timerSub 0.4s ease-out; }
 
 #sr-score {
-    position: absolute; top: 15px; right: 20px; font-size: clamp(28px, 5vw, 45px); color: white; 
+    position: absolute; top: 10px; right: 15px; font-size: clamp(24px, 5vw, 40px); color: white; 
     text-shadow: -2px -2px 0 #333, 2px -2px 0 #333, -2px 2px 0 #333, 2px 2px 0 #333, 4px 4px 0 #ff9800; z-index: 1000;
 }
-#sr-character { position: absolute; left: 60px; z-index: 15; transition: filter 0.1s ease-in-out; }
-.sr-monster { position: absolute; z-index: 10; transition: opacity 0.3s ease-in; }
+
+/* 캐릭터 및 몬스터 크기 유동적 축소 (가로/세로 최적화) */
+#sr-character { 
+    position: absolute; left: 30px; z-index: 15; transition: filter 0.1s ease-in-out; 
+    width: clamp(50px, 12vw, 80px); height: auto;
+}
+.sr-monster { 
+    position: absolute; z-index: 10; transition: opacity 0.3s ease-in; 
+    width: clamp(50px, 12vw, 80px); height: auto;
+}
 
 .sr-bubble {
-    position: absolute; background: white; color: #333; border: 2px solid #333; border-radius: 10px; padding: 4px 8px; 
-    font-size: clamp(10px, 1.5vw, 14px); min-width: 50px; white-space: nowrap; z-index: 20; text-align: center;
-    box-shadow: 0px 2px 0px rgba(0,0,0,0.2); line-height: 1.2; font-weight: normal; transition: opacity 0.3s ease-in; 
+    position: absolute; background: white; color: #333; border: 2px solid #333; border-radius: 10px; padding: 4px 6px; 
+    font-size: clamp(12px, 2.5vw, 15px); min-width: 40px; white-space: nowrap; z-index: 20; text-align: center;
+    box-shadow: 0px 2px 0px rgba(0,0,0,0.2); line-height: 1.2; font-weight: bold; transition: opacity 0.3s ease-in; 
 }
 @keyframes sr-bubblePop {
     0% { transform: scale(1); background-color: white; border-color: #333; }
@@ -332,9 +345,16 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     justify-content: center; align-items: center; z-index: 9999;
 }
 #sr-gameOverBox {
-    background: white; border: 5px solid #ff9800; border-radius: 25px; padding: 30px; display: flex;
+    background: white; border: 5px solid #ff9800; border-radius: 25px; padding: 20px; display: flex;
     flex-direction: column; align-items: center; box-shadow: 0px 10px 0px rgba(0,0,0,0.2);
-    animation: sr-popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: sr-popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 80%; max-width: 300px;
 }
-#sr-gameOverBox h1 { font-size: clamp(30px, 5vw, 45px); margin-bottom: 20px; color: #ff9800; text-shadow: 2px 2px 0px #333; }
-#sr-result { font-size: clamp(18px, 3vw, 26px); text-align: center; line-height: 2; color: #333; background: #f8f9fa; padding: 15px; border-radius: 15px; width: 100%; }
+#sr-gameOverBox h1 { font-size: clamp(24px, 5vw, 36px); margin-bottom: 15px; color: #ff9800; text-shadow: 1px 1px 0px #333; }
+#sr-result { font-size: clamp(16px, 3vw, 22px); text-align: center; line-height: 1.8; color: #333; background: #f8f9fa; padding: 10px; border-radius: 15px; width: 100%; }
+
+/* 가로 모드 (Landscape) 전용 최적화 */
+@media screen and (orientation: landscape) and (max-width: 900px) {
+    #sr-game { height: 85vh; }
+    #sr-character, .sr-monster { width: clamp(40px, 8vw, 70px); }
+    .sr-bubble { font-size: clamp(10px, 2vw, 13px); padding: 3px 5px;}
+}
