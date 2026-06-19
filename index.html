@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>아바타 월드 로그인 (말풍선 채팅 & 10명 와이드 로비)</title>
+    <title>아바타 월드 에듀테크 플랫폼</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -135,6 +134,9 @@
             </div>
 
             <div class="lobby-menu-group">
+                <button id="student-study-btn" class="btn-purple" onclick="showPage('student-study-menu-page')" style="display: none;">학습하기</button>
+                <button id="admin-study-btn" class="btn-purple" onclick="showPage('admin-study-menu-page')" style="display: none;">학습관리</button>
+                
                 <button id="shop-btn" class="btn-orange" onclick="showStudentShopPage()">아바타 상점</button>
                 <button id="storage-btn" class="btn-blue" onclick="showStoragePage()">내 보관함</button>
                 <button id="student-hf-btn" class="btn-pink" onclick="enterHighFiveRoom()" style="display: none;">하이파이브</button>
@@ -170,7 +172,6 @@
 
         <div id="highfive-page" class="page">
             <h2 class="lobby-title" style="color: #e83e8c; text-shadow: 2px 2px 0px #fad1e1;">✋ 하이파이브</h2>
-            
             <div class="online-users-container" style="border-color: #f48fb1; background-color: #fce4ec;">
                 <div class="online-users-header" style="border-bottom-color: #f48fb1;">
                     <div class="online-users-title" style="color: #d81b60;">대기실</div>
@@ -181,7 +182,6 @@
                 </div>
                 <div id="hf-users-list"></div>
             </div>
-
             <div class="login-btn-group row" style="margin-top: 15px;">
                 <div id="hf-admin-btn-group" style="display: none; width: 100%; gap: 10px;">
                     <button id="hf-admin-start-btn" class="btn-green" onclick="startHfGame()" style="flex:1;">시작</button>
@@ -196,7 +196,6 @@
         
         <div id="wave-page" class="page">
             <h2 class="lobby-title" style="color: #00bcd4; text-shadow: 2px 2px 0px #b2ebf2;">🌊 파도타기</h2>
-            
             <div class="online-users-container" style="border-color: #4dd0e1; background-color: #e0f7fa;">
                 <div class="online-users-header" style="border-bottom-color: #4dd0e1;">
                     <div class="online-users-title" style="color: #00838f;">대기실</div>
@@ -206,7 +205,6 @@
                 </div>
                 <div id="wave-users-list"></div>
             </div>
-
             <div class="login-btn-group row" style="margin-top: 15px;">
                 <div id="wave-admin-btn-group" style="display: none; width: 100%; gap: 10px;">
                     <button id="wave-admin-start-btn" class="btn-green" onclick="startWaveGame()" style="flex:1;">시작</button>
@@ -216,6 +214,50 @@
                     <button id="wave-ready-btn" class="btn-green" onclick="toggleWaveReady()" style="flex:1;">준비</button>
                     <button id="wave-student-exit-btn" class="btn-gray" onclick="exitWaveRoom()" style="flex:1;">나가기</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="student-study-menu-page" class="page">
+            <h2>📚 학습 메뉴</h2>
+            <div class="login-btn-group">
+                <button class="btn-blue" onclick="showPage('student-solo-study-page')">혼자하기</button>
+                <button class="btn-green" onclick="alert('함께하기 협동 모드는 현재 준비 중입니다! 🤝')">함께하기</button>
+                <button class="btn-gray" onclick="showPage('student-lobby-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="student-solo-study-page" class="page">
+            <h2>🏃 혼자하기 컨텐츠</h2>
+            <div class="login-btn-group">
+                <button class="btn-orange" onclick="alert('러닝 액션 게임형 학습인 [상티런]은 오픈 준비 중입니다! 🏃💨')">상티런</button>
+                <button class="btn-gray" onclick="showPage('student-study-menu-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="admin-study-menu-page" class="page">
+            <h2>🛠️ 학습 콘텐츠 관리</h2>
+            <div class="login-btn-group">
+                <button class="btn-blue" onclick="showPage('admin-study-create-page')">학습데이터 생성</button>
+                <button class="btn-green" onclick="showStudyManagePage()">학습데이터 수정</button>
+                <button class="btn-gray" onclick="showPage('student-lobby-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="admin-study-create-page" class="page">
+            <h2>📝 새 학습데이터 생성</h2>
+            <p style="font-size: 15px; color: #666; padding: 0 10px; word-break: keep-all;">A열(영어단어), B열(한글뜻) 구조의 엑셀 파일(.xlsx)을 업로드하세요. 업로드한 파일명과 똑같은 이름의 신규 단어장이 실시간 빌드됩니다.</p>
+            <div class="login-btn-group">
+                <button class="btn-green" onclick="document.getElementById('study-excel-file-input').click()">엑셀로 일괄 생성</button>
+                <input type="file" id="study-excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleStudyExcelUpload(event)">
+                <button class="btn-gray" onclick="showPage('admin-study-menu-page')">이전으로</button>
+            </div>
+        </div>
+
+        <div id="admin-study-manage-page" class="page">
+            <h2>⚙️ 학습데이터 목록 및 관리</h2>
+            <div id="study-data-list" class="list-container"></div>
+            <div class="login-btn-group row">
+                <button class="btn-gray" onclick="showPage('admin-study-menu-page')">이전으로</button>
             </div>
         </div>
 
