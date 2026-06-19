@@ -243,7 +243,7 @@
             </div>
         </div>
 
-        <div id="sangti-run-page" class="page" style="padding: 0; width: 100%; height: 100%;">
+        <div id="sangti-run-page" class="page">
             <div id="sr-game-container">
                 <div id="sr-game">
                     <div id="sr-bg-layer"></div>
@@ -262,7 +262,7 @@
                         <div id="sr-gameOverBox">
                             <h1>게임 종료! 🛑</h1>
                             <div id="sr-result"></div>
-                            <div class="login-btn-group row" style="margin-top: 15px; gap: 10px;">
+                            <div class="sr-gameover-btn-group">
                                 <button class="btn-green" onclick="startSangtiRunGame()">다시하기</button>
                                 <button class="btn-gray" onclick="exitSangtiRun()">나가기</button>
                             </div>
@@ -283,7 +283,7 @@
 
         <div id="admin-study-create-page" class="page">
             <h2>📝 새 학습데이터 생성</h2>
-            <p style="font-size: 15px; color: #666; padding: 0 10px; word-break: keep-all;">A열(영어단어), B열(한글뜻) 구조의 엑셀 파일(.xlsx)을 업로드하세요. 업로드한 파일명과 똑같은 이름의 신규 단어장이 실시간 빌드됩니다.</p>
+            <p style="font-size: 15px; color: #666; padding: 0 10px; word-break: keep-all;">A열(영어단어), B열(한글뜻) 구조의 엑셀 파일(.xlsx)을 업로드하세요. 파일명과 동일한 이름의 단어장이 동기화됩니다.</p>
             <div class="login-btn-group">
                 <button class="btn-green" onclick="document.getElementById('study-excel-file-input').click()">엑셀로 일괄 생성</button>
                 <input type="file" id="study-excel-file-input" accept=".xlsx, .xls" style="display:none;" onchange="handleStudyExcelUpload(event)">
