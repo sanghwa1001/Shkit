@@ -1,3 +1,4 @@
+// 파이어베이스 데이터베이스 구성 정보 설정
 const firebaseConfig = {
     apiKey: "AIzaSyAs5o4rlC1-bhA4J0P8LXp54CzDQ_aRNCo",
     authDomain: "shkit-300c7.firebaseapp.com",
@@ -9,12 +10,15 @@ const firebaseConfig = {
     databaseURL: "https://shkit-300c7-default-rtdb.firebaseio.com" 
 };
 
+// 파이어베이스 초기화 실행
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// 기본 제공 아바타 및 상점 판매 전체 풀 정의
 const DEFAULT_AVATARS = ['image_0.gif', 'image_1.gif'];
 const ALL_SHOP_AVATARS = ['1.gif', '2.gif', '3.gif', '4.gif', '5.gif', '6.gif', '7.gif', '8.gif', '9.gif', '10.gif'];
 
+// 유저 상태 및 제어 동적 전역 변수
 let currentUser = null;
 let myCurrentAvatar = null;
 let tempSelectedAvatar = null; 
@@ -32,18 +36,22 @@ let localShopItems = [];
 let localShopNames = {}; 
 let localShopPrices = {}; 
 
-// 하이파이브 변수
+// 신규 추가: 학습 데이터 캐싱 스페이스
+let localStudyData = {};
+
+// 하이파이브 제어 전역 변수
 let hfParticipants = {};
 let hfState = { isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] };
 let hfRequests = {};
 let selectedHfUser = null;
 const PAIR_COLORS = ['#ff9800', '#17a2b8', '#28a745', '#e83e8c', '#6f42c1', '#d84315', '#007bff', '#20c997'];
 
-// 파도타기 변수
+// 파도타기 제어 전역 변수
 let waveParticipants = {};
 let waveState = { isOpen: false, isStarted: false, shuffledIds: [] };
 let waveClicks = {}; 
 
+// 아바타 이름 텍스트 크기 자동 조절 연산 컴포넌트
 function getNameClass(text) {
     const len = text ? text.length : 0;
     if (len <= 4) return 'name-sm';
@@ -52,6 +60,7 @@ function getNameClass(text) {
     return 'name-xl';
 }
 
+// 셔플 알고리즘
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -59,6 +68,10 @@ function shuffleArray(array) {
     }
     return array;
 }
+
+// ==========================================
+// 코어 파이어베이스 리얼타임 데이터 리스너 정의
+// ==========================================
 
 db.ref('studentAccounts').on('value', (snapshot) => {
     localStudentAccounts = snapshot.val() || {};
@@ -90,7 +103,13 @@ db.ref('shopItemPrices').on('value', (snapshot) => {
     if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
 });
 
-// 하이파이브 리스너
+// 신규 추가: 학습 데이터 리얼타임 변경 감지 리스너
+db.ref('studyData').on('value', (snapshot) => {
+    localStudyData = snapshot.val() || {};
+    if (document.getElementById('admin-study-manage-page').classList.contains('active')) renderStudyDataList();
+});
+
+// 하이파이브 미니게임 상태 리스너
 db.ref('highfive/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('highfive-page').classList.contains('active')) {
@@ -112,7 +131,7 @@ db.ref('highfive/requests').on('value', snap => {
     if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
 });
 
-// 파도타기 리스너
+// 파도타기 미니게임 상태 리스너
 db.ref('wave/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('wave-page').classList.contains('active')) {
@@ -134,6 +153,7 @@ db.ref('wave/clicks').on('value', snap => {
     if (document.getElementById('wave-page').classList.contains('active')) renderWaveRoom();
 });
 
+// 실시간 전체 채팅 피드 렌더링 리스너
 db.ref('chatLog').on('child_added', (snapshot) => {
     const data = snapshot.val();
     const logDiv = document.getElementById('chat-log');
@@ -192,6 +212,7 @@ db.ref('chatState/isMuted').on('value', (snapshot) => {
     }
 });
 
+// 보석 조르기 비동기 요청 스캔 리스너
 function listenForGemRequests() {
     db.ref(`gemRequests/${currentUser}`).on('value', snapshot => {
         const reqs = snapshot.val();
@@ -226,6 +247,7 @@ function listenForGemRequests() {
     });
 }
 
+// 조르기 실시간 만료 처리 스케줄러 타이머
 setInterval(() => {
     if (!currentUser || isAdmin) return;
     const now = Date.now();
@@ -253,6 +275,7 @@ setInterval(() => {
     });
 }, 1000);
 
+// 페이지 라우팅 코어 엔진 함수
 function showPage(pageId) {
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => page.classList.remove('active'));
@@ -264,6 +287,7 @@ function showPage(pageId) {
     }
 }
 
+// 장착 보관함 아바타 저장 매커니즘
 function applySelectedAvatar() {
     if (!tempSelectedAvatar) return;
     myCurrentAvatar = tempSelectedAvatar;
@@ -274,6 +298,7 @@ function applySelectedAvatar() {
     renderOnlineUsers();
 }
 
+// 학생 권한 인증
 function checkStudentLogin() {
     const inputId = document.getElementById('student-id').value.trim();
     const inputPw = document.getElementById('student-pw').value.trim();
@@ -289,9 +314,7 @@ function checkStudentLogin() {
         currentUser = inputId;
         isAdmin = false;
         
-        let fixedOwned = account.ownedAvatars || DEFAULT_AVATARS;
         let fixedAvatar = account.avatarId || DEFAULT_AVATARS[0];
-
         myCurrentAvatar = fixedAvatar;
         
         if (account.gems === undefined) {
@@ -305,6 +328,7 @@ function checkStudentLogin() {
     }
 }
 
+// 관리자 보안 인증 파트
 function checkAdminLogin() {
     const inputId = document.getElementById('admin-id').value.trim();
     const inputPw = document.getElementById('admin-pw').value.trim();
@@ -329,6 +353,7 @@ function checkAdminLogin() {
         });
 }
 
+// 개별 학생 계정 생성 가공
 function createStudentAccount() {
     const newId = document.getElementById('new-student-id').value.trim();
     const newPw = document.getElementById('new-student-pw').value.trim();
@@ -339,6 +364,7 @@ function createStudentAccount() {
     showPage('admin-menu-page');
 }
 
+// 엑셀 벌크 연동 학생 계정 일괄 등록 엔진
 function handleExcelUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -372,6 +398,7 @@ function showManagePage(returnPage = 'admin-menu-page') {
 
 function closeManagePage() { showPage(adminManageReturnPage); }
 
+// 회원가입 목록 테이블 돔 그리기 내부 함수
 function renderStudentList() {
     const listDiv = document.getElementById('student-list');
     listDiv.innerHTML = '';
@@ -419,6 +446,7 @@ function deleteAllAccounts() {
     if (confirm('⚠️ 모든 학생 계정을 삭제하시겠습니까?')) db.ref('studentAccounts').remove();
 }
 
+// 상점 관리자 에디터 제어 컴포넌트
 function showAdminShopPage(returnPage = 'admin-menu-page') { 
     adminShopReturnPage = returnPage;
     tempShopItems = [...localShopItems]; 
@@ -489,7 +517,7 @@ function saveSingleData(event, avatarId, index, type) {
     const dbKey = avatarId.replace('.', '_');
 
     if (type === 'name') {
-        newValue = newValue.substring(0, 10); // 최대 10자 보장
+        newValue = newValue.substring(0, 10);
         const currentNameInDB = localShopNames[dbKey];
         if (newValue === '') {
             if (currentNameInDB !== undefined) db.ref('shopItemNames/' + dbKey).remove().then(() => renderAdminShopPage());
@@ -514,6 +542,7 @@ function saveShopItems() {
     showPage(adminShopReturnPage); 
 }
 
+// 학생 권한 로비 셋업 컴포넌트 (학습하기 버튼 연동 추가)
 function enterLobbyWithNickname() {
     const nicknameInput = document.getElementById('student-nickname').value.trim();
     const finalNickname = (nicknameInput === '' ? currentUser : nicknameInput).substring(0, 10);
@@ -528,6 +557,10 @@ function enterLobbyWithNickname() {
     document.getElementById('student-hf-btn').style.display = 'block';
     document.getElementById('student-wave-btn').style.display = 'block';
     document.getElementById('student-logout-btn').style.display = 'block';
+    
+    // 신규 추가: 학생용 학습 기능 노출 제어 처리
+    document.getElementById('student-study-btn').style.display = 'block';
+    document.getElementById('admin-study-btn').style.display = 'none';
     
     document.getElementById('admin-gem-controls').style.display = 'none';
     document.getElementById('student-gem-controls').style.display = 'flex'; 
@@ -562,6 +595,7 @@ function enterLobbyWithNickname() {
     showPage('student-lobby-page');
 }
 
+// 관리자 권한 로비 진입 (학습관리 버튼 연동 추가)
 function enterAdminLobby() {
     isAdmin = true;
     currentUser = '⭐상티';
@@ -576,6 +610,10 @@ function enterAdminLobby() {
     document.getElementById('student-hf-btn').style.display = 'none';
     document.getElementById('student-wave-btn').style.display = 'none';
     document.getElementById('student-logout-btn').style.display = 'none';
+    
+    // 신규 추가: 관리자용 학습 관리 기능 노출 제어 처리
+    document.getElementById('student-study-btn').style.display = 'none';
+    document.getElementById('admin-study-btn').style.display = 'block';
     
     document.getElementById('admin-gem-controls').style.display = 'flex';
     document.getElementById('student-gem-controls').style.display = 'none';
@@ -604,6 +642,7 @@ function enterAdminLobby() {
     showPage('student-lobby-page');
 }
 
+// 로그아웃 메커니즘 전처리 분기
 function logoutStudent() {
     if (currentUser && !isAdmin) {
         db.ref('onlineUsers/' + currentUser).remove();
@@ -638,10 +677,15 @@ function logoutStudent() {
     document.getElementById('admin-wave-btn').style.display = 'none';
     document.getElementById('admin-back-lobby-btn').style.display = 'none';
     
+    // 신규 추가: 로그아웃 트랜잭션 도중 컴포넌트 가시성 초기화
+    document.getElementById('student-study-btn').style.display = 'none';
+    document.getElementById('admin-study-btn').style.display = 'none';
+    
     selectedStudentsForGems = [];
     showPage('main-page');
 }
 
+// 실시간 트래픽 말풍선 및 전용 피드 메타데이터 패킷 전송
 function sendChat() {
     if (!isAdmin && isChatMuted) return; 
 
@@ -697,6 +741,7 @@ function toggleMute() {
     });
 }
 
+// 관리자용 보석 조작 트리거
 function modifyGems(action) {
     if (selectedStudentsForGems.length === 0) {
         alert(`보석을 ${action === 'add' ? '지급' : '차감'}할 학생을 선택해 주세요.`);
@@ -750,6 +795,7 @@ function modifyGems(action) {
     });
 }
 
+// 학생 전용 보석 선물 송금 프로세스
 function giftGems() {
     if (selectedStudentsForGems.length === 0) return alert('선물할 친구를 선택해 주세요!');
     
@@ -785,6 +831,7 @@ function giftGems() {
     });
 }
 
+// 친구에게 보석 조르기 요청 타겟팅 푸시
 function requestGems() {
     if (selectedStudentsForGems.length === 0) return alert('조를 친구를 선택해 주세요!');
     
@@ -796,7 +843,7 @@ function requestGems() {
         db.ref(`gemRequests/${id}`).push({
             from: currentUser,
             amount: amt,
-            expiresAt: Date.now() + 60000 // 60초 만료 설정
+            expiresAt: Date.now() + 60000 
         });
         targetNicks.push(localStudentAccounts[id]?.nickname || id);
     });
@@ -815,6 +862,7 @@ function requestGems() {
     alert('조르기 요청을 보냈습니다! (1분 후 자동 취소됩니다.)');
 }
 
+// 들어온 조르기 스택 확정 승인 및 밸런스 이체 처리
 function acceptGemRequest() {
     if (pendingRequests.length === 0) return;
     if (selectedStudentsForGems.length === 0) {
@@ -865,6 +913,7 @@ function acceptGemRequest() {
     });
 }
 
+// 실시간 접속 유저 배치 현황 출력 메인 드로잉 돔 렌더러
 function renderOnlineUsers() {
     const listDiv = document.getElementById('online-users-list');
     listDiv.innerHTML = '';
@@ -913,7 +962,6 @@ function renderOnlineUsers() {
         
         let displayId = user.nickname || id;
         const isMe = (id === currentUser) ? '<span style="color: #ff9800; margin-left:2px;">(나)</span>' : '';
-        
         let avatarSrc = user.avatarId || 'image_0.gif';
         
         userDiv.innerHTML = `${requestBadge}${bubbleHTML}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit ${getNameClass(displayId)}">${displayId}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>`;
@@ -921,6 +969,7 @@ function renderOnlineUsers() {
     });
 }
 
+// 아바타 구매 및 인벤토리 인스턴스 렌더링
 function showStudentShopPage() { renderStudentShop(); showPage('student-shop-page'); }
 function renderStudentShop() {
     const listDiv = document.getElementById('student-shop-list');
@@ -986,7 +1035,10 @@ function renderAvatarList() {
     });
 }
 
-// 하이파이브 함수
+// ===================================
+// 미니게임 모듈 1: 하이파이브 전용 컴포넌트
+// ===================================
+
 function enterHighFiveRoom() {
     if (isAdmin) {
         db.ref('highfive/state/isOpen').set(true);
@@ -1016,14 +1068,12 @@ function exitHighFiveRoom() {
     } else {
         const pRef = db.ref('highfive/participants/' + currentUser);
         pRef.child('isOnline').onDisconnect().cancel();
-        
         if (hfState.isStarted) {
             pRef.update({ isOnline: false });
         } else {
             pRef.remove();
             db.ref('highfive/requests/' + currentUser).remove();
         }
-        
         showPage('student-lobby-page');
     }
 }
@@ -1038,15 +1088,9 @@ function toggleHfReady() {
 
 function startHfGame() {
     const onlineIds = Object.keys(hfParticipants).filter(id => hfParticipants[id].isOnline !== false);
-    
-    if (onlineIds.length < 2) {
-        return alert('대기실에 최소 2명 이상의 학생이 있어야 시작할 수 있습니다.');
-    }
-    
+    if (onlineIds.length < 2) return alert('대기실에 최소 2명 이상의 학생이 있어야 시작할 수 있습니다.');
     const allReady = onlineIds.every(id => hfParticipants[id].status === 'ready');
-    if (!allReady) {
-        return alert('아직 모든 학생이 준비를 완료하지 않았습니다!');
-    }
+    if (!allReady) return alert('아직 모든 학생이 준비를 완료하지 않았습니다!');
 
     const shuffledIds = shuffleArray([...onlineIds]);
     db.ref('highfive/state').update({ isStarted: true, pairCount: 0, shuffledIds: shuffledIds });
@@ -1072,19 +1116,15 @@ function renderHighFiveRoom() {
     const studentBtnGroup = document.getElementById('hf-student-btn-group');
     const startBtn = document.getElementById('hf-admin-start-btn');
     const readyBtn = document.getElementById('hf-ready-btn');
-    
     const listDiv = document.getElementById('hf-users-list');
     listDiv.innerHTML = '';
     
     let ids = Object.keys(hfParticipants);
-    
     if (!hfState.isStarted) {
         ids = ids.filter(id => hfParticipants[id].isOnline !== false);
     } else if (hfState.shuffledIds && hfState.shuffledIds.length > 0) {
         ids = hfState.shuffledIds.filter(id => hfParticipants[id]);
-        Object.keys(hfParticipants).forEach(id => {
-            if (!ids.includes(id)) ids.push(id);
-        });
+        Object.keys(hfParticipants).forEach(id => { if (!ids.includes(id)) ids.push(id); });
     }
 
     const onlineStudentIds = ids.filter(id => hfParticipants[id].isOnline !== false);
@@ -1097,34 +1137,25 @@ function renderHighFiveRoom() {
     if (isAdmin) {
         studentBtnGroup.style.display = 'none';
         adminBtnGroup.style.display = 'flex';
-        
         if (hfState.isStarted && isMatchComplete) {
             startBtn.innerText = '다시하기';
             startBtn.disabled = false;
-            startBtn.style.opacity = '1';
             startBtn.onclick = restartHfGame;
         } else {
             startBtn.innerText = '시작';
             startBtn.onclick = startHfGame;
             startBtn.disabled = hfState.isStarted;
-            startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
         }
     } else {
         adminBtnGroup.style.display = 'none';
         studentBtnGroup.style.display = 'flex';
-        
         if (hfState.isStarted) {
             readyBtn.style.display = 'none';
         } else {
             readyBtn.style.display = 'block';
             const myData = hfParticipants[currentUser] || {};
-            if (myData.status === 'ready') {
-                readyBtn.innerText = '취소';
-                readyBtn.className = "btn-red";
-            } else {
-                readyBtn.innerText = '준비';
-                readyBtn.className = "btn-green";
-            }
+            if (myData.status === 'ready') { readyBtn.innerText = '취소'; readyBtn.className = "btn-red"; }
+            else { readyBtn.innerText = '준비'; readyBtn.className = "btn-green"; }
         }
     }
 
@@ -1134,15 +1165,8 @@ function renderHighFiveRoom() {
     const requestCount = Object.keys(myRequests).length;
 
     if (!isAdmin) {
-        if (hfState.isStarted) {
-            reqBtn.disabled = false;
-            reqBtn.className = "btn-cyan hf-action-btn";
-            reqBtn.style.opacity = ''; // 투명도 CSS에 위임
-        } else {
-            reqBtn.disabled = true;
-            reqBtn.className = "btn-disabled hf-action-btn";
-            reqBtn.style.opacity = ''; // 강제 100% 투명도 속성 제거
-        }
+        reqBtn.disabled = !hfState.isStarted;
+        reqBtn.className = hfState.isStarted ? "btn-cyan hf-action-btn" : "btn-disabled hf-action-btn";
 
         if (hfState.isStarted && requestCount > 0) {
             acceptBtn.disabled = false;
@@ -1155,10 +1179,7 @@ function renderHighFiveRoom() {
         }
     }
 
-    if (ids.length === 0) {
-        listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">대기실에 아무도 없습니다.</p>';
-        return;
-    }
+    if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">대기실에 아무도 없습니다.</p>'; return; }
 
     ids.forEach(id => {
         const data = hfParticipants[id];
@@ -1173,56 +1194,33 @@ function renderHighFiveRoom() {
         let statusTextHtml = '';
         
         if (hfState.isStarted && !userIsPaired) {
-            if (isFailedUser) {
-                avatarSrc = realAcc.avatarId || 'image_0.gif';
-                displayName = realAcc.nickname || id;
-            } else {
-                avatarSrc = 'unknown.gif'; 
-                displayName = '???';
-            }
+            if (isFailedUser) { avatarSrc = realAcc.avatarId || 'image_0.gif'; displayName = realAcc.nickname || id; }
+            else { avatarSrc = 'unknown.gif'; displayName = '???'; }
         } 
         
-        if (isOffline) {
-            statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>';
-        } else if (userIsPaired) {
-            statusTextHtml = `<div class="hf-ready-text" style="color: ${data.pairColor};">하이파이브 완료!</div>`;
-        } else if (isFailedUser) {
-            statusTextHtml = `<div class="hf-ready-text" style="color: #dc3545;">하이파이브 실패</div>`;
-        } else if (!hfState.isStarted) {
-            statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>';
-        } else {
-            statusTextHtml = '<div class="hf-ready-text">고르는중</div>';
-        }
+        if (isOffline) { statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>'; }
+        else if (userIsPaired) { statusTextHtml = `<div class="hf-ready-text" style="color: ${data.pairColor};">하이파이브 완료!</div>`; }
+        else if (isFailedUser) { statusTextHtml = `<div class="hf-ready-text" style="color: #dc3545;">하이파이브 실패</div>`; }
+        else if (!hfState.isStarted) { statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>'; }
+        else { statusTextHtml = '<div class="hf-ready-text">고르는중</div>'; }
 
         let badgeHtml = '';
         if (!isAdmin && hfState.isStarted && !userIsPaired && !isOffline && !isFailedUser) {
-            if (hfRequests[currentUser] && hfRequests[currentUser][id]) {
-                badgeHtml = '<div class="hf-badge">✋</div>';
-            }
+            if (hfRequests[currentUser] && hfRequests[currentUser][id]) { badgeHtml = '<div class="hf-badge">✋</div>'; }
         }
 
         const userDiv = document.createElement('div');
         userDiv.className = 'online-user-item';
-        
-        if (isOffline) {
-            userDiv.style.opacity = '0.5';
-        }
+        if (isOffline) userDiv.style.opacity = '0.5';
         
         if (userIsPaired && data.pairColor) {
-            userDiv.style.borderColor = data.pairColor;
-            userDiv.style.borderWidth = '4px';
-            userDiv.style.backgroundColor = data.pairColor + '15';
+            userDiv.style.borderColor = data.pairColor; userDiv.style.borderWidth = '4px'; userDiv.style.backgroundColor = data.pairColor + '15';
         } else if (isFailedUser) {
-            userDiv.style.borderColor = '#dc3545';
-            userDiv.style.borderWidth = '4px';
-            userDiv.style.backgroundColor = '#f8d7da';
-        } else if (selectedHfUser === id) {
-            userDiv.classList.add('selected');
-        }
+            userDiv.style.borderColor = '#dc3545'; userDiv.style.borderWidth = '4px'; userDiv.style.backgroundColor = '#f8d7da';
+        } else if (selectedHfUser === id) { userDiv.classList.add('selected'); }
 
         if (!isAdmin && hfState.isStarted && !userIsPaired && id !== currentUser && !isOffline && !isFailedUser) {
-            userDiv.style.cursor = 'pointer';
-            userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
+            userDiv.style.cursor = 'pointer'; userDiv.onclick = () => { selectedHfUser = id; renderHighFiveRoom(); };
         }
 
         userDiv.innerHTML = `${badgeHtml}<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit ${getNameClass(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
@@ -1232,14 +1230,10 @@ function renderHighFiveRoom() {
 
 function sendHighFiveRequest() {
     if (!hfState.isStarted) return alert('게임이 아직 시작되지 않았습니다.');
+    if (hfParticipants[currentUser]?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
     
-    const myData = hfParticipants[currentUser];
-    if (myData?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
-    
-    const studentIds = Object.keys(hfParticipants);
-    const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
-    const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
-    if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+    const onlineStudentIds = Object.keys(hfParticipants).filter(id => hfParticipants[id].isOnline !== false);
+    if (onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length === 1) return alert('모든 매칭이 종료되었습니다.');
 
     if (!selectedHfUser) return alert('하이파이브 하고 싶은 친구를 선택하세요.');
     if (selectedHfUser === currentUser) return alert('자신에게 요청할 수 없습니다.');
@@ -1252,29 +1246,19 @@ function sendHighFiveRequest() {
 
 function acceptHighFive() {
     if (!hfState.isStarted) return alert('게임이 아직 시작되지 않았습니다.');
+    if (hfParticipants[currentUser]?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
     
-    const myData = hfParticipants[currentUser];
-    if (myData?.pairId != null) return alert('이미 하이파이브를 완료했습니다!');
-    
-    const studentIds = Object.keys(hfParticipants);
-    const onlineStudentIds = studentIds.filter(id => hfParticipants[id].isOnline !== false);
-    const unPairedCount = onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length;
-    if (unPairedCount === 1) return alert('모든 매칭이 종료되었습니다.');
+    const onlineStudentIds = Object.keys(hfParticipants).filter(id => hfParticipants[id].isOnline !== false);
+    if (onlineStudentIds.filter(id => hfParticipants[id].pairId == null).length === 1) return alert('모든 매칭이 종료되었습니다.');
 
     if (!selectedHfUser) return alert('하이파이브 할 친구를 선택하세요.');
-    
-    const myRequests = hfRequests[currentUser] || {};
-    if (!myRequests[selectedHfUser]) return alert('선택한 친구에게서 온 요청이 없습니다.');
+    if (!(hfRequests[currentUser] || {})[selectedHfUser]) return alert('선택한 친구에게서 온 요청이 없습니다.');
 
     const targetId = selectedHfUser; 
-    
-    const targetData = hfParticipants[targetId];
-    if (targetData?.pairId != null) {
+    if (hfParticipants[targetId]?.pairId != null) {
         alert('앗! 상대방이 이미 다른 친구와 하이파이브를 완료했습니다. 😥');
         db.ref(`highfive/requests/${currentUser}/${targetId}`).remove(); 
-        selectedHfUser = null;
-        renderHighFiveRoom();
-        return;
+        selectedHfUser = null; renderHighFiveRoom(); return;
     }
     
     const nextPairId = hfState.pairCount + 1;
@@ -1286,7 +1270,6 @@ function acceptHighFive() {
     updates[`highfive/participants/${currentUser}/pairColor`] = pairColor;
     updates[`highfive/participants/${targetId}/pairId`] = nextPairId;
     updates[`highfive/participants/${targetId}/pairColor`] = pairColor;
-    
     updates[`highfive/requests/${currentUser}`] = null;
     updates[`highfive/requests/${targetId}`] = null;
 
@@ -1299,9 +1282,10 @@ function acceptHighFive() {
     });
 }
 
-// ==========================
-// 파도타기 전용 함수들
-// ==========================
+// ===================================
+// 미니게임 모듈 2: 파도타기 전용 컴포넌트
+// ===================================
+
 function enterWaveRoom() {
     if (isAdmin) {
         db.ref('wave/state/isOpen').set(true);
@@ -1344,7 +1328,6 @@ function toggleWaveReady() {
 function startWaveGame() {
     const onlineIds = Object.keys(waveParticipants).filter(id => waveParticipants[id].isOnline !== false);
     if (onlineIds.length < 4) return alert('최소 4명 이상의 학생이 있어야 시작할 수 있습니다.');
-    
     const allReady = onlineIds.every(id => waveParticipants[id].status === 'ready');
     if (!allReady) return alert('아직 모든 학생이 준비를 완료하지 않았습니다!');
 
@@ -1372,72 +1355,45 @@ function renderWaveRoom() {
     const readyBtn = document.getElementById('wave-ready-btn');
     const waveBtn = document.getElementById('wave-action-btn');
     const listDiv = document.getElementById('wave-users-list');
-    
     listDiv.innerHTML = '';
-    let ids = Object.keys(waveParticipants);
     
+    let ids = Object.keys(waveParticipants);
     if (!waveState.isStarted) {
         ids = ids.filter(id => waveParticipants[id].isOnline !== false);
     } else if (waveState.shuffledIds && waveState.shuffledIds.length > 0) {
         ids = waveState.shuffledIds.filter(id => waveParticipants[id]);
-        Object.keys(waveParticipants).forEach(id => {
-            if (!ids.includes(id)) ids.push(id);
-        });
+        Object.keys(waveParticipants).forEach(id => { if (!ids.includes(id)) ids.push(id); });
     }
 
     const onlineStudentIds = ids.filter(id => waveParticipants[id].isOnline !== false);
-    
     const clickArray = Object.values(waveClicks || {});
     const isGameFinished = waveState.isStarted && onlineStudentIds.every(id => clickArray.includes(id));
 
     document.getElementById('wave-controls').style.display = isAdmin ? 'none' : 'flex';
 
     if (isAdmin) {
-        studentBtnGroup.style.display = 'none';
-        adminBtnGroup.style.display = 'flex';
-        
+        studentBtnGroup.style.display = 'none'; adminBtnGroup.style.display = 'flex';
         if (waveState.isStarted && isGameFinished) {
-            startBtn.innerText = '다시하기';
-            startBtn.disabled = false;
-            startBtn.style.opacity = '1';
-            startBtn.onclick = restartWaveGame;
+            startBtn.innerText = '다시하기'; startBtn.disabled = false; startBtn.onclick = restartWaveGame;
         } else {
-            startBtn.innerText = '시작';
-            startBtn.onclick = startWaveGame;
-            startBtn.disabled = waveState.isStarted;
-            startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
+            startBtn.innerText = '시작'; startBtn.onclick = startWaveGame; startBtn.disabled = waveState.isStarted;
         }
     } else {
-        adminBtnGroup.style.display = 'none';
-        studentBtnGroup.style.display = 'flex';
-        
+        adminBtnGroup.style.display = 'none'; studentBtnGroup.style.display = 'flex';
         if (waveState.isStarted) readyBtn.style.display = 'none';
         else {
             readyBtn.style.display = 'block';
             const myData = waveParticipants[currentUser] || {};
-            if (myData.status === 'ready') {
-                readyBtn.innerText = '취소';
-                readyBtn.className = "btn-red";
-            } else {
-                readyBtn.innerText = '준비';
-                readyBtn.className = "btn-green";
-            }
+            if (myData.status === 'ready') { readyBtn.innerText = '취소'; readyBtn.className = "btn-red"; }
+            else { readyBtn.innerText = '준비'; readyBtn.className = "btn-green"; }
         }
 
         const hasClicked = clickArray.includes(currentUser);
-        if (waveState.isStarted && !hasClicked) {
-            waveBtn.disabled = false;
-            waveBtn.className = "btn-cyan hf-action-btn";
-        } else {
-            waveBtn.disabled = true;
-            waveBtn.className = "btn-disabled hf-action-btn";
-        }
+        if (waveState.isStarted && !hasClicked) { waveBtn.disabled = false; waveBtn.className = "btn-cyan hf-action-btn"; }
+        else { waveBtn.disabled = true; waveBtn.className = "btn-disabled hf-action-btn"; }
     }
 
-    if (ids.length === 0) {
-        listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">대기실에 아무도 없습니다.</p>';
-        return;
-    }
+    if (ids.length === 0) { listDiv.innerHTML = '<p style="color: #888; font-size: 16px;">대기실에 아무도 없습니다.</p>'; return; }
 
     ids.forEach(id => {
         const data = waveParticipants[id];
@@ -1454,37 +1410,137 @@ function renderWaveRoom() {
         let displayName = realAcc.nickname || id;
         let statusTextHtml = '';
 
-        if (waveState.isStarted && !isTeamComplete && !isOffline) {
-            avatarSrc = 'unknown.gif';
-            displayName = '???';
-        }
+        if (waveState.isStarted && !isTeamComplete && !isOffline) { avatarSrc = 'unknown.gif'; displayName = '???'; }
 
-        if (isOffline) {
-            statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>';
-        } else if (isTeamComplete) {
+        if (isOffline) { statusTextHtml = '<div class="hf-ready-text" style="color: #999;">나감</div>'; }
+        else if (isTeamComplete) {
             const teamColor = PAIR_COLORS[teamNumber % PAIR_COLORS.length];
             statusTextHtml = `<div class="hf-ready-text" style="color: ${teamColor};">파도타기 완료!</div>`;
-        } else if (userHasClicked) {
-            statusTextHtml = '<div class="hf-ready-text" style="color: #17a2b8;">팀원 대기중..</div>';
-        } else if (!waveState.isStarted) {
-            statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>';
-        } else {
-            statusTextHtml = '<div class="hf-ready-text" style="color: #d84315;">타이밍!</div>';
-        }
+        } else if (userHasClicked) { statusTextHtml = '<div class="hf-ready-text" style="color: #17a2b8;">팀원 대기중..</div>'; }
+        else if (!waveState.isStarted) { statusTextHtml = data.status === 'ready' ? '<div class="hf-ready-text ready">준비완료</div>' : '<div class="hf-ready-text">준비중</div>'; }
+        else { statusTextHtml = '<div class="hf-ready-text" style="color: #d84315;">타이밍!</div>'; }
 
         const userDiv = document.createElement('div');
         userDiv.className = 'online-user-item';
-        
-        if (isOffline) {
-            userDiv.style.opacity = '0.5';
-        } else if (isTeamComplete) {
+        if (isOffline) { userDiv.style.opacity = '0.5'; }
+        else if (isTeamComplete) {
             const teamColor = PAIR_COLORS[teamNumber % PAIR_COLORS.length];
-            userDiv.style.borderColor = teamColor;
-            userDiv.style.borderWidth = '4px';
-            userDiv.style.backgroundColor = teamColor + '15';
+            userDiv.style.borderColor = teamColor; userDiv.style.borderWidth = '4px'; userDiv.style.backgroundColor = teamColor + '15';
         }
 
         userDiv.innerHTML = `<img src="${avatarSrc}" alt="아바타" class="online-user-avatar"><div style="display:flex; flex-direction:column; width:100%; flex: 1; justify-content: flex-end;"><span class="name-text-fit ${getNameClass(displayName)}">${displayName}</span><span style="font-size:10px; color:#ff9800; font-weight:bold; min-height:12px; line-height:1; margin-bottom:2px;">${(isMe) ? '(나)' : ''}</span></div>${statusTextHtml}`;
         listDiv.appendChild(userDiv);
     });
+}
+
+// ============================================
+// 신규 빌드 컴포넌트: 에듀테크 학습 & 데이터 관리 제어 엔진
+// ============================================
+
+// [관리자] 엑셀 파일을 읽어 실시간 파이어베이스 노드 형식 단어장 데이터 설계 및 인출 함수
+function handleStudyExcelUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 파일 이름 파싱 후 파이어베이스 키 스키마 금지 문자열 필터 정제 정규식 처리
+    const originalName = file.name.replace(/\.[^/.]+$/, ""); 
+    const safeKey = originalName.replace(/[.#$\[\]]/g, "_"); 
+
+    if (localStudyData[safeKey]) {
+        if(!confirm(`이미 동일한 명칭의 [${originalName}] 학습데이터 노드가 존재합니다.\n새 파일 구조로 데이터베이스를 덮어쓰시겠습니까?`)) {
+            event.target.value = '';
+            return;
+        }
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+        
+        let wordsArray = [];
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row[0] === undefined || row[1] === undefined) continue;
+            
+            const en = String(row[0]).trim(); 
+            const kr = String(row[1]).trim();
+            
+            // 엑셀 시트 1행 헤더 예외 검증 무시 처리 분기
+            if (en === '' || kr === '' || en.toLowerCase() === '영어' || en.toLowerCase() === '단어' || en === 'ID' || en.toLowerCase() === 'id') continue;
+            
+            wordsArray.push({ en: en, kr: kr });
+        }
+
+        if (wordsArray.length > 0) {
+            db.ref(`studyData/${safeKey}`).set({
+                name: originalName,
+                words: wordsArray
+            }).then(() => {
+                alert(`📖 '${originalName}' 단어장 업로드 성공!\n총 ${wordsArray.length}개의 어휘 데이터셋이 동기화되었습니다.`);
+                event.target.value = '';
+                showPage('admin-study-menu-page');
+            });
+        } else {
+            alert('파싱 오류: 유효한 단어 쌍 데이터를 찾을 수 없습니다.\nA열에 [영어단어], B열에 [한글뜻] 구조 규격을 맞춰주세요.');
+            event.target.value = '';
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// [관리자] 학습 목록 보기 제어 진입 함수
+function showStudyManagePage() {
+    renderStudyDataList();
+    showPage('admin-study-manage-page');
+}
+
+// [관리자] 파이어베이스 로드 객체를 활용한 목록 돔 드로잉 컴포넌트
+function renderStudyDataList() {
+    const listDiv = document.getElementById('study-data-list');
+    listDiv.innerHTML = '';
+    const keys = Object.keys(localStudyData);
+    
+    if (keys.length === 0) { 
+        listDiv.innerHTML = '<p style="color:#888; font-size:16px; padding: 20px 0;">생성된 학습 데이터 풀이 비어있습니다.</p>'; 
+        return; 
+    }
+    
+    listDiv.innerHTML = `<div class="list-header"><div class="h-nick" style="flex:2; text-align: left; padding-left: 10px;">단어장 식별 네임</div><div class="h-btn">데이터 처리</div></div>`;
+    
+    keys.forEach((key) => {
+        const data = localStudyData[key];
+        const currentName = data.name || key;
+        const totalCount = data.words ? data.words.length : 0;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'account-item';
+        itemDiv.innerHTML = `
+            <input type="text" id="edit-study-name-${key}" value="${currentName}" placeholder="데이터 이름" style="flex:2; text-align: left; padding-left: 10px;">
+            <div style="font-size:13px; color:#17a2b8; margin-right:8px; white-space:nowrap; font-weight: bold;">(${totalCount}개 단어)</div>
+            <button class="btn-green btn-sm edit-btn" onclick="updateStudyDataName('${key}')">수정</button>
+            <button class="btn-red btn-sm edit-btn" onclick="deleteStudyData('${key}')">삭제</button>
+        `;
+        listDiv.appendChild(itemDiv);
+    });
+}
+
+// [관리자] 학습 데이터 세트 메타 이름 원격 클라우드 업데이트 처리
+function updateStudyDataName(key) {
+    const newName = document.getElementById(`edit-study-name-${key}`).value.trim();
+    if (newName === '') return alert('변경하여 적용할 빈칸이 아닌 명칭을 입력해주세요.');
+    
+    db.ref(`studyData/${key}`).update({ name: newName }).then(() => {
+        alert('단어장 인덱스 이름 변경 사항이 성공적으로 동기화되었습니다.');
+    });
+}
+
+// [관리자] 특정 단어 데이터 패킷 노드 영구 삭제
+function deleteStudyData(key) {
+    if (confirm('⚠️ 경고: 해당 학습데이터 세트 원본을 영구 삭제하시겠습니까?\n이 트랜잭션 작업은 복구 불가능합니다.')) {
+        db.ref(`studyData/${key}`).remove().then(() => {
+            alert('데이터베이스 노드가 안전하게 제거되었습니다.');
+        });
+    }
 }
