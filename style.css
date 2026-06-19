@@ -1,4 +1,4 @@
-/* 중앙 정렬 및 전체 레이아웃 (모바일 스크롤 제거 최적화) */
+/* 중앙 정렬 및 전체 레이아웃 (모바일 완벽 대응) */
 body { 
     font-family: 'Jua', sans-serif; 
     display: flex; 
@@ -11,7 +11,6 @@ body {
     padding: 15px; 
     box-sizing: border-box; 
     overflow: hidden; 
-    touch-action: none; /* 브라우저 바운스 현상 전면 차단 */
 }
 
 .container { 
@@ -38,6 +37,7 @@ input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; dis
 .login-btn-group { max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
 .login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; }
 
+/* 🔥 컬러 테마 인덱스 */
 :root {
     --bg-color: #007bff;
     --bd-color: #0056b3;
@@ -55,6 +55,7 @@ input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; dis
 .btn-pink   { --bg-color: #e83e8c; --bd-color: #d3337a; --sh-color: #b12563; --txt-color: #ffffff; }
 .btn-disabled { --bg-color: #ccc; --bd-color: #999; --sh-color: #777; --txt-color: #333; }
 
+/* 3D 원클릭 버튼 */
 button { 
     font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; 
     border-radius: 12px; font-size: 18px; cursor: pointer; transition: all 0.1s ease; 
@@ -106,10 +107,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .online-user-avatar { height: 75px; width: auto; margin-bottom: 4px; }
 
 .name-text-fit { font-weight: bold; text-align: center; white-space: nowrap !important; overflow: hidden !important; text-overflow: clip !important; display: block; width: 100%; color: #333; }
-.name-sm { font-size: 16px; letter-spacing: -0.5px; }
-.name-md { font-size: 14.5px; letter-spacing: -0.5px; }
-.name-lg { font-size: 13px; letter-spacing: -0.5px; }
-.name-xl { font-size: 11.5px; letter-spacing: -0.8px; }
+.name-sm { font-size: 16px; letter-spacing: -0.5px; } .name-md { font-size: 14.5px; } .name-lg { font-size: 13px; } .name-xl { font-size: 11.5px; }
 
 .speech-bubble { position: absolute; top: -38px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #ff9800; border-radius: 12px; padding: 4px 8px; font-size: 13px; color: #333; white-space: normal; word-break: keep-all; line-height: 1.1; z-index: 10; box-shadow: 0 3px 0 rgba(255,152,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: #ff9800 transparent transparent transparent; display: block; width: 0; }
@@ -119,10 +117,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .chat-log { height: 110px; overflow-y: auto; overflow-x: hidden; background: #fff; border: 2px solid #ccc; border-radius: 8px; padding: 8px; text-align: left; font-size: 16px; word-break: break-all;}
 .chat-log::-webkit-scrollbar { width: 8px; }
 .chat-log::-webkit-scrollbar-thumb { background: #8bc34a; border-radius: 4px; }
-.chat-input-area { display: flex; gap: 8px; }
-.chat-input-area input { flex: 1; margin: 0; font-size: 16px; padding: 8px; min-width: 0;}
+.chat-input-area { display: flex; gap: 8px; } .chat-input-area input { flex: 1; margin: 0; font-size: 16px; padding: 8px; min-width: 0;}
 
-/* PC 전용 하단 메뉴 바인딩 */
+/* PC 전용 기본 하단 버튼 그룹 배치 (기존 구조) */
 .lobby-menu-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: nowrap; }
 .lobby-menu-group button { margin: 0; flex: 1; min-width: 0; padding: 10px 2px; }
 
@@ -143,7 +140,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-ready-text.ready { color: #28a745; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; }
 
-/* ===== 📱 스마트폰 모바일 디스플레이 특화 규격 쿼리 패치 (2x3 고정 반영) ===== */
+/* ===== 📱 스마트폰 모바일 레이아웃 특화 미디어쿼리 (2x3 고정 반영) ===== */
 @media screen and (max-width: 600px) {
     .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
     h2 { font-size: 24px; margin-bottom: 15px; }
@@ -176,7 +173,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .chat-log { font-size: 14px; height: 90px; padding: 8px; border-width: 1px; }
     .chat-input-area { gap: 4px; } .chat-input-area input { font-size: 14px; padding: 6px; }
     
-    /* 모바일 대기실 메뉴 레이아웃 가로 2개 * 세로 3줄 (2x3) 격자 그리드 구조 전환 */
+    /* [모바일 배치 개혁] 대기실 하단 단원 메뉴 가로 2개 * 세로 3줄 (2x3 Grid) 배치 스페이스 고정 */
     .lobby-menu-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
     .lobby-menu-group button { margin: 0; width: 100%; min-width: 0; padding: 12px 2px; font-size: 14px; }
     .login-btn-group.row button { padding: 10px 2px; }
@@ -190,20 +187,26 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 }
 
 /* ====================================================================
-   🎮 상티런(Sangti Run) 가로/세로 전천후 반응형 게임 엔진 CSS 패치
+   🎮 상티런(Sangti Run) 독립 비율 복원 및 로비 테마 패키지 CSS
    ==================================================================== */
 #sr-game-container {
-    display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;
 }
 
-/* [해결책 1번] 기본 PC 및 대형 데스크톱 환경 구조: 철저하게 원본의 16:9 규격과 크기제한 상속 */
+/* 1번 해결: PC 데스크톱 기본 상태 - 원본 16:9 규격과 한계치를 독립 보장하며 로비 테마 결합 */
 #sr-game {
-    width: 100%; 
-    max-width: 900px; 
-    aspect-ratio: 16 / 9; 
+    width: 95%;
+    max-width: 900px;
+    aspect-ratio: 16 / 9;
     position: relative;
-    background-color: #90caf9; border: 5px solid #333; border-radius: 20px;
-    box-shadow: 8px 12px 0px rgba(0,0,0,0.15), inset 0px 5px 10px rgba(0,0,0,0.1); overflow: hidden;
+    background-color: #90caf9; 
+    
+    /* 플랫폼 메인 주 컨테이너 레이아웃과 완벽한 일치성 부여 */
+    border: 5px solid #333; 
+    border-radius: 25px; 
+    box-shadow: 0 12px 0 rgba(0,0,0,0.2); 
+    
+    overflow: hidden;
     margin: 0 auto;
 }
 
@@ -214,18 +217,17 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 #sr-world { position: absolute; top: 0; left: 0; width: 100%; z-index: 5; }
 
 #sr-timer-container {
-    position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 50%; height: 20px;
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 50%; height: 25px;
     background-color: #F8F9FA; border: 3px solid #333; border-radius: 15px; z-index: 1000; overflow: hidden;
     box-shadow: 0px 4px 0px rgba(0,0,0,0.2); display: none; 
 }
 #sr-timer-bar { width: 100%; height: 100%; background-color: #2ed573; transition: width 0.1s linear, background-color 0.3s ease; }
 
 #sr-score {
-    position: absolute; top: 10px; right: 15px; font-size: 32px; color: white; 
+    position: absolute; top: 15px; right: 20px; font-size: 32px; color: white; 
     text-shadow: -2px -2px 0 #333, 2px -2px 0 #333, -2px 2px 0 #333, 2px 2px 0 #333, 3px 3px 0 #ff9800; z-index: 1000;
 }
 
-/* PC 표준 크기 */
 #sr-character { position: absolute; left: 60px; z-index: 15; transition: filter 0.1s ease-in-out; width: 80px; height: auto; }
 .sr-monster { position: absolute; z-index: 10; transition: opacity 0.3s ease-in; width: 80px; height: auto; }
 
@@ -251,67 +253,23 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: none;
     justify-content: center; align-items: center; z-index: 9999;
 }
-
-/* [해결책 3번] 기본 게임오버 팝업 설계 */
 #sr-gameOverBox {
     background: white; border: 5px solid #ff9800; border-radius: 25px; padding: 25px; display: flex;
     flex-direction: column; align-items: center; box-shadow: 0px 10px 0px rgba(0,0,0,0.2); width: 85%; max-width: 340px;
 }
 #sr-gameOverBox h1 { font-size: 32px; margin-bottom: 15px; color: #ff9800; text-shadow: 1px 1px 0px #333; }
-#sr-result { font-size: 20px; text-align: center; line-height: 1.8; color: #333; background: #f8f9fa; padding: 12px; border-radius: 15px; width: 100%; margin-bottom: 15px; }
-.sr-gameover-btn-group { display: flex; width: 100%; gap: 10px; z-index: 10005; position: relative; }
-.sr-gameover-btn-group button { flex: 1; padding: 10px 2px; font-size: 16px; }
+#sr-result { font-size: 20px; text-align: center; line-height: 1.8; color: #333; background: #f8f9fa; padding: 12px; border-radius: 15px; width: 100%; }
 
-/* -------------------------------------------------------------
-   [해결책 1,3,4번 통합] 스마트폰 모바일 뷰포트 미디어 쿼리 정의구조
-   ------------------------------------------------------------- */
+/* 모바일 전용 미디어 쿼리 연동 분조 (화면 채움 유연화) */
 @media screen and (max-width: 768px) {
-    /* 4번: 모바일 진입 시 스크롤을 완벽히 차단하고 화면 내 고정 배치 */
-    #sangti-run-page {
-        position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; 
-        background: #90caf9; z-index: 9999; padding: 0; margin: 0; overflow: hidden;
-    }
-    #sr-game-container { width: 100%; height: 100%; display: block; }
-    
-    /* 1번: 모바일일 때만 고정 종속 비율을 파괴하고 전체화면 유동적 채움 설정 */
-    #sr-game {
-        width: 100vw; height: 100vh; height: 100dvh; 
-        max-width: 100vw; aspect-ratio: auto; border: none; border-radius: 0; box-shadow: none;
-    }
-    #sr-bg-layer { background-size: auto 120%; }
-    #sr-score { top: 15px; right: 20px; font-size: 28px; }
-    #sr-timer-container { top: 20px; width: 45%; height: 16px; }
-
-    /* [해결책 3번] 모바일 환경에서의 캐릭터, 몹 크기 비례 축소 (clamp 활용 고도화) */
-    #sr-character { left: 25px; width: clamp(46px, 11vw, 64px); }
-    .sr-monster { width: clamp(46px, 11vw, 64px); }
-    .sr-bubble { font-size: clamp(11px, 2.5vw, 13px); padding: 3px 6px; min-width: 35px; }
-
-    /* [해결책 3번] 모바일 세로/가로 대응 게임종료 창 여백 및 요소 축소 */
-    #sr-gameOverBox {
-        padding: 15px; border-width: 4px; border-radius: 20px; max-width: 270px;
-        max-height: 85vh; max-height: 85dvh; overflow-y: auto; /* 세로 폭 초과 시 스크롤 */
-    }
-    #sr-gameOverBox h1 { font-size: 24px; margin-bottom: 8px; }
-    #sr-result { font-size: 15px; padding: 8px; line-height: 1.5; margin-bottom: 10px; }
-    .sr-gameover-btn-group button { padding: 8px 2px; font-size: 14px; }
+    #sr-game { width: 100%; aspect-ratio: auto; height: 60vh; border-radius: 20px; }
+    #sr-character, .sr-monster { width: 64px; }
+    .sr-bubble { font-size: 13px; }
+    #sr-gameOverBox { padding: 15px; }
+    #sr-gameOverBox h1 { font-size: 24px; }
+    #sr-result { font-size: 16px; }
 }
 
-/* 가로 눕힘(Landscape) 모바일 스크린 예외 스케일 디테일 보정 구조 */
-@media screen and (max-width: 900px) and (orientation: landscape) {
-    #sr-timer-container { top: 10px; height: 12px; }
-    #sr-score { top: 8px; right: 15px; font-size: 24px; }
-    #sr-character { left: 35px; width: clamp(38px, 8vw, 55px); }
-    .sr-monster { width: clamp(38px, 8vw, 55px); }
-    .sr-bubble { font-size: clamp(10px, 2vw, 12px); padding: 2px 4px; }
-    
-    #sr-gameOverBox { padding: 12px; max-width: 250px; max-height: 90vh; }
-    #sr-gameOverBox h1 { font-size: 20px; margin-bottom: 4px; }
-    #sr-result { font-size: 13px; padding: 6px; line-height: 1.4; margin-bottom: 8px; }
-    .sr-gameover-btn-group button { padding: 6px 2px; font-size: 13px; }
-}
-
-/* 공유 애니메이션 */
 @keyframes sr-bubblePop { 0% { transform: scale(1); } 50% { transform: scale(1.25); background-color: #fffacd; } 100% { transform: scale(1); } }
 .sr-bubble-pop { animation: sr-bubblePop 0.4s ease-out; }
 @keyframes sr-shake { 0%, 100% { transform: translate(0,0); } 20%, 60% { transform: translate(-3px, 2px); } 40%, 80% { transform: translate(3px, -2px); } }
