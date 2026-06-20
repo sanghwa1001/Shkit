@@ -1531,7 +1531,7 @@ function renderWaveRoom() {
 // 학습 관리 및 게임 기능 함수 모음
 // ==========================
 
-// 1. 엑셀을 통한 학습데이터 업로드 (A열: 영어, B열: 뜻)
+// 1. 엑셀을 통한 학습 데이터 업로드 (A열: 영어, B열: 뜻)
 function handleLearnExcelUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1578,7 +1578,7 @@ function renderLearnDataList() {
     const keys = Object.keys(localLearningData);
     
     if (keys.length === 0) { 
-        listDiv.innerHTML = '<p style="color:#888;">생성된 학습데이터가 없습니다.</p>'; 
+        listDiv.innerHTML = '<p style="color:#888;">생성된 학습 데이터가 없습니다.</p>'; 
         return; 
     }
     
@@ -1605,7 +1605,7 @@ function updateDatasetName(key) {
 }
 
 function deleteDataset(key) {
-    if(confirm('이 학습데이터를 완전히 삭제하시겠습니까?')) {
+    if(confirm('이 학습 데이터를 완전히 삭제하시겠습니까?')) {
         db.ref(`learningData/${key}`).remove();
     }
 }
@@ -1666,7 +1666,7 @@ function renderStudentDataList() {
     const keys = Object.keys(localLearningData);
     
     if (keys.length === 0) { 
-        listDiv.innerHTML = '<p style="color:#888;">등록된 학습데이터가 아직 없습니다.</p>'; 
+        listDiv.innerHTML = '<p style="color:#888;">등록된 학습 데이터가 아직 없습니다.</p>'; 
         return; 
     }
     
