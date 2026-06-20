@@ -151,8 +151,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .chat-input-area { display: flex; gap: 8px; }
 .chat-input-area input { flex: 1; margin: 0; font-size: 16px; padding: 8px; min-width: 0;}
 
-.lobby-menu-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: nowrap; }
-.lobby-menu-group button { margin: 0; flex: 1; min-width: 0; padding: 10px 2px; }
+/* 2줄 x 3줄 버튼 배치를 위해 CSS Grid 적용 */
+.lobby-menu-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+.lobby-menu-group button { margin: 0; width: 100%; padding: 10px 2px; }
 
 .avatar-list-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; max-height: 380px; overflow-y: auto; overflow-x: hidden; padding: 10px; }
 .avatar-item { border: 3px solid #eee; border-radius: 12px; padding: 10px; text-align: center; background-color: white; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 0.2s; }
@@ -218,7 +219,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .chat-input-area { gap: 4px; }
     .chat-input-area input { font-size: 14px; padding: 6px; }
     
-    .lobby-menu-group { gap: 6px; margin-top: 10px; }
+    .lobby-menu-group { gap: 8px; margin-top: 10px; }
     .login-btn-group.row button { padding: 10px 2px; }
     
     .avatar-list-container { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 8px; margin-bottom: 10px; max-height: 300px;}
