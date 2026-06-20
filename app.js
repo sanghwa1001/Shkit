@@ -291,32 +291,47 @@ function applySelectedAvatar() {
 function checkStudentLogin() {
     const inputId = document.getElementById('student-id').value.trim();
     const inputPw = document.getElementById('student-pw').value.trim();
+    const loginBtn = document.querySelector('#student-page .btn-blue');
+    const originalText = loginBtn.innerText;
     
-    if (Object.keys(localStudentAccounts).length === 0) {
-        alert('서버와 연결 중입니다. 잠시 후 다시 눌러주세요 ⏳');
-        return;
-    }
+    loginBtn.innerText = "로그인 중... ⏳";
+    loginBtn.disabled = true;
 
-    const account = localStudentAccounts[inputId];
-
-    if (account && account.pw === inputPw) {
-        currentUser = inputId;
-        isAdmin = false;
-        
-        let fixedOwned = account.ownedAvatars || DEFAULT_AVATARS;
-        let fixedAvatar = account.avatarId || DEFAULT_AVATARS[0];
-
-        myCurrentAvatar = fixedAvatar;
-        
-        if (account.gems === undefined) {
-            db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
+    // 약간의 딜레이를 주어 UI 상 로딩 효과 연출
+    setTimeout(() => {
+        if (Object.keys(localStudentAccounts).length === 0) {
+            alert('서버와 연결 중입니다. 잠시 후 다시 눌러주세요 ⏳');
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+            return;
         }
-        
-        document.getElementById('student-nickname').value = account.nickname || inputId;
-        showPage('nickname-page');
-    } else {
-        alert('아이디 또는 비밀번호가 틀렸습니다.');
-    }
+
+        const account = localStudentAccounts[inputId];
+
+        if (account && account.pw === inputPw) {
+            currentUser = inputId;
+            isAdmin = false;
+            
+            let fixedOwned = account.ownedAvatars || DEFAULT_AVATARS;
+            let fixedAvatar = account.avatarId || DEFAULT_AVATARS[0];
+
+            myCurrentAvatar = fixedAvatar;
+            
+            if (account.gems === undefined) {
+                db.ref('studentAccounts/' + currentUser).update({ gems: 10 });
+            }
+            
+            document.getElementById('student-nickname').value = account.nickname || inputId;
+            
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+            showPage('nickname-page');
+        } else {
+            alert('아이디 또는 비밀번호가 틀렸습니다.');
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+        }
+    }, 300);
 }
 
 function checkAdminLogin() {
@@ -423,7 +438,7 @@ function updateAccount(id) {
 }
 
 function deleteAccount(id) {
-    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 없습니다.');
+    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 정없습니다.');
     if (confirm('정말 삭제하시겠습니까?')) db.ref('studentAccounts/' + id).remove();
 }
 
@@ -1658,12 +1673,20 @@ function renderStudentDataList() {
         return; 
     }
     
-    keys.forEach(key => {
+    // 버튼 색상을 순환하기 위한 배열
+    const colors = ['btn-blue', 'btn-green', 'btn-orange', 'btn-purple', 'btn-pink', 'btn-cyan'];
+    
+    keys.forEach((key, index) => {
         const dataSet = localLearningData[key];
         const btn = document.createElement('button');
-        btn.className = 'btn-blue';
+        
+        // 인덱스를 활용해 색상을 순서대로 적용
+        const colorClass = colors[index % colors.length];
+        btn.className = colorClass;
         btn.style.marginBottom = '12px';
-        btn.innerText = `[${dataSet.name}] 시작하기 (총 ${dataSet.words ? dataSet.words.length : 0}단어)`;
+        
+        // 버튼 텍스트 변경
+        btn.innerText = `${dataSet.name} (총 ${dataSet.words ? dataSet.words.length : 0}단어)`;
         btn.onclick = () => selectDatasetForGame(key);
         listDiv.appendChild(btn);
     });
