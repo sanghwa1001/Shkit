@@ -79,7 +79,6 @@ const RUN_BASE_HEIGHT = 506.25;
 const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; 
 
 let runLastTime = 0;
-
 let runCharW = 0;
 let runCharH = 0;
 let runCharBubbleW = 0;
@@ -130,7 +129,6 @@ db.ref('shopItemPrices').on('value', (snapshot) => {
     if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
 });
 
-// 하이파이브 리스너
 db.ref('highfive/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('highfive-page').classList.contains('active')) {
@@ -152,7 +150,6 @@ db.ref('highfive/requests').on('value', snap => {
     if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
 });
 
-// 파도타기 리스너
 db.ref('wave/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('wave-page').classList.contains('active')) {
@@ -232,7 +229,6 @@ db.ref('chatState/isMuted').on('value', (snapshot) => {
     }
 });
 
-// 학습 데이터 리스너
 db.ref('learningData').on('value', (snapshot) => {
     localLearningData = snapshot.val() || {};
     if (document.getElementById('admin-edit-learn-page').classList.contains('active')) renderLearnDataList();
@@ -1018,7 +1014,7 @@ function renderStudentDataList() {
 function selectDatasetForGame(key) { currentSelectedData = key; if (currentLearnMode === 'solo') { showPage('student-solo-game-page'); } else { alert('함께하기 목록은 곧 업데이트됩니다!'); } }
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (버그 수정 완결판)
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최종 마스터본)
 // ==========================================
 
 function openSangtiRunGamePage() {
@@ -1036,11 +1032,14 @@ function openSangtiRunGamePage() {
     
     runWords = selectedSet.words.map(w => ({ eng: String(w.eng), kor: String(w.kor) }));
     
+    // 🛠️ [최종 반영] 게임 모드 활성화로 하얀 박스 여백 다이어트
+    document.getElementById("main-container").classList.add("game-mode");
+    
     resetSangtiRunEngineUI();
     showPage('sangtirun-page');
     updateSangtiRunScale();
 
-    // 🛠️ 대기화면에서도 배경을 올바른 카메라 좌표에 맞게 세팅해두어, 시작 시 순간이동을 방지
+    // 진입 즉시 배경과 카메라 좌표를 0과 정중앙으로 세팅하여 점프 버그 영구 제거
     setTimeout(() => {
         RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
         document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
@@ -1060,14 +1059,18 @@ function openSangtiRunGamePage() {
             runCameraY = Math.max(0, Math.min(maxCamY, runCameraY));
             document.getElementById("world").style.transform = `translateY(${-runCameraY}px)`;
             
-            // 🛠️ 진입 시점에 이미 배경을 정확히 카메라 Y와 함께 맞추어 놓습니다.
-            if(bgLayer) bgLayer.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
+            if(bgLayer) {
+                runBgX = 0; // 명시적 초기화
+                bgLayer.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
+            }
         }
     }, 50);
 }
 
 function exitSangtiRunGamePage() {
     if (runGameStarted) endSangtiRunGame();
+    // 🛠️ [최종 반영] 게임 모드 해제로 일반 로비 패딩 및 너비 복구
+    document.getElementById("main-container").classList.remove("game-mode");
     showPage('student-solo-game-page');
 }
 
@@ -1090,12 +1093,11 @@ function resetSangtiRunEngineUI() {
     charImg.classList.remove("red-tint", "shake");
     charImg.src = originalCharacterSrc;
     
-    // 🛠️ [문제 1 해결] 배경 변수를 진입(Reset) 시점에 0으로 초기화
     runBgX = 0;
     const bgLayer = document.getElementById("bg-layer");
     if (bgLayer) {
         bgLayer.classList.remove("bg-shake");
-        bgLayer.style.backgroundPosition = "0px 0%"; // 게임 진입 즉시 0으로 맞춰 점프 현상 제거
+        bgLayer.style.backgroundPosition = "0px 0%"; 
     }
     
     const startBtn = document.getElementById("runStartBtn");
@@ -1259,7 +1261,6 @@ function endSangtiRunGame(){
     document.getElementById("result").innerHTML = `🏆 점수 : ${runScore} 점<br><br>⭕ 정답 : ${runCorrectCount} 개<br><br>❌ 오답 : ${runWrongCount} 개`;
 }
 
-// 🛠️ 메인 게임 루프 (최적화 완료)
 function runLoopEngine(timestamp) {
     if (!runLastTime) runLastTime = timestamp;
     let dt = (timestamp - runLastTime) / 16.666; 
