@@ -67,7 +67,6 @@ let runIsPressing = false;
 let runMonsters = [];
 let runSpawnInterval;
 let runBgX = 0; 
-// 1번 반영: 오리지널 캐릭터 이미지 및 에셋 문자열 전면 영문화 교체 완료
 const originalCharacterSrc = "swimcharacter1.gif"; 
 let runAvatarChangeTimeout; 
 let runActiveCoins = [];
@@ -470,7 +469,7 @@ function updateAccount(id) {
 }
 
 function deleteAccount(id) {
-    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 없습니다.');
+    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 일습니다.');
     if (confirm('정말 삭제하시겠습니까?')) db.ref('studentAccounts/' + id).remove();
 }
 
@@ -1122,8 +1121,8 @@ function spawnRunMonster(){
         const monster = document.createElement("img");
         let monsterNum = Math.floor(Math.random() * 9) * 2 + 1;
         
-        // 🛠️ 1번 반영: 상티런 몬스터 파일명 규칙 영문화 적용 (swimrunmonster1.gif 등)
-        monster.src = "swimrunmonster" + monsterNum + ".gif";
+        // 🛠️ 1번 최신 반영: 상티런 몬스터 파일명 규칙 영문화 적용 (swimmonster1.gif 등)
+        monster.src = "swimmonster" + monsterNum + ".gif";
         monster.className = "monster"; monster.style.opacity = "0";
 
         const bubble = document.createElement("div");
@@ -1259,11 +1258,10 @@ function runLoopEngine(){
                     runScore += 10; runCorrectCount++; runTimeLeft = Math.min(RUN_MAX_TIME, runTimeLeft + 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-add"); 
                     
-                    // 🛠️ 1번 반영: 상티런 캐릭터 반응 영문화 매칭 (swimcharacter2.gif)
+                    // 🛠️ 1번 최신 반영
                     charEl.src = "swimcharacter2.gif";
-                    monster.el.src = "swimrunmonster" + (monster.monsterNum + 1) + ".gif"; monster.el.classList.add("shake");
+                    monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif"; monster.el.classList.add("shake");
 
-                    // 🛠️ 1번 반영: 상티런 코인 에셋 명칭 교체 (swimcoin.gif)
                     const coin = document.createElement("img"); coin.src = "swimcoin.gif"; coin.className = "coin-effect";
                     coin.style.left = (charEl.offsetLeft + (charEl.offsetWidth / 2)) + "px"; coin.dataset.offsetY = "15"; coin.style.top = (runPlayerY + 15) + "px";
                     worldEl.appendChild(coin); runActiveCoins.push(coin);
@@ -1273,9 +1271,9 @@ function runLoopEngine(){
                     runScore -= 10; runWrongCount++; runTimeLeft = Math.max(0, runTimeLeft - 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-sub"); 
                     
-                    // 🛠️ 1번 반영: 오답 표정 캐릭터 영문화 매칭 (swimcharacter3.gif)
                     charEl.src = "swimcharacter3.gif"; charEl.classList.add("red-tint");
-                    monster.el.src = "swimrunmonster" + (monster.monsterNum + 1) + ".gif";
+                    // 🛠️ 1번 최신 반영
+                    monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif";
                     charEl.classList.remove("shake"); void charEl.offsetWidth; charEl.classList.add("shake");
                     bgEl.classList.remove("bg-shake"); void bgEl.offsetWidth; bgEl.classList.add("bg-shake");
                     setTimeout(() => charEl.classList.remove("red-tint"), 300);
