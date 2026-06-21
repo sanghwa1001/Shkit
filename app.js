@@ -1081,12 +1081,12 @@ function resetSangtiRunEngineUI() {
     document.getElementById("score").textContent = "0";
     document.getElementById("gameOver").classList.remove("show");
     
-    // 🛠️ Wrapper를 숨깁니다
     document.getElementById("characterBubbleWrapper").style.display = "none";
     document.getElementById("timer-container").style.display = "none";
     
     const charImg = document.getElementById("character");
-    charImg.classList.remove("red-tint");
+    // 🛠️ 버그 수정: 이전 플레이에서 남아있던 흔들림(.shake) 강제 초기화
+    charImg.classList.remove("red-tint", "shake");
     charImg.src = originalCharacterSrc;
     document.getElementById("bg-layer").classList.remove("bg-shake");
     
@@ -1118,13 +1118,11 @@ function setRunCharacterWord(isFirstTime = false){
     bubble.textContent = currentRunWord.eng;
     
     if(!isFirstTime) {
-        // 🛠️ 안쪽 내용물인 bubble에만 scale 이펙트를 줍니다 (translate와 충돌 없음)
         bubble.classList.remove("bubble-pop");
         void bubble.offsetWidth; 
         bubble.classList.add("bubble-pop");
     }
     
-    // 🛠️ 말풍선 내용이 바뀔 때만 크기 재계산 (캐싱)
     setTimeout(() => { runCharBubbleW = bubbleWrapper.offsetWidth; }, 0);
 }
 
@@ -1141,24 +1139,20 @@ function spawnRunMonster(){
     let correctIndex = spawnGroupHasCorrect ? Math.floor(Math.random() * 2) : -1;
 
     for (let i = 0; i < 2; i++) {
-        // 🛠️ [이중 Wrapper 구조 도입] 몬스터 상자 생성
         const mWrapper = document.createElement("div");
         mWrapper.className = "monster-wrapper";
         mWrapper.style.opacity = "0";
 
-        // 알맹이(이미지) 생성 및 상자에 삽입
         const monsterImg = document.createElement("img");
         let monsterNum = Math.floor(Math.random() * 9) * 2 + 1;
         monsterImg.src = "swimmonster" + monsterNum + ".gif";
         monsterImg.className = "monster-img"; 
         mWrapper.appendChild(monsterImg);
 
-        // 🛠️ [이중 Wrapper 구조 도입] 말풍선 상자 생성
         const bWrapper = document.createElement("div");
         bWrapper.className = "bubble-wrapper";
         bWrapper.style.opacity = "0";
 
-        // 알맹이(말풍선 내용) 생성 및 상자에 삽입
         const bubbleContent = document.createElement("div");
         bubbleContent.className = "bubble"; 
         let isCorrect = (i === correctIndex);
@@ -1181,7 +1175,6 @@ function spawnRunMonster(){
             attempts++;
         }
 
-        // 겉 껍데기(Wrapper)를 이용해 이동 좌표 설정
         mWrapper.style.transform = `translate(${startX}px, ${y}px)`;
         const wDiv = document.getElementById("world");
         wDiv.appendChild(mWrapper); 
@@ -1189,7 +1182,6 @@ function spawnRunMonster(){
         
         setTimeout(() => { mWrapper.style.opacity = "1"; bWrapper.style.opacity = "1"; }, 50);
 
-        // 메모리에 껍데기와 알맹이를 모두 저장
         runMonsters.push({ 
             wrapper: mWrapper, img: monsterImg, 
             bWrapper: bWrapper, bubble: bubbleContent, 
@@ -1208,7 +1200,6 @@ function startSangtiRunGame() {
     document.getElementById("score").textContent = "0";
     document.getElementById("gameOver").classList.remove("show");
     
-    // Wrapper를 보여줍니다
     document.getElementById("characterBubbleWrapper").style.display = "block";
     document.getElementById("timer-container").style.display = "block";
     
@@ -1223,13 +1214,12 @@ function startSangtiRunGame() {
     RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
     document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
     
-    // 게임 시작 시 정중앙 고정 해상도 물리 매칭
     runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
     runVelocity = 0; runIsPressing = false; runBgX = 0;
 
     setRunCharacterWord(true);
     runGameStarted = true; runTimeLeft = RUN_MAX_TIME; updateRunTimerUI();
-    runLastTime = 0; // 프레임 동기화 초기화
+    runLastTime = 0; 
 
     clearInterval(runTimerInterval); clearInterval(runSpawnInterval);
     runSpawnInterval = setInterval(spawnRunMonster, 750);
@@ -1249,7 +1239,9 @@ function endSangtiRunGame(){
     document.getElementById("timer-container").style.display = "none";
     
     const charImg = document.getElementById("character");
-    charImg.src = originalCharacterSrc; charImg.classList.remove("red-tint");
+    charImg.src = originalCharacterSrc; 
+    // 🛠️ 버그 수정: 게임 오버 시에도 캐릭터 흔들림 클래스 초기화
+    charImg.classList.remove("red-tint", "shake");
     document.getElementById("bg-layer").classList.remove("bg-shake");
 
     const startBtn = document.getElementById("runStartBtn");
@@ -1262,9 +1254,9 @@ function endSangtiRunGame(){
 // 🛠️ [성능 최적화] 메인 게임 루프 - Delta Time 및 Transform 캐싱 반영
 function runLoopEngine(timestamp) {
     if (!runLastTime) runLastTime = timestamp;
-    let dt = (timestamp - runLastTime) / 16.666; // 60프레임(16.6ms) 기준 배율
+    let dt = (timestamp - runLastTime) / 16.666; 
     runLastTime = timestamp;
-    if (dt > 3) dt = 3; // 브라우저 백그라운드 전환 등 비정상 지연 튀어오름 방지
+    if (dt > 3) dt = 3; 
 
     if(runGameStarted) {
         const charWrapper = document.getElementById("charWrapper");
@@ -1288,24 +1280,20 @@ function runLoopEngine(timestamp) {
         runBgX -= 2 * dt;
         bgEl.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
         
-        // 🛠️ 겉 상자(Wrapper)만 translate로 위치를 이동시킵니다.
         charWrapper.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
         let cbX = RUN_CHAR_X + (runCharW / 2) - (runCharBubbleW / 2);
         let cbY = runPlayerY + runCharH + 2;
         bubbleWrapper.style.transform = `translate(${cbX}px, ${cbY}px)`;
 
-        // 코인은 CSS 애니메이션과 충돌하므로 top/left 유지 (단순 이펙트용)
         runActiveCoins.forEach(coin => { coin.style.top = (runPlayerY + parseFloat(coin.dataset.offsetY)) + "px"; });
 
         runMonsters.forEach(m => {
-            // 최초 한 번만 껍데기의 크기를 캐싱
             if (m.w === 0) m.w = m.wrapper.offsetWidth;
             if (m.h === 0) m.h = m.wrapper.offsetHeight;
             if (m.bw === 0) m.bw = m.bWrapper.offsetWidth;
             if (m.bh === 0) m.bh = m.bWrapper.offsetHeight;
 
             m.x -= m.speed * dt;
-            // 겉 상자(Wrapper)만 좌표 이동! (애니메이션과 충돌 없음)
             m.wrapper.style.transform = `translate(${m.x}px, ${m.y}px)`;
             
             let bx = m.x + (m.w / 2) - (m.bw / 2);
@@ -1315,7 +1303,6 @@ function runLoopEngine(timestamp) {
             if(m.dead || Date.now() - m.spawnedTime < 500) return;
 
             let hit = false;
-            // 캐싱된 크기를 활용해 충돌 판정 (성능 대폭 향상)
             if(m.w > 0 && runCharW > 0) {
                 hit = runCollision(
                     { left: RUN_CHAR_X + runCharW*0.15, right: RUN_CHAR_X + runCharW*0.85, top: runPlayerY + runCharH*0.15, bottom: runPlayerY + runCharH*0.85 },
@@ -1333,7 +1320,6 @@ function runLoopEngine(timestamp) {
                     
                     charImg.src = "swimcharacter2.gif";
                     m.img.src = "swimmonster" + (m.monsterNum + 1) + ".gif"; 
-                    // 🛠️ 알맹이(img)에만 애니메이션을 주어 순간이동 버그 원천 차단
                     m.img.classList.add("shake");
 
                     const coin = document.createElement("img"); coin.src = "swimcoin.gif"; coin.className = "coin-effect";
@@ -1349,7 +1335,6 @@ function runLoopEngine(timestamp) {
                     charImg.src = "swimcharacter3.gif"; charImg.classList.add("red-tint");
                     m.img.src = "swimmonster" + (m.monsterNum + 1) + ".gif";
                     
-                    // 캐릭터의 흔들림도 내부 알맹이(img)에만 적용
                     charImg.classList.remove("shake"); void charImg.offsetWidth; charImg.classList.add("shake");
                     
                     bgEl.classList.remove("bg-shake"); void bgEl.offsetWidth; bgEl.classList.add("bg-shake");
@@ -1374,7 +1359,6 @@ document.addEventListener("keyup", e => { if (e.code === "Space" && document.get
 document.addEventListener("mousedown", () => { if(document.getElementById('sangtirun-page').classList.contains('active')) runIsPressing = true; });
 document.addEventListener("mouseup", () => { runIsPressing = false; });
 
-// 🛠️ [문제 1 완벽 해결] 모바일 고스트 터치 및 탭 씹힘 방지 로직 탑재
 document.addEventListener("touchstart", (e) => { 
     if (document.getElementById('sangtirun-page').classList.contains('active') && e.target.closest('#game-wrapper')) {
         runIsPressing = true; 
@@ -1382,7 +1366,6 @@ document.addEventListener("touchstart", (e) => {
 }, { passive: true });
 document.addEventListener("touchend", () => { runIsPressing = false; });
 
-// 제스처 간섭, OS 알림, 포커스 이탈 등으로 터치 판정이 날아갔을 때 강제 리셋
 document.addEventListener("touchcancel", () => { runIsPressing = false; });
 window.addEventListener("blur", () => { runIsPressing = false; });
 document.addEventListener("visibilitychange", () => { if (document.hidden) runIsPressing = false; });
