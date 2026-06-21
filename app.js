@@ -51,7 +51,7 @@ let currentLearnMode = null;
 let currentSelectedData = null;
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 반영)
 // ==========================================
 let runWords = []; 
 let currentRunWord = null;
@@ -73,8 +73,18 @@ let runActiveCoins = [];
 let runTimeLeft = 60; 
 const RUN_MAX_TIME = 60; 
 let runTimerInterval;
+
 const RUN_BASE_WIDTH = 900;
 const RUN_BASE_HEIGHT = 506.25;
+const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; // X좌표 고정 캐싱
+
+// 🛠️ 프레임 속도 동기화(Delta Time) 변수
+let runLastTime = 0;
+
+// 🛠️ DOM 요소 크기 캐싱 변수 (Layout Thrashing 방지)
+let runCharW = 0;
+let runCharH = 0;
+let runCharBubbleW = 0;
 
 function getNameClass(text) {
     const len = text ? text.length : 0;
@@ -469,7 +479,7 @@ function updateAccount(id) {
 }
 
 function deleteAccount(id) {
-    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 일습니다.');
+    if (localOnlineUsers[id]) return alert('현재 접속 중인 학생은 삭제할 수 없습니다.');
     if (confirm('정말 삭제하시겠습니까?')) db.ref('studentAccounts/' + id).remove();
 }
 
@@ -1010,7 +1020,7 @@ function renderStudentDataList() {
 function selectDatasetForGame(key) { currentSelectedData = key; if (currentLearnMode === 'solo') { showPage('student-solo-game-page'); } else { alert('함께하기 목록은 곧 업데이트됩니다!'); } }
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전용 융합 함수 로직
+// 🏃‍♂️ 상티런 인게임용 전용 융합 함수 로직 (최적화 완료)
 // ==========================================
 
 function openSangtiRunGamePage() {
@@ -1032,18 +1042,19 @@ function openSangtiRunGamePage() {
     showPage('sangtirun-page');
     updateSangtiRunScale();
 
-    // 🛠️ 2번 반영: display가 active된 직후 브라우저가 크기를 읽을 수 있도록 비동기(50ms)로 정중앙 Y좌표 계산 후 배치
+    // 🛠️ [성능 최적화] 요소 크기 캐싱 및 하드웨어 가속 Transform 초기화
     setTimeout(() => {
         RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
         document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
         
         const charEl = document.getElementById("character");
         if(charEl) {
-            runPlayerY = (RUN_WORLD_HEIGHT / 2) - (charEl.offsetHeight / 2);
-            charEl.style.top = runPlayerY + "px";
+            runCharW = charEl.offsetWidth;
+            runCharH = charEl.offsetHeight;
+            runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
+            charEl.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
             
-            // 월드 카메라도 플레이어 중앙에 정확히 추적 매칭
-            runCameraY = (runPlayerY + (charEl.offsetHeight / 2)) - (RUN_BASE_HEIGHT / 2);
+            runCameraY = (runPlayerY + (runCharH / 2)) - (RUN_BASE_HEIGHT / 2);
             let maxCamY = RUN_WORLD_HEIGHT - RUN_BASE_HEIGHT;
             runCameraY = Math.max(0, Math.min(maxCamY, runCameraY));
             document.getElementById("world").style.transform = `translateY(${-runCameraY}px)`;
@@ -1066,7 +1077,6 @@ function updateSangtiRunScale() {
 
 function resetSangtiRunEngineUI() {
     document.getElementById("score").textContent = "0";
-    // 🛠️ 3번 반영: display 제거하고 show 클래스를 제어하여 부드럽게 감춤
     document.getElementById("gameOver").classList.remove("show");
     document.getElementById("characterBubble").style.display = "none";
     document.getElementById("timer-container").style.display = "none";
@@ -1103,6 +1113,9 @@ function setRunCharacterWord(isFirstTime = false){
         void bubble.offsetWidth; 
         bubble.classList.add("bubble-pop");
     }
+    
+    // 🛠️ 말풍선 내용이 바뀔 때만 크기 재계산 (캐싱)
+    setTimeout(() => { runCharBubbleW = bubble.offsetWidth; }, 0);
 }
 
 function updateRunTimerUI() {
@@ -1120,24 +1133,25 @@ function spawnRunMonster(){
     for (let i = 0; i < 2; i++) {
         const monster = document.createElement("img");
         let monsterNum = Math.floor(Math.random() * 9) * 2 + 1;
-        
-        // 🛠️ 1번 최신 반영: 상티런 몬스터 파일명 규칙 영문화 적용 (swimmonster1.gif 등)
         monster.src = "swimmonster" + monsterNum + ".gif";
-        monster.className = "monster"; monster.style.opacity = "0";
+        monster.className = "monster"; 
+        monster.style.opacity = "0";
 
         const bubble = document.createElement("div");
-        bubble.className = "bubble"; bubble.style.opacity = "0";
+        bubble.className = "bubble"; 
+        bubble.style.opacity = "0";
+        
         let isCorrect = (i === correctIndex);
         let word = isCorrect ? currentRunWord : (runWords.filter(w=>w.kor!==currentRunWord.kor)[Math.floor(Math.random()*(runWords.length-1))] || currentRunWord);
-
         bubble.textContent = word.kor;
+        
         let y, startX; let isValidPosition = false; let attempts = 0;
 
         while (!isValidPosition && attempts < 20) {
             startX = RUN_BASE_WIDTH + (Math.random() * RUN_BASE_WIDTH * 0.3);
             y = (RUN_BASE_HEIGHT * 0.1) + Math.random() * (RUN_WORLD_HEIGHT - (RUN_BASE_HEIGHT * 0.3));
             isValidPosition = true;
-            let charDist = Math.sqrt(Math.pow(startX - (RUN_BASE_WIDTH * 0.08), 2) + Math.pow(y - runPlayerY, 2));
+            let charDist = Math.sqrt(Math.pow(startX - RUN_CHAR_X, 2) + Math.pow(y - runPlayerY, 2));
             if(charDist < RUN_BASE_WIDTH * 0.25) { isValidPosition = false; attempts++; continue; }
             for (let j = 0; j < runMonsters.length; j++) {
                 if (runMonsters[j].dead) continue;
@@ -1146,12 +1160,15 @@ function spawnRunMonster(){
             attempts++;
         }
 
-        monster.style.left = startX+"px"; monster.style.top = y+"px";
+        // 🛠️ 초기 위치도 Transform으로 설정 (top, left 사용 안 함)
+        monster.style.transform = `translate(${startX}px, ${y}px)`;
         const wDiv = document.getElementById("world");
         wDiv.appendChild(monster); wDiv.appendChild(bubble);
+        
         setTimeout(() => { monster.style.opacity = "1"; bubble.style.opacity = "1"; }, 50);
 
-        runMonsters.push({ el:monster, bubble:bubble, x:startX, y:y, dead:false, speed: 2.0 + (Math.random() * 1.5), spawnedTime: Date.now(), monsterNum: monsterNum });
+        // 크기(w, h)는 로드 된 이후 첫 루프 때 캐싱되도록 0으로 초기화
+        runMonsters.push({ el:monster, bubble:bubble, x:startX, y:y, dead:false, speed: 2.0 + (Math.random() * 1.5), spawnedTime: Date.now(), monsterNum: monsterNum, w: 0, h: 0, bw: 0, bh: 0 });
     }
 }
 
@@ -1161,7 +1178,6 @@ function startSangtiRunGame() {
     if(runWords.length === 0) return;
     runScore = 0; runCorrectCount = 0; runWrongCount = 0;
     document.getElementById("score").textContent = "0";
-    // 🛠️ 3번 반영: 인게임 리셋 시 show 클래스 오프
     document.getElementById("gameOver").classList.remove("show");
     document.getElementById("characterBubble").style.display = "block";
     document.getElementById("timer-container").style.display = "block";
@@ -1175,12 +1191,12 @@ function startSangtiRunGame() {
     RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
     document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
     
-    // 게임을 실제 시작할 때도 정중앙 고정 해상도 물리 매칭
-    runPlayerY = (RUN_WORLD_HEIGHT / 2) - (document.getElementById("character").offsetHeight / 2);
+    runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
     runVelocity = 0; runIsPressing = false; runBgX = 0;
 
     setRunCharacterWord(true);
     runGameStarted = true; runTimeLeft = RUN_MAX_TIME; updateRunTimerUI();
+    runLastTime = 0; // 프레임 동기화 초기화
 
     clearInterval(runTimerInterval); clearInterval(runSpawnInterval);
     runSpawnInterval = setInterval(spawnRunMonster, 750);
@@ -1206,49 +1222,71 @@ function endSangtiRunGame(){
     const startBtn = document.getElementById("runStartBtn");
     startBtn.className = "btn-blue"; startBtn.disabled = false; startBtn.innerText = "🎮 다시 시작하기";
     
-    // 🛠️ 3번 반영: 모달 트리거 시 show 클래스를 올려 레이아웃 깜빡임 완벽 차단
     document.getElementById("gameOver").classList.add("show");
     document.getElementById("result").innerHTML = `🏆 점수 : ${runScore} 점<br><br>⭕ 정답 : ${runCorrectCount} 개<br><br>❌ 오답 : ${runWrongCount} 개`;
 }
 
-function runLoopEngine(){
-    if(runGameStarted){
+// 🛠️ [성능 최적화] 메인 게임 루프 - Delta Time 및 Transform 캐싱 반영
+function runLoopEngine(timestamp) {
+    if (!runLastTime) runLastTime = timestamp;
+    let dt = (timestamp - runLastTime) / 16.666; // 60프레임(16.6ms) 기준 배율
+    runLastTime = timestamp;
+    if (dt > 3) dt = 3; // 브라우저 백그라운드 전환 등 비정상 지연 튀어오름 방지
+
+    if(runGameStarted) {
         const charEl = document.getElementById("character");
         const bubbleEl = document.getElementById("characterBubble");
         const worldEl = document.getElementById("world");
         const bgEl = document.getElementById("bg-layer");
         const timerContainer = document.getElementById("timer-container");
 
-        runVelocity += runIsPressing ? -0.3 : 0.15;
+        runVelocity += runIsPressing ? (-0.3 * dt) : (0.15 * dt);
         if (runVelocity < -4) runVelocity = -4; if (runVelocity > 3) runVelocity = 3;
-        runPlayerY += runVelocity;
+        runPlayerY += runVelocity * dt;
 
-        if(runPlayerY < -charEl.offsetHeight || runPlayerY > RUN_WORLD_HEIGHT) endSangtiRunGame();
+        if(runPlayerY < -runCharH || runPlayerY > RUN_WORLD_HEIGHT) endSangtiRunGame();
 
-        runCameraY = (runPlayerY + (charEl.offsetHeight / 2)) - (RUN_BASE_HEIGHT / 2);
+        runCameraY = (runPlayerY + (runCharH / 2)) - (RUN_BASE_HEIGHT / 2);
         let maxCamY = RUN_WORLD_HEIGHT - RUN_BASE_HEIGHT;
         runCameraY = Math.max(0, Math.min(maxCamY, runCameraY));
         worldEl.style.transform = `translateY(${-runCameraY}px)`;
 
-        runBgX -= 2;
+        runBgX -= 2 * dt;
         bgEl.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
-        charEl.style.top = runPlayerY+"px";
-        bubbleEl.style.left = (charEl.offsetLeft + (charEl.offsetWidth / 2) - (bubbleEl.offsetWidth / 2)) + "px";
-        bubbleEl.style.top = (runPlayerY + charEl.offsetHeight + 2) + "px";
+        
+        // 🛠️ 하드웨어 가속 이동 적용
+        charEl.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
+        let cbX = RUN_CHAR_X + (runCharW / 2) - (runCharBubbleW / 2);
+        let cbY = runPlayerY + runCharH + 2;
+        bubbleEl.style.transform = `translate(${cbX}px, ${cbY}px)`;
 
+        // 코인은 CSS 애니메이션과 충돌하므로 top/left 유지
         runActiveCoins.forEach(coin => { coin.style.top = (runPlayerY + parseFloat(coin.dataset.offsetY)) + "px"; });
 
-        runMonsters.forEach(monster=>{
-            monster.x -= monster.speed; monster.el.style.left = monster.x+"px";
-            monster.bubble.style.left = (monster.x + (monster.el.offsetWidth / 2) - (monster.bubble.offsetWidth / 2)) + "px";
-            monster.bubble.style.top = (monster.y + monster.el.offsetHeight + 2) + "px";
+        runMonsters.forEach(monster => {
+            // 최초 한 번만 크기 캐싱
+            if (monster.w === 0) monster.w = monster.el.offsetWidth;
+            if (monster.h === 0) monster.h = monster.el.offsetHeight;
+            if (monster.bw === 0) monster.bw = monster.bubble.offsetWidth;
+            if (monster.bh === 0) monster.bh = monster.bubble.offsetHeight;
+
+            monster.x -= monster.speed * dt;
+            monster.el.style.transform = `translate(${monster.x}px, ${monster.y}px)`;
+            
+            let bx = monster.x + (monster.w / 2) - (monster.bw / 2);
+            let by = monster.y + monster.h + 2;
+            monster.bubble.style.transform = `translate(${bx}px, ${by}px)`;
 
             if(monster.dead || Date.now() - monster.spawnedTime < 500) return;
 
-            let hit = runCollision(
-                { left: charEl.offsetLeft + charEl.offsetWidth*0.15, right: charEl.offsetLeft + charEl.offsetWidth*0.85, top: runPlayerY + charEl.offsetHeight*0.15, bottom: runPlayerY + charEl.offsetHeight*0.85 },
-                { left: monster.x + monster.el.offsetWidth*0.15, right: monster.x + monster.el.offsetWidth*0.85, top: monster.y + monster.el.offsetHeight*0.15, bottom: monster.y + monster.el.offsetHeight*0.85 }
-            );
+            let hit = false;
+            // 크기가 계산된 이후에만 충돌 판정 수행 (DOM 캐싱 활용)
+            if(monster.w > 0 && runCharW > 0) {
+                hit = runCollision(
+                    { left: RUN_CHAR_X + runCharW*0.15, right: RUN_CHAR_X + runCharW*0.85, top: runPlayerY + runCharH*0.15, bottom: runPlayerY + runCharH*0.85 },
+                    { left: monster.x + monster.w*0.15, right: monster.x + monster.w*0.85, top: monster.y + monster.h*0.15, bottom: monster.y + monster.h*0.85 }
+                );
+            }
 
             if(hit){
                 monster.dead = true; if (runAvatarChangeTimeout) clearTimeout(runAvatarChangeTimeout);
@@ -1257,22 +1295,18 @@ function runLoopEngine(){
                 if(monster.bubble.textContent === currentRunWord.kor){
                     runScore += 10; runCorrectCount++; runTimeLeft = Math.min(RUN_MAX_TIME, runTimeLeft + 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-add"); 
-                    
-                    // 🛠️ 1번 최신 반영
                     charEl.src = "swimcharacter2.gif";
                     monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif"; monster.el.classList.add("shake");
 
                     const coin = document.createElement("img"); coin.src = "swimcoin.gif"; coin.className = "coin-effect";
-                    coin.style.left = (charEl.offsetLeft + (charEl.offsetWidth / 2)) + "px"; coin.dataset.offsetY = "15"; coin.style.top = (runPlayerY + 15) + "px";
+                    coin.style.left = (RUN_CHAR_X + (runCharW / 2)) + "px"; coin.dataset.offsetY = "15"; coin.style.top = (runPlayerY + 15) + "px";
                     worldEl.appendChild(coin); runActiveCoins.push(coin);
                     setTimeout(() => { coin.remove(); runActiveCoins = runActiveCoins.filter(c => c !== coin); }, 500);
                     setRunCharacterWord();
                 } else {
                     runScore -= 10; runWrongCount++; runTimeLeft = Math.max(0, runTimeLeft - 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-sub"); 
-                    
                     charEl.src = "swimcharacter3.gif"; charEl.classList.add("red-tint");
-                    // 🛠️ 1번 최신 반영
                     monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif";
                     charEl.classList.remove("shake"); void charEl.offsetWidth; charEl.classList.add("shake");
                     bgEl.classList.remove("bg-shake"); void bgEl.offsetWidth; bgEl.classList.add("bg-shake");
