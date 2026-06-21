@@ -13,6 +13,7 @@ body {
     overflow: hidden; 
 }
 
+/* 기본 로비/메뉴 모드 컨테이너 */
 .container { 
     background-color: #ffffff; 
     padding: 30px; 
@@ -28,7 +29,17 @@ body {
     overflow-x: hidden; 
     box-sizing: border-box; 
     margin: 0; 
+    transition: all 0.3s ease;
 }
+
+/* 🏃‍♂️ [최종 반영] 여백을 최소화하고 화면을 꽉 채우는 '게임 전용 모드' */
+.container.game-mode {
+    padding: 12px;
+    width: fit-content; 
+    max-width: 100%;
+    overflow: hidden; 
+}
+
 .container::-webkit-scrollbar { width: 8px; }
 .container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
 
@@ -55,13 +66,12 @@ input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; dis
 .btn-pink   { --bg-color: #e83e8c; --bd-color: #d3337a; --sh-color: #b12563; --txt-color: #ffffff; }
 .btn-disabled { --bg-color: #ccc; --bd-color: #999; --sh-color: #777; --txt-color: #333; }
 
-/* 기본 대형 버튼 스타일 (PC 기준) */
+/* 기본 대형 버튼 스타일 */
 button { 
     font-family: 'Jua', sans-serif; width: 100%; padding: 12px 10px; margin: 0; 
     border-radius: 12px; font-size: 18px; cursor: pointer; transition: all 0.1s ease; 
     letter-spacing: 0.5px; white-space: nowrap; 
     border-width: 3px; border-style: solid;
-    
     background-color: var(--bg-color); 
     border-color: var(--bd-color); 
     box-shadow: 0 6px 0 var(--sh-color); 
@@ -78,7 +88,6 @@ button:disabled, .btn-disabled {
     transform: translateY(0) !important;
 }
 
-/* 작은 버튼 공통 속성 */
 .btn-sm {
     padding: 6px 8px;
     font-size: clamp(13px, 3.5vw, 15px);
@@ -90,7 +99,6 @@ button:disabled, .btn-disabled {
     transform: translateY(4px);
 }
 
-/* 컨트롤 및 유틸리티 전용 버튼 레이아웃 */
 .chat-action-btn, .gem-action-btn, .hf-action-btn { 
     width: auto; min-width: 70px; margin: 0; font-size: 15px; padding: 8px 10px; flex-shrink: 0; 
 }
@@ -151,7 +159,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .chat-input-area { display: flex; gap: 8px; }
 .chat-input-area input { flex: 1; margin: 0; font-size: 16px; padding: 8px; min-width: 0;}
 
-/* 2줄 x 3줄 버튼 배치를 위해 CSS Grid 적용 */
 .lobby-menu-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
 .lobby-menu-group button { margin: 0; width: 100%; padding: 10px 2px; }
 
@@ -172,12 +179,16 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-ready-text.ready { color: #28a745; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
-/* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 ===== */
 
-/* 🛠️ [해결 1, 2 반영] 롱탭 방지 및 가로 화면(Landscape) 잘림 방지를 위한 max-width 반응형 */
+/* ==========================================
+   🏃‍♂️ 상티런 인게임 전용 마스터 스타일 
+========================================== */
+
+/* 🛠️ [최종 반영] 세로 공간 확보를 위해 넓게 늘어나는 동적 가로 구조. 
+   가로 모드에서는 브라우저의 100dvh를 초과하지 않도록 120px 여백 계산 후 제한 */
 #game-wrapper {
-    width: 100%;
-    max-width: calc(60vh * 16 / 9); /* 가로 모드나 PC에서 높이(vh)를 초과해 잘리는 현상 완벽 방어 */
+    width: 100vw; 
+    max-width: calc((100dvh - 120px) * 16 / 9); /* 세로가 좁고 가로가 긴 화면에서 게임창 넘침 완벽 방어 */
     aspect-ratio: 16 / 9; 
     position: relative;
     background-color: #90caf9; 
@@ -187,7 +198,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     overflow: hidden;
     margin: 0 auto;
     
-    /* 롱탭 이미지 저장, 텍스트 드래그 방지 */
+    /* 🛠️ [최종 반영] 롱탭 시 뜨는 이미지 다운로드 및 복사 메뉴 완벽 차단 */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -212,9 +223,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background-repeat: repeat-x;
     background-position: left 50%;
     z-index: 1; 
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
 }
 
 #world {
@@ -278,7 +286,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     z-index: 1000;
 }
 
-/* 렌더링 충돌 방지를 위한 Wrapper 구조 */
+/* 렌더링 충돌 방지 Wrapper */
 .char-wrapper, .monster-wrapper, .bubble-wrapper {
     position: absolute;
     left: 0; top: 0;
@@ -288,17 +296,16 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .monster-wrapper { z-index: 10; transition: opacity 0.5s ease-in; }
 .bubble-wrapper { z-index: 20; transition: opacity 0.5s ease-in; }
 
-/* 겉 상자가 이동을 담당하므로 안쪽 이미지는 자연스럽게 크기만 잡음 + 롱탭 차단 */
+/* 🛠️ [최종 반영] 이미지 드래그 및 터치 간섭 완전 셧다운 */
 #character, .monster-img, .coin-effect {
     display: block;
     transition: filter 0.1s ease-in-out; 
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
     user-select: none;
-    pointer-events: none; /* 이미지가 터치 이벤트를 아예 가로채지 못하도록 무시 */
+    pointer-events: none; 
 }
 
-/* 안쪽 말풍선은 겉 상자 안에서 편안하게 Scale(팝 이펙트)에만 집중! */
 .bubble {
     background: white;
     color: #333;
@@ -312,6 +319,8 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     box-shadow: 0px 2px 0px rgba(0,0,0,0.2); 
     line-height: 1.2;
     font-weight: normal; 
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 @keyframes bubblePop {
@@ -359,7 +368,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     100% { transform: translateX(-50%) translateY(0px) scale(0.8); }
 }
 
-/* 📥 깜빡임 제거 위한 숨김 처리 */
 #gameOver {
     position: absolute;
     inset: 0;
@@ -368,7 +376,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
@@ -400,9 +407,12 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background: #f8f9fa; padding: 15px; border-radius: 15px; width: 100%;
 }
 
-/* ===== 모바일 화면 완벽 최적화 ===== */
+/* ===== 모바일 및 소형 화면 대응 ===== */
 @media screen and (max-width: 600px) {
     .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
+    /* 게임모드 시 모바일에서는 패딩을 더 줄여 화면 극대화 */
+    .container.game-mode { padding: 8px; }
+    
     h2 { font-size: 24px; margin-bottom: 15px; }
     
     button { 
@@ -459,7 +469,8 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
+    /* 🛠️ [최종 반영] 모바일 가로 모드에서도 버튼 높이를 감안하여 안전하게 스케일 다운 */
+    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); max-width: calc((100dvh - 80px) * 16 / 9); }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
     #result { font-size: 16px; padding: 10px; }
