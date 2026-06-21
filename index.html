@@ -15,7 +15,7 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="main-container">
         <div id="main-page" class="page active">
             <h2>🎮 로그인 화면</h2>
             <div class="login-btn-group">
@@ -275,7 +275,7 @@
         </div>
 
         <div id="sangtirun-page" class="page">
-            <div id="game-wrapper" onmousedown="runIsPressing = true;" ontouchstart="event.preventDefault(); runIsPressing = true;">
+            <div id="game-wrapper" onmousedown="runIsPressing = true;">
                 <div id="game">
                     <div id="bg-layer"></div>
                     <div id="world">
@@ -298,7 +298,7 @@
                     </div>
                 </div>
             </div>
-            <div class="login-btn-group row" style="margin-top: 15px; max-width: 100%;">
+            <div class="login-btn-group row" style="margin-top: 10px; max-width: 100%;">
                 <button id="runStartBtn" class="btn-blue" onclick="startSangtiRunGame()">🎮 게임 시작!</button>
                 <button class="btn-gray" onclick="exitSangtiRunGamePage()">🔙 이전으로</button>
             </div>
