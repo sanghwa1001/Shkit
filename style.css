@@ -32,13 +32,12 @@ body {
     transition: all 0.3s ease;
 }
 
-/* 🏃‍♂️ [최종 완결판] 게임 전용 모드 아키텍처 */
+/* 🏃‍♂️ 게임 전용 모드 아키텍처 (fit-content 버전 복구) */
 .container.game-mode {
-    padding: 15px;
-    height: 95vh;
-    height: 95dvh; /* 가로 모드에서도 무조건 화면에 꽉 차도록 확장 */
-    display: flex; /* Flexbox 도입으로 완벽한 대칭 여백 달성 */
-    flex-direction: column;
+    padding: 12px;
+    width: fit-content; 
+    max-width: 100%;
+    overflow: hidden; 
 }
 
 .container::-webkit-scrollbar { width: 8px; }
@@ -47,7 +46,7 @@ body {
 h2 { color: #333; margin-top: 0; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 32px; }
 input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; display: block; }
 .login-btn-group { max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-.login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; flex-shrink: 0; /* 버튼 압착 잘림 영구 방지 */ }
+.login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; }
 
 /* 🔥 CSS 변수를 활용한 컬러 테마 시스템 */
 :root {
@@ -113,14 +112,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .page { display: none; } 
 .active { display: block; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* 게임 모드 활성화 시 page 영역 역시 Flex로 전환 */
-#sangtirun-page.active {
-    display: flex !important;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-}
 
 .list-container { max-height: 350px; overflow-y: auto; overflow-x: hidden; margin-bottom: 15px; padding-right: 5px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 10px; }
 .list-container::-webkit-scrollbar { width: 8px; }
@@ -194,28 +185,17 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
    🏃‍♂️ 상티런 인게임 전용 마스터 스타일 
 ========================================== */
 
-/* 🛠️ 버튼이 쓰고 남은 높이를 모두 게임창 영역이 가져가도록 Flex 할당 */
-.game-area-container {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 0; /* 화면 밖으로 넘치는 버그를 막아주는 Flexbox 필수 마법 */
-}
-
-/* 🛠️ calc 계산식 삭제: 비율(16:9)과 Flexbox 엔진에 온전히 맡김 */
 #game-wrapper {
-    position: relative;
-    aspect-ratio: 16 / 9;
     width: 100%;
-    max-width: 100%;
-    max-height: 100%;
+    max-width: calc((100dvh - 120px) * 16 / 9); /* 가로 모드나 PC에서 높이(vh)를 초과해 잘리는 현상 완벽 방어 */
+    aspect-ratio: 16 / 9; 
+    position: relative;
     background-color: #90caf9; 
     border: 5px solid #333; 
     border-radius: 20px;
     box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
     overflow: hidden;
+    margin: 0 auto;
     
     /* 롱탭 이미지 저장, 텍스트 드래그 방지 */
     -webkit-touch-callout: none;
@@ -308,6 +288,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     z-index: 1000;
 }
 
+/* 렌더링 충돌 방지를 위한 Wrapper 구조 */
 .char-wrapper, .monster-wrapper, .bubble-wrapper {
     position: absolute;
     left: 0; top: 0;
@@ -317,15 +298,17 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .monster-wrapper { z-index: 10; transition: opacity 0.5s ease-in; }
 .bubble-wrapper { z-index: 20; transition: opacity 0.5s ease-in; }
 
+/* 겉 상자가 이동을 담당하므로 안쪽 이미지는 자연스럽게 크기만 잡음 + 롱탭 차단 */
 #character, .monster-img, .coin-effect {
     display: block;
     transition: filter 0.1s ease-in-out; 
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
     user-select: none;
-    pointer-events: none; 
+    pointer-events: none; /* 이미지가 터치 이벤트를 아예 가로채지 못하도록 무시 */
 }
 
+/* 안쪽 말풍선은 겉 상자 안에서 편안하게 Scale(팝 이펙트)에만 집중! */
 .bubble {
     background: white;
     color: #333;
@@ -339,8 +322,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     box-shadow: 0px 2px 0px rgba(0,0,0,0.2); 
     line-height: 1.2;
     font-weight: normal; 
-    -webkit-user-select: none;
-    user-select: none;
 }
 
 @keyframes bubblePop {
@@ -378,6 +359,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     width: 25px; 
     height: auto;
     z-index: 12; 
+    pointer-events: none;
     animation: coinBounce 0.6s forwards;
     opacity: 1; 
 }
@@ -388,6 +370,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     100% { transform: translateX(-50%) translateY(0px) scale(0.8); }
 }
 
+/* 📥 깜빡임 제거 위한 숨김 처리 */
 #gameOver {
     position: absolute;
     inset: 0;
@@ -396,6 +379,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
@@ -427,10 +411,11 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background: #f8f9fa; padding: 15px; border-radius: 15px; width: 100%;
 }
 
-/* ===== 모바일 및 소형 화면 대응 ===== */
+/* ===== 모바일 화면 완벽 최적화 ===== */
 @media screen and (max-width: 600px) {
     .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
-    .container.game-mode { padding: 10px; }
+    /* 게임모드 시 모바일에서는 패딩을 더 줄여 화면 극대화 */
+    .container.game-mode { padding: 8px; }
     
     h2 { font-size: 24px; margin-bottom: 15px; }
     
@@ -488,7 +473,8 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
+    /* 🛠️ [패치 반영] -120px 넉넉한 여백 확보하여 한계 높이 초과 스크롤 버그 제거 */
+    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); max-width: calc((100dvh - 120px) * 16 / 9); }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
     #result { font-size: 16px; padding: 10px; }
