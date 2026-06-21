@@ -172,7 +172,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-ready-text.ready { color: #28a745; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
-/* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 및 1번(배경파일 영문) 반영 ===== */
+/* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 및 반영 ===== */
 #game-wrapper {
     width: 100%;
     aspect-ratio: 16 / 9; 
