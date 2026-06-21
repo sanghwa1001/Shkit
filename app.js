@@ -82,7 +82,7 @@ let runLastTime = 0;
 let runCharW = 0;
 let runCharH = 0;
 let runCharBubbleW = 0;
-let runResizeTimeout; // 🛠️ 화면 회전 최적화를 위한 타이머 변수
+let runResizeTimeout; // 🛠️ 화면 회전 시 대기할 타이머 변수
 
 function getNameClass(text) {
     const len = text ? text.length : 0;
@@ -130,6 +130,7 @@ db.ref('shopItemPrices').on('value', (snapshot) => {
     if (document.getElementById('student-shop-page').classList.contains('active')) renderStudentShop();
 });
 
+// 하이파이브 리스너
 db.ref('highfive/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, pairCount: 0, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('highfive-page').classList.contains('active')) {
@@ -151,6 +152,7 @@ db.ref('highfive/requests').on('value', snap => {
     if (document.getElementById('highfive-page').classList.contains('active')) renderHighFiveRoom();
 });
 
+// 파도타기 리스너
 db.ref('wave/state').on('value', snap => {
     const newState = snap.val() || { isOpen: false, isStarted: false, shuffledIds: [] };
     if (!isAdmin && newState.isOpen === false && document.getElementById('wave-page').classList.contains('active')) {
@@ -230,6 +232,7 @@ db.ref('chatState/isMuted').on('value', (snapshot) => {
     }
 });
 
+// 학습 데이터 리스너
 db.ref('learningData').on('value', (snapshot) => {
     localLearningData = snapshot.val() || {};
     if (document.getElementById('admin-edit-learn-page').classList.contains('active')) renderLearnDataList();
@@ -749,7 +752,7 @@ function sendChat() {
 }
 
 function clearAllChat() {
-    if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+    if (confirm('🚨 모든 학생의 채팅 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 점니다.')) {
         db.ref('chatLog').remove()
             .then(() => alert('채팅 기록이 깔끔하게 지워졌습니다.'))
             .catch((error) => alert('초기화 중 오류가 발생했습니다.'));
@@ -1038,7 +1041,7 @@ function openSangtiRunGamePage() {
     resetSangtiRunEngineUI();
     showPage('sangtirun-page');
     
-    // 🛠️ 진입 시 화면 측정 및 캐싱 (CSS 애니메이션 0.3초 대기)
+    // 🛠️ 진입 시 CSS 애니메이션 시간을 고려하여 0.3초 대기 후 정확한 크기로 측정
     setTimeout(() => {
         updateSangtiRunScale();
         
@@ -1374,14 +1377,14 @@ document.addEventListener("touchcancel", () => { runIsPressing = false; });
 window.addEventListener("blur", () => { runIsPressing = false; });
 document.addEventListener("visibilitychange", () => { if (document.hidden) runIsPressing = false; });
 
-// 🛠️ [최종 반영] 화면 회전 시 CSS 애니메이션이 끝나는 0.3초 대기 후 정확한 크기 측정
+// 🛠️ [패치 반영] 화면 회전 시 하얀 박스 애니메이션 끝나는 0.3초 대기 후 정확히 스케일 재계산
 window.addEventListener("resize", () => { 
     if (document.getElementById('sangtirun-page').classList.contains('active')) {
         clearTimeout(runResizeTimeout);
         runResizeTimeout = setTimeout(() => {
-            updateSangtiRunScale(); 
+            updateSangtiRunScale();
         }, 300);
-    } 
+    }
 });
 
 requestAnimationFrame(runLoopEngine);
