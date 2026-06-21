@@ -173,8 +173,11 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
 /* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 ===== */
+
+/* 🛠️ [해결 1, 2 반영] 롱탭 방지 및 가로 화면(Landscape) 잘림 방지를 위한 max-width 반응형 */
 #game-wrapper {
     width: 100%;
+    max-width: calc(60vh * 16 / 9); /* 가로 모드나 PC에서 높이(vh)를 초과해 잘리는 현상 완벽 방어 */
     aspect-ratio: 16 / 9; 
     position: relative;
     background-color: #90caf9; 
@@ -183,6 +186,12 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
     overflow: hidden;
     margin: 0 auto;
+    
+    /* 롱탭 이미지 저장, 텍스트 드래그 방지 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 #game {
@@ -203,6 +212,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background-repeat: repeat-x;
     background-position: left 50%;
     z-index: 1; 
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 #world {
@@ -276,10 +288,14 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .monster-wrapper { z-index: 10; transition: opacity 0.5s ease-in; }
 .bubble-wrapper { z-index: 20; transition: opacity 0.5s ease-in; }
 
-/* 겉 상자가 이동을 담당하므로 안쪽 이미지는 자연스럽게 크기만 잡음 */
-#character, .monster-img {
+/* 겉 상자가 이동을 담당하므로 안쪽 이미지는 자연스럽게 크기만 잡음 + 롱탭 차단 */
+#character, .monster-img, .coin-effect {
     display: block;
     transition: filter 0.1s ease-in-out; 
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    pointer-events: none; /* 이미지가 터치 이벤트를 아예 가로채지 못하도록 무시 */
 }
 
 /* 안쪽 말풍선은 겉 상자 안에서 편안하게 Scale(팝 이펙트)에만 집중! */
@@ -333,7 +349,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     width: 25px; 
     height: auto;
     z-index: 12; 
-    pointer-events: none;
     animation: coinBounce 0.6s forwards;
     opacity: 1; 
 }
