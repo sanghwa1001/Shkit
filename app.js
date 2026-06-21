@@ -51,7 +51,7 @@ let currentLearnMode = null;
 let currentSelectedData = null;
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 반영)
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음
 // ==========================================
 let runWords = []; 
 let currentRunWord = null;
@@ -76,12 +76,10 @@ let runTimerInterval;
 
 const RUN_BASE_WIDTH = 900;
 const RUN_BASE_HEIGHT = 506.25;
-const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; // X좌표 고정 캐싱
+const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; 
 
-// 🛠️ 프레임 속도 동기화(Delta Time) 변수
 let runLastTime = 0;
 
-// 🛠️ DOM 요소 크기 캐싱 변수 (Layout Thrashing 방지)
 let runCharW = 0;
 let runCharH = 0;
 let runCharBubbleW = 0;
@@ -1020,7 +1018,7 @@ function renderStudentDataList() {
 function selectDatasetForGame(key) { currentSelectedData = key; if (currentLearnMode === 'solo') { showPage('student-solo-game-page'); } else { alert('함께하기 목록은 곧 업데이트됩니다!'); } }
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 + Wrapper 분리 반영)
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (버그 수정 완결판)
 // ==========================================
 
 function openSangtiRunGamePage() {
@@ -1042,13 +1040,14 @@ function openSangtiRunGamePage() {
     showPage('sangtirun-page');
     updateSangtiRunScale();
 
-    // 🛠️ [성능 최적화] 요소 크기 캐싱 및 하드웨어 가속 Transform 초기화
+    // 🛠️ 대기화면에서도 배경을 올바른 카메라 좌표에 맞게 세팅해두어, 시작 시 순간이동을 방지
     setTimeout(() => {
         RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
         document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
         
         const charWrapper = document.getElementById("charWrapper");
         const charImg = document.getElementById("character");
+        const bgLayer = document.getElementById("bg-layer");
         
         if(charWrapper && charImg) {
             runCharW = charImg.offsetWidth || charWrapper.offsetWidth;
@@ -1060,6 +1059,9 @@ function openSangtiRunGamePage() {
             let maxCamY = RUN_WORLD_HEIGHT - RUN_BASE_HEIGHT;
             runCameraY = Math.max(0, Math.min(maxCamY, runCameraY));
             document.getElementById("world").style.transform = `translateY(${-runCameraY}px)`;
+            
+            // 🛠️ 진입 시점에 이미 배경을 정확히 카메라 Y와 함께 맞추어 놓습니다.
+            if(bgLayer) bgLayer.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
         }
     }, 50);
 }
@@ -1085,10 +1087,16 @@ function resetSangtiRunEngineUI() {
     document.getElementById("timer-container").style.display = "none";
     
     const charImg = document.getElementById("character");
-    // 🛠️ 버그 수정: 이전 플레이에서 남아있던 흔들림(.shake) 강제 초기화
     charImg.classList.remove("red-tint", "shake");
     charImg.src = originalCharacterSrc;
-    document.getElementById("bg-layer").classList.remove("bg-shake");
+    
+    // 🛠️ [문제 1 해결] 배경 변수를 진입(Reset) 시점에 0으로 초기화
+    runBgX = 0;
+    const bgLayer = document.getElementById("bg-layer");
+    if (bgLayer) {
+        bgLayer.classList.remove("bg-shake");
+        bgLayer.style.backgroundPosition = "0px 0%"; // 게임 진입 즉시 0으로 맞춰 점프 현상 제거
+    }
     
     const startBtn = document.getElementById("runStartBtn");
     startBtn.className = "btn-blue";
@@ -1214,8 +1222,9 @@ function startSangtiRunGame() {
     RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
     document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
     
+    // (runBgX = 0 은 reset 함수에서 미리 처리하여 점프 버그 완벽 차단됨)
     runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
-    runVelocity = 0; runIsPressing = false; runBgX = 0;
+    runVelocity = 0; runIsPressing = false; 
 
     setRunCharacterWord(true);
     runGameStarted = true; runTimeLeft = RUN_MAX_TIME; updateRunTimerUI();
@@ -1240,7 +1249,6 @@ function endSangtiRunGame(){
     
     const charImg = document.getElementById("character");
     charImg.src = originalCharacterSrc; 
-    // 🛠️ 버그 수정: 게임 오버 시에도 캐릭터 흔들림 클래스 초기화
     charImg.classList.remove("red-tint", "shake");
     document.getElementById("bg-layer").classList.remove("bg-shake");
 
@@ -1251,7 +1259,7 @@ function endSangtiRunGame(){
     document.getElementById("result").innerHTML = `🏆 점수 : ${runScore} 점<br><br>⭕ 정답 : ${runCorrectCount} 개<br><br>❌ 오답 : ${runWrongCount} 개`;
 }
 
-// 🛠️ [성능 최적화] 메인 게임 루프 - Delta Time 및 Transform 캐싱 반영
+// 🛠️ 메인 게임 루프 (최적화 완료)
 function runLoopEngine(timestamp) {
     if (!runLastTime) runLastTime = timestamp;
     let dt = (timestamp - runLastTime) / 16.666; 
@@ -1351,9 +1359,6 @@ function runLoopEngine(timestamp) {
     requestAnimationFrame(runLoopEngine);
 }
 
-// ==========================================
-// 윈도우 및 글로벌 바인딩 이벤트 처리
-// ==========================================
 document.addEventListener("keydown", e => { if (e.code === "Space" && document.getElementById('sangtirun-page').classList.contains('active')) { e.preventDefault(); runIsPressing = true; } });
 document.addEventListener("keyup", e => { if (e.code === "Space" && document.getElementById('sangtirun-page').classList.contains('active')) runIsPressing = false; });
 document.addEventListener("mousedown", () => { if(document.getElementById('sangtirun-page').classList.contains('active')) runIsPressing = true; });
@@ -1365,12 +1370,10 @@ document.addEventListener("touchstart", (e) => {
     }
 }, { passive: true });
 document.addEventListener("touchend", () => { runIsPressing = false; });
-
 document.addEventListener("touchcancel", () => { runIsPressing = false; });
 window.addEventListener("blur", () => { runIsPressing = false; });
 document.addEventListener("visibilitychange", () => { if (document.hidden) runIsPressing = false; });
 
 window.addEventListener("resize", () => { if (document.getElementById('sangtirun-page').classList.contains('active')) updateSangtiRunScale(); });
 
-// 최초 가동 시작
 requestAnimationFrame(runLoopEngine);
