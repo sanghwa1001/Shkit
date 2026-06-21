@@ -172,7 +172,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-ready-text.ready { color: #28a745; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
-/* ===== 🏃‍♂️ 상티런 게임 전용 스타일 추가 ===== */
+/* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 및 1번(배경파일 영문) 반영 ===== */
 #game-wrapper {
     width: 100%;
     aspect-ratio: 16 / 9; 
@@ -198,7 +198,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 #bg-layer {
     position: absolute;
     inset: -10px; 
-    background: url("상티런 배경.png");
+    background: url("swimbackground.png");
     background-size: auto 150%; 
     background-repeat: repeat-x;
     background-position: left 50%;
@@ -344,14 +344,26 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     100% { transform: translateX(-50%) translateY(0px) scale(0.8); }
 }
 
+/* 📥 3번 반영: display 조작 대신 visibility와 opacity를 결합하여 깜빡임 제거 */
 #gameOver {
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,0.6); 
-    display: none;
+    display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#gameOver.show {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 #gameOverBox {
@@ -432,7 +444,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    /* 상티런 모바일 인게임 오버레이 패딩 및 해상도 최적화 */
     #game-wrapper { border-width: 3px; border-radius: 15px; }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
