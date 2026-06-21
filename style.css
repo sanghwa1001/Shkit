@@ -32,12 +32,13 @@ body {
     transition: all 0.3s ease;
 }
 
-/* 🏃‍♂️ [최종 반영] 여백을 최소화하고 화면을 꽉 채우는 '게임 전용 모드' */
+/* 🏃‍♂️ [최종 완결판] 게임 전용 모드 아키텍처 */
 .container.game-mode {
-    padding: 12px;
-    width: fit-content; 
-    max-width: 100%;
-    overflow: hidden; 
+    padding: 15px;
+    height: 95vh;
+    height: 95dvh; /* 가로 모드에서도 무조건 화면에 꽉 차도록 확장 */
+    display: flex; /* Flexbox 도입으로 완벽한 대칭 여백 달성 */
+    flex-direction: column;
 }
 
 .container::-webkit-scrollbar { width: 8px; }
@@ -46,7 +47,7 @@ body {
 h2 { color: #333; margin-top: 0; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-size: 32px; }
 input.login-input { max-width: 350px; margin-left: auto; margin-right: auto; display: block; }
 .login-btn-group { max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-.login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; }
+.login-btn-group.row { flex-direction: row; justify-content: center; max-width: 100%; flex-shrink: 0; /* 버튼 압착 잘림 영구 방지 */ }
 
 /* 🔥 CSS 변수를 활용한 컬러 테마 시스템 */
 :root {
@@ -109,8 +110,17 @@ input { font-family: 'Jua', sans-serif; width: 100%; padding: 12px; margin: 10px
 input:focus { outline: none; border-color: #007bff; background-color: #fff; }
 input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 
-.page { display: none; } .active { display: block; animation: fadeIn 0.3s ease; }
+.page { display: none; } 
+.active { display: block; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 게임 모드 활성화 시 page 영역 역시 Flex로 전환 */
+#sangtirun-page.active {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
 
 .list-container { max-height: 350px; overflow-y: auto; overflow-x: hidden; margin-bottom: 15px; padding-right: 5px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 15px; padding: 10px; }
 .list-container::-webkit-scrollbar { width: 8px; }
@@ -184,21 +194,30 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
    🏃‍♂️ 상티런 인게임 전용 마스터 스타일 
 ========================================== */
 
-/* 🛠️ [최종 반영] 세로 공간 확보를 위해 넓게 늘어나는 동적 가로 구조. 
-   가로 모드에서는 브라우저의 100dvh를 초과하지 않도록 120px 여백 계산 후 제한 */
+/* 🛠️ 버튼이 쓰고 남은 높이를 모두 게임창 영역이 가져가도록 Flex 할당 */
+.game-area-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0; /* 화면 밖으로 넘치는 버그를 막아주는 Flexbox 필수 마법 */
+}
+
+/* 🛠️ calc 계산식 삭제: 비율(16:9)과 Flexbox 엔진에 온전히 맡김 */
 #game-wrapper {
-    width: 100vw; 
-    max-width: calc((100dvh - 120px) * 16 / 9); /* 세로가 좁고 가로가 긴 화면에서 게임창 넘침 완벽 방어 */
-    aspect-ratio: 16 / 9; 
     position: relative;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
     background-color: #90caf9; 
     border: 5px solid #333; 
     border-radius: 20px;
     box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
     overflow: hidden;
-    margin: 0 auto;
     
-    /* 🛠️ [최종 반영] 롱탭 시 뜨는 이미지 다운로드 및 복사 메뉴 완벽 차단 */
+    /* 롱탭 이미지 저장, 텍스트 드래그 방지 */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -223,6 +242,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background-repeat: repeat-x;
     background-position: left 50%;
     z-index: 1; 
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 #world {
@@ -286,7 +308,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     z-index: 1000;
 }
 
-/* 렌더링 충돌 방지 Wrapper */
 .char-wrapper, .monster-wrapper, .bubble-wrapper {
     position: absolute;
     left: 0; top: 0;
@@ -296,7 +317,6 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .monster-wrapper { z-index: 10; transition: opacity 0.5s ease-in; }
 .bubble-wrapper { z-index: 20; transition: opacity 0.5s ease-in; }
 
-/* 🛠️ [최종 반영] 이미지 드래그 및 터치 간섭 완전 셧다운 */
 #character, .monster-img, .coin-effect {
     display: block;
     transition: filter 0.1s ease-in-out; 
@@ -410,8 +430,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 /* ===== 모바일 및 소형 화면 대응 ===== */
 @media screen and (max-width: 600px) {
     .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
-    /* 게임모드 시 모바일에서는 패딩을 더 줄여 화면 극대화 */
-    .container.game-mode { padding: 8px; }
+    .container.game-mode { padding: 10px; }
     
     h2 { font-size: 24px; margin-bottom: 15px; }
     
@@ -469,8 +488,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    /* 🛠️ [최종 반영] 모바일 가로 모드에서도 버튼 높이를 감안하여 안전하게 스케일 다운 */
-    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); max-width: calc((100dvh - 80px) * 16 / 9); }
+    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
     #result { font-size: 16px; padding: 10px; }
