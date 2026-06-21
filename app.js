@@ -1020,7 +1020,7 @@ function renderStudentDataList() {
 function selectDatasetForGame(key) { currentSelectedData = key; if (currentLearnMode === 'solo') { showPage('student-solo-game-page'); } else { alert('함께하기 목록은 곧 업데이트됩니다!'); } }
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전용 융합 함수 로직 (최적화 완료)
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 + Wrapper 분리 반영)
 // ==========================================
 
 function openSangtiRunGamePage() {
@@ -1047,12 +1047,14 @@ function openSangtiRunGamePage() {
         RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
         document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
         
-        const charEl = document.getElementById("character");
-        if(charEl) {
-            runCharW = charEl.offsetWidth;
-            runCharH = charEl.offsetHeight;
+        const charWrapper = document.getElementById("charWrapper");
+        const charImg = document.getElementById("character");
+        
+        if(charWrapper && charImg) {
+            runCharW = charImg.offsetWidth || charWrapper.offsetWidth;
+            runCharH = charImg.offsetHeight || charWrapper.offsetHeight;
             runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
-            charEl.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
+            charWrapper.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
             
             runCameraY = (runPlayerY + (runCharH / 2)) - (RUN_BASE_HEIGHT / 2);
             let maxCamY = RUN_WORLD_HEIGHT - RUN_BASE_HEIGHT;
@@ -1078,10 +1080,14 @@ function updateSangtiRunScale() {
 function resetSangtiRunEngineUI() {
     document.getElementById("score").textContent = "0";
     document.getElementById("gameOver").classList.remove("show");
-    document.getElementById("characterBubble").style.display = "none";
+    
+    // 🛠️ Wrapper를 숨깁니다
+    document.getElementById("characterBubbleWrapper").style.display = "none";
     document.getElementById("timer-container").style.display = "none";
-    document.getElementById("character").classList.remove("red-tint");
-    document.getElementById("character").src = originalCharacterSrc;
+    
+    const charImg = document.getElementById("character");
+    charImg.classList.remove("red-tint");
+    charImg.src = originalCharacterSrc;
     document.getElementById("bg-layer").classList.remove("bg-shake");
     
     const startBtn = document.getElementById("runStartBtn");
@@ -1089,7 +1095,7 @@ function resetSangtiRunEngineUI() {
     startBtn.disabled = false;
     startBtn.innerText = "🎮 게임 시작!";
 
-    runMonsters.forEach(m => { m.el.remove(); m.bubble.remove(); });
+    runMonsters.forEach(m => { m.wrapper.remove(); m.bWrapper.remove(); });
     runMonsters = [];
     runActiveCoins.forEach(c => c.remove());
     runActiveCoins = [];
@@ -1107,15 +1113,19 @@ function setRunCharacterWord(isFirstTime = false){
     } else { currentRunWord = runWords[Math.floor(Math.random()*runWords.length)]; }
 
     const bubble = document.getElementById("characterBubble");
+    const bubbleWrapper = document.getElementById("characterBubbleWrapper");
+    
     bubble.textContent = currentRunWord.eng;
+    
     if(!isFirstTime) {
+        // 🛠️ 안쪽 내용물인 bubble에만 scale 이펙트를 줍니다 (translate와 충돌 없음)
         bubble.classList.remove("bubble-pop");
         void bubble.offsetWidth; 
         bubble.classList.add("bubble-pop");
     }
     
     // 🛠️ 말풍선 내용이 바뀔 때만 크기 재계산 (캐싱)
-    setTimeout(() => { runCharBubbleW = bubble.offsetWidth; }, 0);
+    setTimeout(() => { runCharBubbleW = bubbleWrapper.offsetWidth; }, 0);
 }
 
 function updateRunTimerUI() {
@@ -1131,19 +1141,30 @@ function spawnRunMonster(){
     let correctIndex = spawnGroupHasCorrect ? Math.floor(Math.random() * 2) : -1;
 
     for (let i = 0; i < 2; i++) {
-        const monster = document.createElement("img");
-        let monsterNum = Math.floor(Math.random() * 9) * 2 + 1;
-        monster.src = "swimmonster" + monsterNum + ".gif";
-        monster.className = "monster"; 
-        monster.style.opacity = "0";
+        // 🛠️ [이중 Wrapper 구조 도입] 몬스터 상자 생성
+        const mWrapper = document.createElement("div");
+        mWrapper.className = "monster-wrapper";
+        mWrapper.style.opacity = "0";
 
-        const bubble = document.createElement("div");
-        bubble.className = "bubble"; 
-        bubble.style.opacity = "0";
-        
+        // 알맹이(이미지) 생성 및 상자에 삽입
+        const monsterImg = document.createElement("img");
+        let monsterNum = Math.floor(Math.random() * 9) * 2 + 1;
+        monsterImg.src = "swimmonster" + monsterNum + ".gif";
+        monsterImg.className = "monster-img"; 
+        mWrapper.appendChild(monsterImg);
+
+        // 🛠️ [이중 Wrapper 구조 도입] 말풍선 상자 생성
+        const bWrapper = document.createElement("div");
+        bWrapper.className = "bubble-wrapper";
+        bWrapper.style.opacity = "0";
+
+        // 알맹이(말풍선 내용) 생성 및 상자에 삽입
+        const bubbleContent = document.createElement("div");
+        bubbleContent.className = "bubble"; 
         let isCorrect = (i === correctIndex);
         let word = isCorrect ? currentRunWord : (runWords.filter(w=>w.kor!==currentRunWord.kor)[Math.floor(Math.random()*(runWords.length-1))] || currentRunWord);
-        bubble.textContent = word.kor;
+        bubbleContent.textContent = word.kor;
+        bWrapper.appendChild(bubbleContent);
         
         let y, startX; let isValidPosition = false; let attempts = 0;
 
@@ -1160,15 +1181,22 @@ function spawnRunMonster(){
             attempts++;
         }
 
-        // 🛠️ 초기 위치도 Transform으로 설정 (top, left 사용 안 함)
-        monster.style.transform = `translate(${startX}px, ${y}px)`;
+        // 겉 껍데기(Wrapper)를 이용해 이동 좌표 설정
+        mWrapper.style.transform = `translate(${startX}px, ${y}px)`;
         const wDiv = document.getElementById("world");
-        wDiv.appendChild(monster); wDiv.appendChild(bubble);
+        wDiv.appendChild(mWrapper); 
+        wDiv.appendChild(bWrapper);
         
-        setTimeout(() => { monster.style.opacity = "1"; bubble.style.opacity = "1"; }, 50);
+        setTimeout(() => { mWrapper.style.opacity = "1"; bWrapper.style.opacity = "1"; }, 50);
 
-        // 크기(w, h)는 로드 된 이후 첫 루프 때 캐싱되도록 0으로 초기화
-        runMonsters.push({ el:monster, bubble:bubble, x:startX, y:y, dead:false, speed: 2.0 + (Math.random() * 1.5), spawnedTime: Date.now(), monsterNum: monsterNum, w: 0, h: 0, bw: 0, bh: 0 });
+        // 메모리에 껍데기와 알맹이를 모두 저장
+        runMonsters.push({ 
+            wrapper: mWrapper, img: monsterImg, 
+            bWrapper: bWrapper, bubble: bubbleContent, 
+            x: startX, y: y, dead: false, speed: 2.0 + (Math.random() * 1.5), 
+            spawnedTime: Date.now(), monsterNum: monsterNum, 
+            w: 0, h: 0, bw: 0, bh: 0 
+        });
     }
 }
 
@@ -1179,18 +1207,23 @@ function startSangtiRunGame() {
     runScore = 0; runCorrectCount = 0; runWrongCount = 0;
     document.getElementById("score").textContent = "0";
     document.getElementById("gameOver").classList.remove("show");
-    document.getElementById("characterBubble").style.display = "block";
+    
+    // Wrapper를 보여줍니다
+    document.getElementById("characterBubbleWrapper").style.display = "block";
     document.getElementById("timer-container").style.display = "block";
     
     const startBtn = document.getElementById("runStartBtn");
     startBtn.className = "btn-disabled"; startBtn.disabled = true; startBtn.innerText = "🚀 진행 중...";
 
-    runMonsters.forEach(m=>{ m.el.remove(); m.bubble.remove(); }); runMonsters = [];
-    runActiveCoins.forEach(c => c.remove()); runActiveCoins = [];
+    runMonsters.forEach(m => { m.wrapper.remove(); m.bWrapper.remove(); }); 
+    runMonsters = [];
+    runActiveCoins.forEach(c => c.remove()); 
+    runActiveCoins = [];
 
     RUN_WORLD_HEIGHT = RUN_BASE_HEIGHT * 2.5;
     document.getElementById("world").style.height = RUN_WORLD_HEIGHT + "px";
     
+    // 게임 시작 시 정중앙 고정 해상도 물리 매칭
     runPlayerY = (RUN_WORLD_HEIGHT / 2) - (runCharH / 2);
     runVelocity = 0; runIsPressing = false; runBgX = 0;
 
@@ -1212,11 +1245,11 @@ function endSangtiRunGame(){
     clearInterval(runSpawnInterval); clearInterval(runTimerInterval);
     if (runAvatarChangeTimeout) clearTimeout(runAvatarChangeTimeout);
 
-    document.getElementById("characterBubble").style.display = "none";
+    document.getElementById("characterBubbleWrapper").style.display = "none";
     document.getElementById("timer-container").style.display = "none";
     
-    const charEl = document.getElementById("character");
-    charEl.src = originalCharacterSrc; charEl.classList.remove("red-tint");
+    const charImg = document.getElementById("character");
+    charImg.src = originalCharacterSrc; charImg.classList.remove("red-tint");
     document.getElementById("bg-layer").classList.remove("bg-shake");
 
     const startBtn = document.getElementById("runStartBtn");
@@ -1234,8 +1267,9 @@ function runLoopEngine(timestamp) {
     if (dt > 3) dt = 3; // 브라우저 백그라운드 전환 등 비정상 지연 튀어오름 방지
 
     if(runGameStarted) {
-        const charEl = document.getElementById("character");
-        const bubbleEl = document.getElementById("characterBubble");
+        const charWrapper = document.getElementById("charWrapper");
+        const charImg = document.getElementById("character");
+        const bubbleWrapper = document.getElementById("characterBubbleWrapper");
         const worldEl = document.getElementById("world");
         const bgEl = document.getElementById("bg-layer");
         const timerContainer = document.getElementById("timer-container");
@@ -1254,69 +1288,79 @@ function runLoopEngine(timestamp) {
         runBgX -= 2 * dt;
         bgEl.style.backgroundPosition = `${runBgX}px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
         
-        // 🛠️ 하드웨어 가속 이동 적용
-        charEl.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
+        // 🛠️ 겉 상자(Wrapper)만 translate로 위치를 이동시킵니다.
+        charWrapper.style.transform = `translate(${RUN_CHAR_X}px, ${runPlayerY}px)`;
         let cbX = RUN_CHAR_X + (runCharW / 2) - (runCharBubbleW / 2);
         let cbY = runPlayerY + runCharH + 2;
-        bubbleEl.style.transform = `translate(${cbX}px, ${cbY}px)`;
+        bubbleWrapper.style.transform = `translate(${cbX}px, ${cbY}px)`;
 
-        // 코인은 CSS 애니메이션과 충돌하므로 top/left 유지
+        // 코인은 CSS 애니메이션과 충돌하므로 top/left 유지 (단순 이펙트용)
         runActiveCoins.forEach(coin => { coin.style.top = (runPlayerY + parseFloat(coin.dataset.offsetY)) + "px"; });
 
-        runMonsters.forEach(monster => {
-            // 최초 한 번만 크기 캐싱
-            if (monster.w === 0) monster.w = monster.el.offsetWidth;
-            if (monster.h === 0) monster.h = monster.el.offsetHeight;
-            if (monster.bw === 0) monster.bw = monster.bubble.offsetWidth;
-            if (monster.bh === 0) monster.bh = monster.bubble.offsetHeight;
+        runMonsters.forEach(m => {
+            // 최초 한 번만 껍데기의 크기를 캐싱
+            if (m.w === 0) m.w = m.wrapper.offsetWidth;
+            if (m.h === 0) m.h = m.wrapper.offsetHeight;
+            if (m.bw === 0) m.bw = m.bWrapper.offsetWidth;
+            if (m.bh === 0) m.bh = m.bWrapper.offsetHeight;
 
-            monster.x -= monster.speed * dt;
-            monster.el.style.transform = `translate(${monster.x}px, ${monster.y}px)`;
+            m.x -= m.speed * dt;
+            // 겉 상자(Wrapper)만 좌표 이동! (애니메이션과 충돌 없음)
+            m.wrapper.style.transform = `translate(${m.x}px, ${m.y}px)`;
             
-            let bx = monster.x + (monster.w / 2) - (monster.bw / 2);
-            let by = monster.y + monster.h + 2;
-            monster.bubble.style.transform = `translate(${bx}px, ${by}px)`;
+            let bx = m.x + (m.w / 2) - (m.bw / 2);
+            let by = m.y + m.h + 2;
+            m.bWrapper.style.transform = `translate(${bx}px, ${by}px)`;
 
-            if(monster.dead || Date.now() - monster.spawnedTime < 500) return;
+            if(m.dead || Date.now() - m.spawnedTime < 500) return;
 
             let hit = false;
-            // 크기가 계산된 이후에만 충돌 판정 수행 (DOM 캐싱 활용)
-            if(monster.w > 0 && runCharW > 0) {
+            // 캐싱된 크기를 활용해 충돌 판정 (성능 대폭 향상)
+            if(m.w > 0 && runCharW > 0) {
                 hit = runCollision(
                     { left: RUN_CHAR_X + runCharW*0.15, right: RUN_CHAR_X + runCharW*0.85, top: runPlayerY + runCharH*0.15, bottom: runPlayerY + runCharH*0.85 },
-                    { left: monster.x + monster.w*0.15, right: monster.x + monster.w*0.85, top: monster.y + monster.h*0.15, bottom: monster.y + monster.h*0.85 }
+                    { left: m.x + m.w*0.15, right: m.x + m.w*0.85, top: m.y + m.h*0.15, bottom: m.y + m.h*0.85 }
                 );
             }
 
             if(hit){
-                monster.dead = true; if (runAvatarChangeTimeout) clearTimeout(runAvatarChangeTimeout);
+                m.dead = true; if (runAvatarChangeTimeout) clearTimeout(runAvatarChangeTimeout);
                 timerContainer.classList.remove("timer-add", "timer-sub"); void timerContainer.offsetWidth;
 
-                if(monster.bubble.textContent === currentRunWord.kor){
+                if(m.bubble.textContent === currentRunWord.kor){
                     runScore += 10; runCorrectCount++; runTimeLeft = Math.min(RUN_MAX_TIME, runTimeLeft + 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-add"); 
-                    charEl.src = "swimcharacter2.gif";
-                    monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif"; monster.el.classList.add("shake");
+                    
+                    charImg.src = "swimcharacter2.gif";
+                    m.img.src = "swimmonster" + (m.monsterNum + 1) + ".gif"; 
+                    // 🛠️ 알맹이(img)에만 애니메이션을 주어 순간이동 버그 원천 차단
+                    m.img.classList.add("shake");
 
                     const coin = document.createElement("img"); coin.src = "swimcoin.gif"; coin.className = "coin-effect";
                     coin.style.left = (RUN_CHAR_X + (runCharW / 2)) + "px"; coin.dataset.offsetY = "15"; coin.style.top = (runPlayerY + 15) + "px";
                     worldEl.appendChild(coin); runActiveCoins.push(coin);
                     setTimeout(() => { coin.remove(); runActiveCoins = runActiveCoins.filter(c => c !== coin); }, 500);
+                    
                     setRunCharacterWord();
                 } else {
                     runScore -= 10; runWrongCount++; runTimeLeft = Math.max(0, runTimeLeft - 3); updateRunTimerUI();
                     timerContainer.classList.add("timer-sub"); 
-                    charEl.src = "swimcharacter3.gif"; charEl.classList.add("red-tint");
-                    monster.el.src = "swimmonster" + (monster.monsterNum + 1) + ".gif";
-                    charEl.classList.remove("shake"); void charEl.offsetWidth; charEl.classList.add("shake");
+                    
+                    charImg.src = "swimcharacter3.gif"; charImg.classList.add("red-tint");
+                    m.img.src = "swimmonster" + (m.monsterNum + 1) + ".gif";
+                    
+                    // 캐릭터의 흔들림도 내부 알맹이(img)에만 적용
+                    charImg.classList.remove("shake"); void charImg.offsetWidth; charImg.classList.add("shake");
+                    
                     bgEl.classList.remove("bg-shake"); void bgEl.offsetWidth; bgEl.classList.add("bg-shake");
-                    setTimeout(() => charEl.classList.remove("red-tint"), 300);
+                    setTimeout(() => charImg.classList.remove("red-tint"), 300);
                 }
-                runAvatarChangeTimeout = setTimeout(() => { charEl.src = originalCharacterSrc; }, 800);
+                runAvatarChangeTimeout = setTimeout(() => { charImg.src = originalCharacterSrc; }, 800);
                 document.getElementById("score").textContent = runScore;
-                setTimeout(()=>{ monster.el.remove(); monster.bubble.remove(); }, 500);
+                
+                setTimeout(() => { m.wrapper.remove(); m.bWrapper.remove(); }, 500);
             }
-            if(monster.x < -200){ monster.el.remove(); monster.bubble.remove(); }
+            if(m.x < -200){ m.wrapper.remove(); m.bWrapper.remove(); }
         });
     }
     requestAnimationFrame(runLoopEngine);
@@ -1327,8 +1371,22 @@ function runLoopEngine(timestamp) {
 // ==========================================
 document.addEventListener("keydown", e => { if (e.code === "Space" && document.getElementById('sangtirun-page').classList.contains('active')) { e.preventDefault(); runIsPressing = true; } });
 document.addEventListener("keyup", e => { if (e.code === "Space" && document.getElementById('sangtirun-page').classList.contains('active')) runIsPressing = false; });
+document.addEventListener("mousedown", () => { if(document.getElementById('sangtirun-page').classList.contains('active')) runIsPressing = true; });
 document.addEventListener("mouseup", () => { runIsPressing = false; });
+
+// 🛠️ [문제 1 완벽 해결] 모바일 고스트 터치 및 탭 씹힘 방지 로직 탑재
+document.addEventListener("touchstart", (e) => { 
+    if (document.getElementById('sangtirun-page').classList.contains('active') && e.target.closest('#game-wrapper')) {
+        runIsPressing = true; 
+    }
+}, { passive: true });
 document.addEventListener("touchend", () => { runIsPressing = false; });
+
+// 제스처 간섭, OS 알림, 포커스 이탈 등으로 터치 판정이 날아갔을 때 강제 리셋
+document.addEventListener("touchcancel", () => { runIsPressing = false; });
+window.addEventListener("blur", () => { runIsPressing = false; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) runIsPressing = false; });
+
 window.addEventListener("resize", () => { if (document.getElementById('sangtirun-page').classList.contains('active')) updateSangtiRunScale(); });
 
 // 최초 가동 시작
