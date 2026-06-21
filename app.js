@@ -51,7 +51,7 @@ let currentLearnMode = null;
 let currentSelectedData = null;
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 반영)
 // ==========================================
 let runWords = []; 
 let currentRunWord = null;
@@ -76,10 +76,12 @@ let runTimerInterval;
 
 const RUN_BASE_WIDTH = 900;
 const RUN_BASE_HEIGHT = 506.25;
-const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; 
+const RUN_CHAR_X = RUN_BASE_WIDTH * 0.08; // X좌표 고정 캐싱
 
+// 🛠️ 프레임 속도 동기화(Delta Time) 변수
 let runLastTime = 0;
 
+// 🛠️ DOM 요소 크기 캐싱 변수 (Layout Thrashing 방지)
 let runCharW = 0;
 let runCharH = 0;
 let runCharBubbleW = 0;
@@ -1018,7 +1020,7 @@ function renderStudentDataList() {
 function selectDatasetForGame(key) { currentSelectedData = key; if (currentLearnMode === 'solo') { showPage('student-solo-game-page'); } else { alert('함께하기 목록은 곧 업데이트됩니다!'); } }
 
 // ==========================================
-// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음
+// 🏃‍♂️ 상티런 인게임용 전역 독립 변수 모음 (최적화 + Wrapper 분리 반영)
 // ==========================================
 
 function openSangtiRunGamePage() {
@@ -1058,9 +1060,6 @@ function openSangtiRunGamePage() {
             let maxCamY = RUN_WORLD_HEIGHT - RUN_BASE_HEIGHT;
             runCameraY = Math.max(0, Math.min(maxCamY, runCameraY));
             document.getElementById("world").style.transform = `translateY(${-runCameraY}px)`;
-            
-            // 🛠️ [버그 수정] 배경 Y축 위치도 카메라에 맞춰 완전히 초기화 (순간이동 차단)
-            document.getElementById("bg-layer").style.backgroundPosition = `0px ${maxCamY > 0 ? (runCameraY / maxCamY) * 100 : 0}%`;
         }
     }, 50);
 }
@@ -1092,7 +1091,6 @@ function resetSangtiRunEngineUI() {
     const bgEl = document.getElementById("bg-layer");
     bgEl.classList.remove("bg-shake");
     
-    // 🛠️ [버그 수정] 배경 스크롤 좌표 초기화 및 즉각 반영
     runBgX = 0;
     bgEl.style.backgroundPosition = "0px 0%";
     
