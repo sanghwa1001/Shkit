@@ -173,7 +173,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
 /* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 및 반영 ===== */
-/* 🛠️ [문제 1 그림자 해결] box-shadow 제거 및 2D Flat 디자인으로 통일 */
+/* 🛠️ [문제 1 그림자 해결] 플랫 디자인에 맞춰 솔리드 섀도우(Solid Shadow)로 디자인 통일 */
 #game-wrapper {
     width: 100%;
     aspect-ratio: 16 / 9; 
@@ -181,6 +181,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     background-color: #90caf9; 
     border: 5px solid #333; 
     border-radius: 20px;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2); /* 플랫폼 디자인과 일치하는 묵직한 하단 그림자 적용 */
     overflow: hidden;
     margin: 0 auto;
 }
@@ -450,7 +451,8 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    #game-wrapper { border-width: 3px; border-radius: 15px; }
+    /* 모바일 환경에 맞게 그림자 사이즈도 얇게 조정 */
+    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
     #result { font-size: 16px; padding: 10px; }
