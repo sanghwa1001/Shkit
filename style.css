@@ -28,7 +28,38 @@ body {
     overflow-x: hidden; 
     box-sizing: border-box; 
     margin: 0; 
+    transition: all 0.3s ease; /* 전환 효과 추가 */
 }
+
+/* 🛠️ 1번 수정 반영: 상티런 진입 시 컨테이너의 하얀 배경, 테두리를 지우고 전체화면화 */
+.container.game-mode {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 게임 모드일 때만 페이지 너비를 100%로 확장 */
+.container.game-mode .page {
+    width: 100%;
+    height: 100%;
+}
+
+.container.game-mode #sangtirun-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 스크롤바 커스텀 */
 .container::-webkit-scrollbar { width: 8px; }
 .container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
 
@@ -173,6 +204,23 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 .hf-badge { position: absolute; top: -10px; right: -10px; background: #ff9800; border: 2px solid #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; z-index: 10; animation: bounceBadge 0.8s infinite; }
 
 /* ===== 🏃‍♂️ 상티런 게임 전용 스타일 코어 ===== */
+/* 🛠️ 1번 수정 반영: 상하가 잘리지 않는 반응형 16:9 꽉 찬 도화지 */
+.container.game-mode #game-wrapper {
+    width: 100%;
+    /* 화면 높이에서 버튼 영역(약 80px)을 제외한 나머지에 맞춰 가로/세로 16:9 비율 유지 (잘림 완벽 방지) */
+    max-width: calc((100dvh - 80px) * 16 / 9); 
+    aspect-ratio: 16 / 9; 
+    position: relative;
+    background-color: #90caf9; 
+    border: 5px solid #333; 
+    border-radius: 20px;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
+    box-sizing: border-box; 
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+/* 게임 모드가 아닐 때 (기본) - 만약을 위한 예비용 */
 #game-wrapper {
     width: 100%;
     aspect-ratio: 16 / 9; 
@@ -181,9 +229,17 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     border: 5px solid #333; 
     border-radius: 20px;
     box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
-    box-sizing: border-box; /* 🛠️ [박스 쏠림 해결] 100% width에 border 두께 포함시켜 정중앙에 배치 */
+    box-sizing: border-box; 
     overflow: hidden;
     margin: 0 auto;
+}
+
+/* 게임모드 버튼 그룹 반응형 처리 */
+.container.game-mode #runBtnGroup {
+    max-width: calc((100dvh - 80px) * 16 / 9);
+    margin: 15px auto 0 auto;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
 
 #game {
@@ -388,7 +444,9 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 
 /* ===== 모바일 화면 완벽 최적화 ===== */
 @media screen and (max-width: 600px) {
-    .container { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
+    /* 일반 모드일 때만 적용 (게임 모드에선 컨테이너 여백/테두리 없음) */
+    .container:not(.game-mode) { padding: 15px; border-width: 3px; border-radius: 15px; max-height: 96dvh; margin: 0; }
+    
     h2 { font-size: 24px; margin-bottom: 15px; }
     
     button { 
@@ -445,7 +503,7 @@ input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .gem-label { font-size: 13px; }
     .gem-input { font-size: 13px; width: 40px; padding: 3px; border-width: 1px;}
 
-    #game-wrapper { border-width: 3px; border-radius: 15px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); box-sizing: border-box; }
+    #game-wrapper { border-width: 3px; border-radius: 10px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); box-sizing: border-box; }
     #gameOverBox { padding: 15px; border-width: 3px; border-radius: 15px; }
     #gameOverBox h1 { font-size: 26px; margin-bottom: 10px; }
     #result { font-size: 16px; padding: 10px; }
